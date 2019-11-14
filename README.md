@@ -18,3 +18,8 @@
 - Collection Type
 
 
+### 19.11.14
+
+- Optional
+
+- Enum
