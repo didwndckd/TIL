@@ -137,10 +137,6 @@ func evaluate(_ expression: ArithmeticExpression) -> Int {
     case .addition(let x, let y):
         // 더하기 연산
         switch (x,y) {
-        case (let x , let .number(y)):
-            return evaluate (x) + y
-        case (let .number(x) , let y):
-            return x + evaluate(y)
         case (let x , let y):
             return evaluate(x) + evaluate(y)
         }// 더하기 연산
@@ -148,10 +144,6 @@ func evaluate(_ expression: ArithmeticExpression) -> Int {
     case .multiplication(let x, let y):
         // 곱하기 연산
         switch (x, y) {
-        case (let x , let .number(y)):
-            return evaluate(x) * y
-        case (let .number(x) , let y):
-            return x * evaluate(y)
         case (let x , let y):
             return evaluate(x) * evaluate(y)
         
@@ -162,5 +154,7 @@ func evaluate(_ expression: ArithmeticExpression) -> Int {
     
 evaluate(five)    // 결과 : 5
 evaluate(sum)     // 결과 : 9
-evaluate(product) // 결과 : 18
-
+evaluate(product) // 결과 : 81
+let test : ArithmeticExpression = .multiplication(sum, five)  // 9*5 =45
+let test2 : ArithmeticExpression = .addition(test, product) //45 + 81
+evaluate(test2) //결과 126
