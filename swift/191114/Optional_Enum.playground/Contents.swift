@@ -136,18 +136,10 @@ func evaluate(_ expression: ArithmeticExpression) -> Int {
         return x
     case .addition(let x, let y):
         // 더하기 연산
-        switch (x,y) {
-        case (let x , let y):
             return evaluate(x) + evaluate(y)
-        }// 더하기 연산
-        
     case .multiplication(let x, let y):
         // 곱하기 연산
-        switch (x, y) {
-        case (let x , let y):
             return evaluate(x) * evaluate(y)
-        
-        }// 곱하기 연산
     }
     
 }
