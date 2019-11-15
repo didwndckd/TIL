@@ -138,7 +138,7 @@ func onlyOneAlphbet (arr : Array<Character>) -> Array<Character> {
             }
             
             if arr[firstIndex] == arr[secondIndex] {
-                boolen = false
+                boolen = false ; break
             }
         }
         if boolen {

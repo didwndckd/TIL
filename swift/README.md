@@ -23,3 +23,10 @@
 - Optional
 
 - Enum
+
+### 19.11.15
+
+- Closure
+
+- OOP introduction 
+
