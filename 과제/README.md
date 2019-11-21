@@ -33,3 +33,7 @@
 ### 19.11.18
 
 - OOP
+
+### 19.11.21
+
+- iOS AppLifeCycle, Hello World , algorithm
