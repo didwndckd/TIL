@@ -14,6 +14,7 @@ func strPlus ( a : Int , b : Int) -> Int{
         bCount += 1
         bBase /= 10
     }
+    print(bCount)
     var multi = 1
     for _ in 1...bCount{
         multi *= 10
