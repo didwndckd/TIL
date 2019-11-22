@@ -40,4 +40,4 @@
 
 ### 19.11.22
 
-- iOS 
+- iOS UIGide, algorithm 
