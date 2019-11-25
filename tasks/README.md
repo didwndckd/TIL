@@ -41,3 +41,7 @@
 ### 19.11.22
 
 - iOS UIGide, algorithm 
+
+### 19.11.25
+
+- UI View Controller
