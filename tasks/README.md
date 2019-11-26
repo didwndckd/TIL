@@ -45,3 +45,7 @@
 ### 19.11.25
 
 - UI View Controller
+
+### 19.11.26
+
+- UI Text Field, Alert
