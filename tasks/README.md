@@ -49,3 +49,8 @@
 ### 19.11.26
 
 - UI Text Field, Alert
+
+### 19.12.03
+
+- StroyBoard, Segue
+

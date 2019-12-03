@@ -98,6 +98,7 @@ extension NextViewController: UIAdaptivePresentationControllerDelegate{
     
     
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+        print(presentedViewController)
         print("디드 디스미스")
         
     }
