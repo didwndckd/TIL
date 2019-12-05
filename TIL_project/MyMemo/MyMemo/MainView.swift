@@ -8,7 +8,7 @@
 
 import UIKit
 
-class NaviView: UIView {
+class MainView: UIView {
     
     
     

@@ -8,14 +8,15 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class MainViewController: UIViewController {
     
-    
+    let nacvigationController = UINavigationController()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let naviView = NaviView()
+        
+        
         
     }
 
