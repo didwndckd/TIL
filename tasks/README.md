@@ -58,4 +58,6 @@
 
 - 타입캐스팅, 생성자
 
+### 19.12.06
 
+- SingleTon, UserDefaults
