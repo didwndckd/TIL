@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3123A2E4239A56790071CD51 /* MessageBoxDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3123A2E3239A56790071CD51 /* MessageBoxDelegate.swift */; };
 		31C9885523960D8600DEFD55 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C9885423960D8600DEFD55 /* MainView.swift */; };
 		31C9885723960D9E00DEFD55 /* MainModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31C9885623960D9E00DEFD55 /* MainModel.swift */; };
 		31FDD6F423960C9500F3167B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FDD6F323960C9500F3167B /* AppDelegate.swift */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3123A2E3239A56790071CD51 /* MessageBoxDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBoxDelegate.swift; sourceTree = "<group>"; };
 		31C9885423960D8600DEFD55 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		31C9885623960D9E00DEFD55 /* MainModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainModel.swift; sourceTree = "<group>"; };
 		31FDD6F023960C9500F3167B /* MyMemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyMemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -66,6 +68,7 @@
 				31C9885423960D8600DEFD55 /* MainView.swift */,
 				31C9885623960D9E00DEFD55 /* MainModel.swift */,
 				31FDD6F923960C9500F3167B /* Main.storyboard */,
+				3123A2E3239A56790071CD51 /* MessageBoxDelegate.swift */,
 				31FDD6FC23960C9700F3167B /* Assets.xcassets */,
 				31FDD6FE23960C9700F3167B /* LaunchScreen.storyboard */,
 				31FDD70123960C9700F3167B /* Info.plist */,
@@ -146,6 +149,7 @@
 			files = (
 				31FDD6F823960C9500F3167B /* MainViewController.swift in Sources */,
 				31FDD6F423960C9500F3167B /* AppDelegate.swift in Sources */,
+				3123A2E4239A56790071CD51 /* MessageBoxDelegate.swift in Sources */,
 				31C9885523960D8600DEFD55 /* MainView.swift in Sources */,
 				31C9885723960D9E00DEFD55 /* MainModel.swift in Sources */,
 				31FDD6F623960C9500F3167B /* SceneDelegate.swift in Sources */,

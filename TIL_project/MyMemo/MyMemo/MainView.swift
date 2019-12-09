@@ -12,28 +12,11 @@ class MainView: UIView {
     
     
     
-     let editDirectory: UIButton = UIButton(type: .system)
-     let labelDirectory: UILabel = UILabel()
+
      
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        
-        
-        
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init Error")
-    }
     
     
-    func setHeader(superView: UIView) {
-        
-    }
     
-    func setUI() {
-        
-    }
     
 }
 

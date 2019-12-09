@@ -61,3 +61,7 @@
 ### 19.12.06
 
 - SingleTon, UserDefaults
+
+### 19.12.09
+
+- ARC, struct
