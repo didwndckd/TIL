@@ -12,6 +12,8 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var myView: CustomView!
     
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.

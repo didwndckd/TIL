@@ -32,6 +32,10 @@ class SecondViewController: UIViewController {
         // Do any additional setup after loading the view.
     }
     
+    deinit {
+        print("SecondViewController deinit")
+    }
+    
     
     
     func setUI () {
@@ -59,10 +63,11 @@ class SecondViewController: UIViewController {
 extension SecondViewController: TableDelegate {
     
     func cell(position: Int) -> MyCell {
-        let cell = SecondCell()
+        
+        
+        let cell = SecondCell(position: position)
         
         cell.delegate = self
-        cell.position = position
         cell.label.text = arr[position]
         cell.button.setTitle("\(arr[position]) 버튼", for: .normal)
         

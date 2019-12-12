@@ -14,17 +14,29 @@ protocol SecondCellDelegate: class {
 
 class SecondCell: MyCell {
     
-    var position = 0
+    private let position: Int
+    
+    
     
     let label = UILabel()
     let button = UIButton(type: .system)
     
     weak var delegate: SecondCellDelegate?
 
-    override init() {
+    
+    init(position: Int) {
+        
+        self.position = position
         super.init()
         self.frame.size = setUI()
+        
+        
     }
+    
+//    override init() {
+//        super.init()
+//        self.frame.size = setUI()
+//    }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
