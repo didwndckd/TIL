@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Foundation
 
 class ViewController: UIViewController {
 
@@ -18,18 +19,29 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        
+        print(CFGetRetainCount(self))
         myView.delegate = self
         myView.backgroundColor = nil
         myView.backgroundColor = .red
 //        myView.backgroundColor = .red
         //바꿀때마다 프린트를 찍어야하는 문제점
-        
+        print(CFGetRetainCount(self))
         
         
         
     }
+    
+    deinit {
+        print("ViewController deinit: \(CFGetRetainCount(self))")
+    }
 
-
+    @IBAction func dismissButton(_ sender: Any) {
+        
+        print("dismissButton")
+        dismiss(animated: false)
+    }
+    
 }
 
 extension ViewController: CustomViewDelegate {

@@ -5,6 +5,12 @@
 
 class Teacher {
   var student: Student?
+    
+    init() {
+        student = Student()
+    }
+    
+    
   deinit {
     print("Teacher is being deinitialized")
   }
@@ -12,28 +18,37 @@ class Teacher {
 
 class Student {
   // strong, unowned, weak
-//  let teacher: Teacher  // count = 2
-  unowned let teacher: Teacher // count = 1 / 카운트가 올라가지 않음
+  var teacher: Teacher?  // count = 2
+//  unowned let teacher: Teacher // count = 1 / 카운트가 올라가지 않음
 //  weak var teacher: Teacher?
   
-  init(teacher: Teacher) {
-    self.teacher = teacher
-  }
+    init() {
+        
+    }
+    
+//  init(teacher: Teacher) {
+//    self.teacher = teacher
+//  }
   deinit {
     print("Student is being deinitialized")
   }
 }
 
-var teacher: Teacher? = Teacher()
-var student: Student? = Student(teacher: teacher!)
-teacher?.student = student // 강한참조 선언시 count = 2 약한참조 선언시 count = 1
+//var teacher: Teacher? = Teacher()
+//var student: Student? = Student(teacher: teacher!)
+//teacher?.student = student // 강한참조 선언시 count = 2 약한참조 선언시 count = 1
 
+
+var teacher: Teacher? = Teacher()
+
+teacher!.student?.teacher = teacher
 
 print("\n---------- [ teacher release ] ----------\n")
-teacher = nil // 약한 참조 선언시 -> tracher count = 0 / student count = 1
-
+ // 약한 참조 선언시 -> tracher count = 0 / student count = 1
+//teacher?.student = nil
+teacher = nil
 print("\n---------- [ student release ] ----------\n")
-student = nil // count = 0
+//student = nil // count = 0
 
 
 

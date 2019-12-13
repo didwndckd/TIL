@@ -73,3 +73,7 @@
 ### 19.12.12
 
 - AutoLayout
+
+### 19.12.13
+
+- LoginPageExample

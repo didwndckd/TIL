@@ -17,7 +17,12 @@ protocol CustomViewDelegate: class {// :class 해주는 이유 -> 사용할 때 
 class CustomView: UIView {
 
     
-    weak var delegate: CustomViewDelegate?
+     var delegate: CustomViewDelegate? {
+        didSet {
+            guard let delegate = delegate else { return }
+            print("NextViewController customView delegate : \(CFGetRetainCount(delegate))")
+        }
+    }
     
     
     override var backgroundColor: UIColor? { // 프로퍼티 옵저버 사용 불가
