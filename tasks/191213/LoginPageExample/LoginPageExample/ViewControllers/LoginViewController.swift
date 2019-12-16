@@ -13,18 +13,21 @@ import UIKit
 // 로그인 상태 -> 메인 로그인 상태 아니면 -> 로그인 페이지
 
 class LoginViewController: UIViewController {
+    
+    var keyboardState = false
+    var originY: CGFloat?
 
-    
-    
-     let loginView = LoginView(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
+    let loginView = LoginView(frame: .zero)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         print("LoginViewController: viewDidLoad")
         setLoginView()
-        
-        
+        loginView.setUI()
+        loginView.idTextField.delegate = self
+        loginView.pwTextField.delegate = self
+        view.backgroundColor = .black
         
 //        testView.layer.cornerRadius = testView.frame.size.width/2
         // width == height 일때 한 변의 길이/2 를 cornerRadius값으로 주면 원이 된다
@@ -33,17 +36,40 @@ class LoginViewController: UIViewController {
         
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        
+        
+    }
+    
+    
+    //옵저버 등록
+//    func registerForkeyboardNotification() {
+//        NotificationCenter.default.addObserver(<#T##observer: Any##Any#>, selector: <#T##Selector#>, name: <#T##NSNotification.Name?#>, object: <#T##Any?#>)
+//        NotificationCenter.default.addObserver(<#T##observer: Any##Any#>, selector: <#T##Selector#>, name: <#T##NSNotification.Name?#>, object: <#T##Any?#>)
+//    }
+    
+    
+
+    
     
     func setLoginView() {
         view.addSubview(loginView)
         loginView.translatesAutoresizingMaskIntoConstraints = false
+        loginView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        loginView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        loginView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        loginView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+                
         
-        loginView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0).isActive = true
-        loginView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0).isActive = true
-        loginView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: 0).isActive = true
-        loginView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 0).isActive = true
         
-        
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        print("touchesEnded()")
+        loginView.endEditing(true)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -63,7 +89,9 @@ class LoginViewController: UIViewController {
     
     override func viewWillLayoutSubviews() {
         super.viewWillLayoutSubviews()
-        loginView.setUI()
+       // print("viewWillLayoutSubviews")
+         //loginView.setUI()
+        
     }
         
     
@@ -94,5 +122,38 @@ class LoginViewController: UIViewController {
         
     }
 
+}
+
+extension LoginViewController: UITextFieldDelegate {
+    
+    func textFieldDidChangeSelection(_ textField: UITextField) {
+        //print("aaa")
+    }
+    func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+        guard var text = textField.text else {return false}
+        
+        if text.count > 16 {
+            
+            text.remove(at: text.index(before: text.endIndex))
+            textField.text = text
+            
+            return false
+        }else {
+            return true
+        }
+        
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField.tag == 0 {
+            loginView.pwTextField.becomeFirstResponder()
+            return true
+        }else {
+            loginView.pwTextField.endEditing(true)
+            return true
+        }
+    }
+    
+    
 }
 

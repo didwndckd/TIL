@@ -77,3 +77,7 @@
 ### 19.12.13
 
 - LoginPageExample
+
+### 19.12.16
+
+- StackView

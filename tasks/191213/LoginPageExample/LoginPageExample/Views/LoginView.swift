@@ -17,12 +17,13 @@ class LoginView: UIView {
     let quadrangleStackView = UIView()
     
     let loginStackView = UIView()
-    let idTextField = UITextField()
+    let idTextField = LoginTextField()
     let idUnderLine = UIView()
-    let pwTextField = UITextField()
+    let pwTextField = LoginTextField()
     let pwUnderLine = UIView()
     let signUpButton = UIButton(type: .system)
     let idimage = UIImageView()
+    let pwimage = UIImageView()
 
     
     
@@ -30,6 +31,8 @@ class LoginView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         print("LoginView: init")
+        backgroundColor = .white
+        addSubview(logo)
         
         addSubview(quadrangleStackView)
         quadrangleStackView.addSubview(quadrangle)
@@ -63,31 +66,24 @@ class LoginView: UIView {
     }
     
     
+   
+    
     
      func setUI() {
         
-        addSubview(logo)
-        logo.image = UIImage(named: "fastcampus_logo")
-        let logoMargin:CGFloat = 60
-        logo.contentMode = .scaleAspectFill // 이미지 오토레이아웃 사이즈에 맞게 조정
         
-        //logo AutoLayout
-        logo.translatesAutoresizingMaskIntoConstraints = false
-        logo.topAnchor.constraint(equalTo: topAnchor, constant: logoMargin).isActive = true
-        logo.leadingAnchor.constraint(equalTo: leadingAnchor, constant: logoMargin).isActive = true
-        logo.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -logoMargin).isActive = true
+       
         
-        if let image = logo.image {
-        logo.bounds.size.height = image.size.height
-        
-        }else{
-            logo.bounds.size.height = 0
-        }
-        
-        
-        
-        
-        
+          logo.image = UIImage(named: "fastcampus_logo")
+              let logoMargin:CGFloat = 60
+              logo.contentMode = .scaleAspectFill // 이미지 오토레이아웃 사이즈에 맞게 조정
+              
+              //logo AutoLayout
+              logo.translatesAutoresizingMaskIntoConstraints = false
+              logo.topAnchor.constraint(equalTo: topAnchor, constant: logoMargin).isActive = true
+              logo.leadingAnchor.constraint(equalTo: leadingAnchor, constant: logoMargin).isActive = true
+              logo.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -logoMargin).isActive = true
+
         
         // quadrangle AutoLayout
         let quadrangleTopMargin: CGFloat = 30
@@ -104,7 +100,9 @@ class LoginView: UIView {
        
         quadrangleStackView.heightAnchor.constraint(equalTo: logo.heightAnchor, multiplier: 0.7).isActive = true
         
-        quadrangleStackView.centerXAnchor.constraint(equalToSystemSpacingAfter: logo.centerXAnchor, multiplier: 1).isActive = true
+        quadrangleStackView.centerXAnchor.constraint(equalTo: logo.centerXAnchor).isActive = true
+        
+        
         
         let radius: CGFloat = 7
         
@@ -112,18 +110,16 @@ class LoginView: UIView {
         quadrangle.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle.layer.cornerRadius = radius
-        
-        quadrangle1.centerXAnchor.constraint(equalToSystemSpacingAfter: quadrangleStackView.centerXAnchor, multiplier: 1).isActive = true
+        quadrangle1.centerXAnchor.constraint(equalTo: quadrangleStackView.centerXAnchor).isActive = true
         quadrangle1.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle1.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle1.layer.cornerRadius = radius
-        
         quadrangle2.trailingAnchor.constraint(equalTo: quadrangleStackView.trailingAnchor, constant: 0).isActive = true
         quadrangle2.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle2.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
         quadrangle2.layer.cornerRadius = radius
         
-        print(quadrangleStackView.frame)
+        //print(quadrangleStackView.frame)
         
         //quadrangle AutoLayout
         
@@ -139,7 +135,7 @@ class LoginView: UIView {
         
         signUpButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -signupButtonMargin).isActive = true
         
-        signUpButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -logoMargin*2+10).isActive = true
+        signUpButton.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -logoMargin * 2 + 10).isActive = true
         
         let signUpbuttonTitleMargin: CGFloat = 13
         signUpButton.titleLabel?.topAnchor.constraint(equalTo: signUpButton.topAnchor, constant: signUpbuttonTitleMargin).isActive = true
@@ -163,27 +159,56 @@ class LoginView: UIView {
         
         loginStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: loginMargin).isActive = true
         loginStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -loginMargin).isActive = true
-        loginStackView.topAnchor.constraint(equalTo: centerYAnchor, constant: loginMargin).isActive = true
+        loginStackView.topAnchor.constraint(equalTo: centerYAnchor, constant: 80).isActive = true
         
         loginStackView.bottomAnchor.constraint(equalTo: signUpButton.topAnchor, constant: 0).isActive = true
         
 //        loginStackView.backgroundColor = .red
         
-        
-        idimage.image = UIImage(named: "email")
-        
-        
+         
         
         idTextField.topAnchor.constraint(equalTo: loginStackView.topAnchor, constant: 0).isActive = true
         idTextField.leadingAnchor.constraint(equalTo: loginStackView.leadingAnchor, constant: 0).isActive = true
         idTextField.trailingAnchor.constraint(equalTo: loginStackView.trailingAnchor, constant: 0).isActive = true
         
-        
+        idTextField.keyboardType = .emailAddress
         idTextField.placeholder = "이메일을 입력하세요"
-        idTextField.font = .systemFont(ofSize: 20)
-        idTextField.leftViewMode = .always
+        idTextField.font = .systemFont(ofSize: 25)
+        idimage.image = UIImage(named: "email")
         idTextField.leftView = idimage
-        idTextField.borderStyle = .bezel
+        idTextField.leftViewMode = .always
+        idTextField.tag = 0
+        
+        
+        idUnderLine.translatesAutoresizingMaskIntoConstraints = false
+        idUnderLine.topAnchor.constraint(equalTo: idTextField.bottomAnchor, constant: 6).isActive = true
+        idUnderLine.trailingAnchor.constraint(equalTo: idTextField.trailingAnchor, constant: -10).isActive = true
+        idUnderLine.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        idUnderLine.widthAnchor.constraint(equalTo: idTextField.textInputView.widthAnchor, multiplier: 1).isActive = true
+        
+            
+        
+        pwTextField.translatesAutoresizingMaskIntoConstraints = false
+        pwTextField.topAnchor.constraint(equalTo: idUnderLine.bottomAnchor, constant: 20).isActive = true
+        pwTextField.leadingAnchor.constraint(equalTo: loginStackView.leadingAnchor).isActive = true
+        pwTextField.trailingAnchor.constraint(equalTo: loginStackView.trailingAnchor).isActive = true
+        
+        pwTextField.keyboardType = .default
+        pwTextField.placeholder = "비밀번호를 입력하세요"
+        pwTextField.font = .systemFont(ofSize: 25)
+        pwimage.image = UIImage(named: "password")
+        pwTextField.leftView = pwimage
+        pwTextField.leftViewMode = .always
+        pwTextField.isSecureTextEntry = true
+        pwTextField.tag = 1
+        
+        pwUnderLine.topAnchor.constraint(equalTo: pwTextField.bottomAnchor, constant: 6).isActive = true
+        pwUnderLine.trailingAnchor.constraint(equalTo: pwTextField.trailingAnchor, constant: -10).isActive = true
+        pwUnderLine.widthAnchor.constraint(equalTo: pwTextField.textInputView.widthAnchor).isActive = true
+        pwUnderLine.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        
+//        loginStackView.backgroundColor = .red
+        
         
     }
     

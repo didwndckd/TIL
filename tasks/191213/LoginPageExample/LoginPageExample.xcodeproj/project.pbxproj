@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3112BD6823A723A500276B40 /* LoginTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3112BD6723A723A500276B40 /* LoginTextField.swift */; };
 		31F67A8423A344A100765344 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F67A8323A344A100765344 /* AppDelegate.swift */; };
 		31F67A8623A344A100765344 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F67A8523A344A100765344 /* SceneDelegate.swift */; };
 		31F67A8823A344A100765344 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F67A8723A344A100765344 /* LoginViewController.swift */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3112BD6723A723A500276B40 /* LoginTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginTextField.swift; sourceTree = "<group>"; };
 		31F67A8023A344A100765344 /* LoginPageExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoginPageExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31F67A8323A344A100765344 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		31F67A8523A344A100765344 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -41,6 +43,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3112BD6623A7237100276B40 /* Wiget */ = {
+			isa = PBXGroup;
+			children = (
+				3112BD6723A723A500276B40 /* LoginTextField.swift */,
+			);
+			path = Wiget;
+			sourceTree = "<group>";
+		};
 		31F67A7723A344A100765344 = {
 			isa = PBXGroup;
 			children = (
@@ -60,6 +70,7 @@
 		31F67A8223A344A100765344 /* LoginPageExample */ = {
 			isa = PBXGroup;
 			children = (
+				3112BD6623A7237100276B40 /* Wiget */,
 				31F67A9B23A352D900765344 /* Modele */,
 				31F67A9A23A352D200765344 /* Views */,
 				31F67A9923A352C200765344 /* ViewControllers */,
@@ -171,6 +182,7 @@
 				31F67A9823A34AB500765344 /* MainViewController.swift in Sources */,
 				31F67A8823A344A100765344 /* LoginViewController.swift in Sources */,
 				31F67A8423A344A100765344 /* AppDelegate.swift in Sources */,
+				3112BD6823A723A500276B40 /* LoginTextField.swift in Sources */,
 				31F67A9D23A352FB00765344 /* LoginView.swift in Sources */,
 				31F67A8623A344A100765344 /* SceneDelegate.swift in Sources */,
 			);
