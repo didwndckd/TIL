@@ -22,19 +22,31 @@ class LoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if UserDefaults.standard.string(forKey: "ID") != nil {
+            setWindow()
+        }
+        
         print("LoginViewController: viewDidLoad")
         setLoginView()
-        loginView.setUI()
         loginView.idTextField.delegate = self
         loginView.pwTextField.delegate = self
+        loginView.delegate = self
         view.backgroundColor = .black
         
 //        testView.layer.cornerRadius = testView.frame.size.width/2
         // width == height 일때 한 변의 길이/2 를 cornerRadius값으로 주면 원이 된다
         
         
+       
         
     }
+    
+    
+    
+    
+        
+    
+   
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -44,11 +56,7 @@ class LoginViewController: UIViewController {
     }
     
     
-    //옵저버 등록
-//    func registerForkeyboardNotification() {
-//        NotificationCenter.default.addObserver(<#T##observer: Any##Any#>, selector: <#T##Selector#>, name: <#T##NSNotification.Name?#>, object: <#T##Any?#>)
-//        NotificationCenter.default.addObserver(<#T##observer: Any##Any#>, selector: <#T##Selector#>, name: <#T##NSNotification.Name?#>, object: <#T##Any?#>)
-//    }
+
     
     
 
@@ -126,6 +134,10 @@ class LoginViewController: UIViewController {
 
 extension LoginViewController: UITextFieldDelegate {
     
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        
+    }
+    
     func textFieldDidChangeSelection(_ textField: UITextField) {
         //print("aaa")
     }
@@ -144,6 +156,10 @@ extension LoginViewController: UITextFieldDelegate {
         
     }
     
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        
+    }
+    
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         if textField.tag == 0 {
             loginView.pwTextField.becomeFirstResponder()
@@ -153,6 +169,30 @@ extension LoginViewController: UITextFieldDelegate {
             return true
         }
     }
+    
+    
+}
+
+extension LoginViewController: LoginViewDelegate {
+    func buttonAction() {
+        if let id = loginView.idTextField.text, let pw = loginView.pwTextField.text {
+            if id == pw {
+                UserDefaults.standard.set(id, forKey: "ID")
+                setWindow()
+                
+            }else {
+                loginView.idTextField.backgroundColor = UIColor.withAlphaComponent(.red)(0.5)
+                loginView.pwTextField.backgroundColor = UIColor.withAlphaComponent(.red)(0.5)
+                UIView.animate(withDuration: 0.5) {
+                    self.loginView.idTextField.backgroundColor = .white
+                    self.loginView.pwTextField.backgroundColor = .white
+                }
+            }
+        }
+    }
+    
+    
+    
     
     
 }

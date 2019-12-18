@@ -10,12 +10,56 @@ import UIKit
 
 class MainViewController: UIViewController {
 
-    /*
-    // Only override draw() if you perform custom drawing.
-    // An empty implementation adversely affects performance during animation.
-    override func draw(_ rect: CGRect) {
-        // Drawing code
+    let mainView = MainView(frame: .zero)
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.addSubview(mainView)
+        
+        mainView.delegate = self
+        setMainView()
     }
-    */
+    
+    func setWindow() {
+        if #available(iOS 13.0, *){
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                let window = UIWindow(windowScene: windowScene)
+                window.rootViewController = LoginViewController()
+                let sceneDelegate = windowScene.delegate as? SceneDelegate
+                sceneDelegate?.window = window
+                window.makeKeyAndVisible()
+            }
+            
+        }else {
+            let appDelegate = UIApplication.shared.delegate as! AppDelegate
+            let window = UIWindow(frame: UIScreen.main.bounds)
+            window.rootViewController = LoginViewController()
+            window.makeKeyAndVisible()
+            appDelegate.window = window
+        }
+        
+    }
+    
+    
+    func setMainView() {
+        mainView.translatesAutoresizingMaskIntoConstraints = false
+        
+        mainView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
+        mainView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor).isActive = true
+        mainView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor).isActive = true
+        mainView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+    }
 
+}
+
+
+extension MainViewController: MainViewDelegate {
+    func buttonAction() {
+        UserDefaults.standard.set(nil, forKey: "ID")
+        setWindow()
+    }
+    
+    
 }

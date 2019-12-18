@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		310B418123AA04570020F9D9 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 310B418023AA04570020F9D9 /* MainView.swift */; };
 		3112BD6823A723A500276B40 /* LoginTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3112BD6723A723A500276B40 /* LoginTextField.swift */; };
 		31F67A8423A344A100765344 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F67A8323A344A100765344 /* AppDelegate.swift */; };
 		31F67A8623A344A100765344 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F67A8523A344A100765344 /* SceneDelegate.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		310B418023AA04570020F9D9 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		3112BD6723A723A500276B40 /* LoginTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginTextField.swift; sourceTree = "<group>"; };
 		31F67A8023A344A100765344 /* LoginPageExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoginPageExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31F67A8323A344A100765344 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -97,6 +99,7 @@
 			isa = PBXGroup;
 			children = (
 				31F67A9C23A352FB00765344 /* LoginView.swift */,
+				310B418023AA04570020F9D9 /* MainView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -180,6 +183,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31F67A9823A34AB500765344 /* MainViewController.swift in Sources */,
+				310B418123AA04570020F9D9 /* MainView.swift in Sources */,
 				31F67A8823A344A100765344 /* LoginViewController.swift in Sources */,
 				31F67A8423A344A100765344 /* AppDelegate.swift in Sources */,
 				3112BD6823A723A500276B40 /* LoginTextField.swift in Sources */,

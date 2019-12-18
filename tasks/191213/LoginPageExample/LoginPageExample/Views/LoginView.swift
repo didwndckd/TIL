@@ -8,6 +8,10 @@
 
 import UIKit
 
+protocol LoginViewDelegate {
+    func buttonAction()
+}
+
 class LoginView: UIView {
 
     let logo = UIImageView()
@@ -24,7 +28,10 @@ class LoginView: UIView {
     let signUpButton = UIButton(type: .system)
     let idimage = UIImageView()
     let pwimage = UIImageView()
+    
+    var delegate: LoginViewDelegate?
 
+    var loginStackViewYConstraint: NSLayoutConstraint?
     
     
     
@@ -56,9 +63,63 @@ class LoginView: UIView {
         signUpButton.tintColor = .white
         signUpButton.setTitle("Sign In", for: .normal)
         signUpButton.titleLabel?.font = .systemFont(ofSize: 23)
+        signUpButton.addTarget(self, action: #selector(didTapButton(_:)), for: .touchUpInside)
+        
+        setUI()
         
         
+            NotificationCenter.default.addObserver(self,
+            selector: #selector(keyboardWillShowHandle(keyboardShowNotification:)),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil)
+
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(keyboardWillShowHandle(keyboardShowNotification:)),
+                                               name: UIResponder.keyboardWillHideNotification,
+                                               object: nil)
+               
         
+    }
+    
+    @objc func didTapButton(_ sender: UIButton) {
+        delegate?.buttonAction()
+    }
+    
+    @objc func keyboardWillShowHandle(keyboardShowNotification notification: Notification) {
+        
+        if let userInfo = notification.userInfo,
+            let keyboardRectangle = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+            
+            if notification.name == UIResponder.keyboardWillShowNotification {
+                loginStackViewYConstraint?.isActive = false
+
+                            loginStackViewYConstraint = loginStackView.bottomAnchor.constraint(
+                                equalTo: superview?.bottomAnchor ?? bottomAnchor,
+                                constant: -keyboardRectangle.height - 10)
+                            
+                            UIView.animate(withDuration: 0.5, animations: {
+                                self.loginStackViewYConstraint?.isActive = true
+                                
+                                self.layoutIfNeeded()
+                                print("animate")
+               
+                            })
+            }else {
+                loginStackViewYConstraint?.isActive = false
+                loginStackViewYConstraint = loginStackView.bottomAnchor.constraint(equalTo: signUpButton.topAnchor, constant: -10)
+                
+                UIView.animate(withDuration: 0.5, animations: {
+                    self.loginStackViewYConstraint?.isActive = true
+                    self.layoutIfNeeded()
+                })
+                
+            }
+            
+            
+            
+            
+            
+        }
     }
     
     required init?(coder: NSCoder) {
@@ -66,7 +127,7 @@ class LoginView: UIView {
     }
     
     
-   
+    
     
     
      func setUI() {
@@ -107,16 +168,21 @@ class LoginView: UIView {
         let radius: CGFloat = 7
         
         quadrangle.leadingAnchor.constraint(equalTo: quadrangleStackView.leadingAnchor, constant: 0).isActive = true
-        quadrangle.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
-        quadrangle.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
+        quadrangle.topAnchor.constraint(equalTo: quadrangleStackView.topAnchor).isActive = true
+        quadrangle.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
+        quadrangle.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
         quadrangle.layer.cornerRadius = radius
+        
+        quadrangle1.topAnchor.constraint(equalTo: quadrangleStackView.topAnchor).isActive = true
         quadrangle1.centerXAnchor.constraint(equalTo: quadrangleStackView.centerXAnchor).isActive = true
-        quadrangle1.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
-        quadrangle1.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
+        quadrangle1.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
+        quadrangle1.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
         quadrangle1.layer.cornerRadius = radius
+        
+        quadrangle2.topAnchor.constraint(equalTo: quadrangleStackView.topAnchor).isActive = true
         quadrangle2.trailingAnchor.constraint(equalTo: quadrangleStackView.trailingAnchor, constant: 0).isActive = true
-        quadrangle2.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
-        quadrangle2.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor, multiplier: 1).isActive = true
+        quadrangle2.widthAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
+        quadrangle2.heightAnchor.constraint(equalTo: quadrangleStackView.heightAnchor).isActive = true
         quadrangle2.layer.cornerRadius = radius
         
         //print(quadrangleStackView.frame)
@@ -159,9 +225,12 @@ class LoginView: UIView {
         
         loginStackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: loginMargin).isActive = true
         loginStackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -loginMargin).isActive = true
-        loginStackView.topAnchor.constraint(equalTo: centerYAnchor, constant: 80).isActive = true
         
-        loginStackView.bottomAnchor.constraint(equalTo: signUpButton.topAnchor, constant: 0).isActive = true
+        
+        loginStackViewYConstraint = loginStackView.bottomAnchor.constraint(equalTo: signUpButton.topAnchor, constant: -10)
+        loginStackViewYConstraint?.isActive = true
+        
+        
         
 //        loginStackView.backgroundColor = .red
         
@@ -184,14 +253,15 @@ class LoginView: UIView {
         idUnderLine.topAnchor.constraint(equalTo: idTextField.bottomAnchor, constant: 6).isActive = true
         idUnderLine.trailingAnchor.constraint(equalTo: idTextField.trailingAnchor, constant: -10).isActive = true
         idUnderLine.heightAnchor.constraint(equalToConstant: 1).isActive = true
-        idUnderLine.widthAnchor.constraint(equalTo: idTextField.textInputView.widthAnchor, multiplier: 1).isActive = true
+        idUnderLine.leadingAnchor.constraint(equalTo: idTextField.leadingAnchor, constant: 10 + (idTextField.leftView?.intrinsicContentSize.width ?? 0)).isActive = true
         
-            
+        
         
         pwTextField.translatesAutoresizingMaskIntoConstraints = false
         pwTextField.topAnchor.constraint(equalTo: idUnderLine.bottomAnchor, constant: 20).isActive = true
         pwTextField.leadingAnchor.constraint(equalTo: loginStackView.leadingAnchor).isActive = true
         pwTextField.trailingAnchor.constraint(equalTo: loginStackView.trailingAnchor).isActive = true
+        
         
         pwTextField.keyboardType = .default
         pwTextField.placeholder = "비밀번호를 입력하세요"
@@ -204,12 +274,15 @@ class LoginView: UIView {
         
         pwUnderLine.topAnchor.constraint(equalTo: pwTextField.bottomAnchor, constant: 6).isActive = true
         pwUnderLine.trailingAnchor.constraint(equalTo: pwTextField.trailingAnchor, constant: -10).isActive = true
-        pwUnderLine.widthAnchor.constraint(equalTo: pwTextField.textInputView.widthAnchor).isActive = true
+        
+        pwUnderLine.leadingAnchor.constraint(equalTo: pwTextField.leadingAnchor, constant: 10 + (pwTextField.leftView?.intrinsicContentSize.width ?? 0)).isActive = true
+        
         pwUnderLine.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        pwUnderLine.bottomAnchor.constraint(equalTo: loginStackView.bottomAnchor).isActive = true
         
 //        loginStackView.backgroundColor = .red
         
-        
+                
     }
     
     
