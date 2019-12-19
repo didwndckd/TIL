@@ -49,6 +49,8 @@ final class TableViewEditing: UIViewController {
   
   @objc func switchToEditing() {
     
+    tableView.setEditing(!tableView.isEditing, animated: true) // 현재의 editing값의 반대값을 전달 한다can
+    
   }
 }
 
@@ -64,6 +66,27 @@ extension TableViewEditing: UITableViewDataSource {
     cell.textLabel?.text = "\(data[indexPath.row])"
     return cell
   }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        switch editingStyle {
+        case .none: print("none")
+        case .delete:
+            print("delete", indexPath)
+//            data.remove(at: data.firstIndex(of: data[indexPath.row])!)
+            data.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+            
+        case .insert:
+            print("insert", indexPath)
+//            data.remove(at: indexPath.row)
+            data.insert((0...100).randomElement()!, at: indexPath.row)
+            tableView.insertRows(at: [indexPath], with: .automatic)
+        default: print("default")
+        }
+
+    }
+    
+    
 }
 
 
@@ -71,6 +94,77 @@ extension TableViewEditing: UITableViewDataSource {
 
 extension TableViewEditing: UITableViewDelegate {
   
-  
+//    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+//        //기본값 true
+//        return indexPath.row.isMultiple(of: 2)
+//
+//    }
+    
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        
+        // 기본값 delete
+        
+        let row = indexPath.row
+        if row % 3 == 0 {
+            print("none")
+            return .none
+        }else if row % 3 == 1 {
+            print("delete")
+            return .delete
+        }else {
+            print("insert")
+            return .insert
+            
+        }
+        
+    }
+    
+    
+    //iOS 8~10
+//    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+//        return [UITableViewRowAction(style: .normal , title: "Add"){(action, sourceView, actionPerformed) in
+//            print("Add Action")
+//            actionPerformed(true)
+//        }]
+//    }
+    
+    // iOS 11 이상
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        
+        let addAction = UIContextualAction(style: .normal, title: "Add") {(action, sourceView, actionPerformed) in
+            print("Add Action")
+            actionPerformed(true)
+        }
+        
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") {
+            (action, sourceView, actionPerformed) in
+            print("delete Action")
+            actionPerformed(true)
+        }
+        
+        let configuration = UISwipeActionsConfiguration(actions: [addAction, deleteAction])
+//        configuration.performsFirstActionWithFullSwipe = false
+    return configuration
+    }
+    
+    func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let addAction = UIContextualAction(style: .normal, title: "Add") {(action, sourceView, actionPerformed) in
+                    print("Add Action")
+                    actionPerformed(true)
+                }
+                
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") {
+                    (action, sourceView, actionPerformed) in
+                    print("delete Action")
+                    actionPerformed(true)
+                }
+                
+        
+                
+                let configuration = UISwipeActionsConfiguration(actions: [addAction, deleteAction])
+        //        configuration.performsFirstActionWithFullSwipe = false
+            return configuration
+    }
 }
 

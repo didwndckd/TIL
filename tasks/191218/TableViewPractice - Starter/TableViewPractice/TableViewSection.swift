@@ -21,8 +21,8 @@ final class TableViewSection: UIViewController {
   override var description: String { "Practice 2 - Section" }
   
 //    let data = Array(900...1000)
-  let data = [5, 16, 19, 22, 29, 30, 39, 44, 48, 50, 14,81,21,20, 90, 100, 200, 212]
-//  let data = Array(1...100)
+//  let data = [5, 16, 19, 22, 29, 30, 39, 44, 48, 50, 14,81,21,20, 90, 100, 200, 212]
+  let data = Array(1...100)
     var datas: [Int: [Int]] = [:]
     var sectionsTitles: [Int] = []
     

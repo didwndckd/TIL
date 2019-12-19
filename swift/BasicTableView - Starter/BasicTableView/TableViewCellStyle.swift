@@ -21,7 +21,14 @@ final class TableViewCellStyle: UIViewController {
     let tableView = UITableView(frame: view.frame)
     tableView.rowHeight = 70
     tableView.dataSource = self
+    tableView.delegate = self
     view.addSubview(tableView)
+    
+    
+//    tableView.rowHeight = 100             // cell의 heigt 크기를 고정
+//    tableView.estimatedRowHeight = 40   //추정?
+    
+    
   }
 }
 
@@ -54,8 +61,21 @@ extension TableViewCellStyle: UITableViewDataSource {
     
     // 공통 속성 세팅
     cell.textLabel?.text = "\(indexPath.row * 1000)"
-    
+    cell.detailTextLabel?.text = "ABCD"
+    cell.imageView?.image = UIImage(named: "bear")
+    cell.accessoryType = .checkmark
     return cell
   }
+}
+
+
+extension TableViewCellStyle: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {// cell 의 heigt를 각각 다르게 할 수 있다
+        if indexPath.row % 4 == 0 {
+            return 120
+        }else {
+            return 50
+        }
+    }
 }
 
