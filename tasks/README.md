@@ -74,14 +74,18 @@
 
 - AutoLayout
 
-### 19.12.13
+### 19.12.16
 
 - LoginPageExample
 
-### 19.12.16
+### 19.12.17
 
 - StackView
 
-### 19.12.17
+### 19.12.18
 
 - TAbleView
+
+## 19.12.19
+
+- TableView, CustomeCell

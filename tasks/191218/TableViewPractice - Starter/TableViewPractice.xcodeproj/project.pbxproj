@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3138775E23AB898200CEF01F /* TableViewNumberUpViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3138775D23AB898200CEF01F /* TableViewNumberUpViewController.swift */; };
+		3138776023AB8BB600CEF01F /* CustomCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3138775F23AB8BB600CEF01F /* CustomCell.swift */; };
 		52B52570225E0BCC00E3CDD4 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B5256F225E0BCC00E3CDD4 /* AppDelegate.swift */; };
 		52B52575225E0BCC00E3CDD4 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 52B52573225E0BCC00E3CDD4 /* Main.storyboard */; };
 		52B52577225E0BCE00E3CDD4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 52B52576225E0BCE00E3CDD4 /* Assets.xcassets */; };
@@ -20,6 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3138775D23AB898200CEF01F /* TableViewNumberUpViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableViewNumberUpViewController.swift; sourceTree = "<group>"; };
+		3138775F23AB8BB600CEF01F /* CustomCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCell.swift; sourceTree = "<group>"; };
 		52B5256C225E0BCC00E3CDD4 /* TableViewPractice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TableViewPractice.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52B5256F225E0BCC00E3CDD4 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		52B52574225E0BCC00E3CDD4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -69,8 +73,10 @@
 				52B52583225E0C9600E3CDD4 /* TableViewNumbers.swift */,
 				52B52585225E0CA300E3CDD4 /* TableViewSection.swift */,
 				52B52587225E0CAD00E3CDD4 /* TableViewRefresh.swift */,
-				52B52589225E0CB700E3CDD4 /* TableViewMultipleSelection.swift */,
 				52B5258B225E0CC000E3CDD4 /* TableViewAccessoryType.swift */,
+				52B52589225E0CB700E3CDD4 /* TableViewMultipleSelection.swift */,
+				3138775D23AB898200CEF01F /* TableViewNumberUpViewController.swift */,
+				3138775F23AB8BB600CEF01F /* CustomCell.swift */,
 				52B52573225E0BCC00E3CDD4 /* Main.storyboard */,
 				52B52576225E0BCE00E3CDD4 /* Assets.xcassets */,
 				52B52578225E0BCE00E3CDD4 /* LaunchScreen.storyboard */,
@@ -150,10 +156,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3138775E23AB898200CEF01F /* TableViewNumberUpViewController.swift in Sources */,
 				52B5258C225E0CC000E3CDD4 /* TableViewAccessoryType.swift in Sources */,
 				52B52584225E0C9600E3CDD4 /* TableViewNumbers.swift in Sources */,
 				52B5258A225E0CB700E3CDD4 /* TableViewMultipleSelection.swift in Sources */,
 				52B52570225E0BCC00E3CDD4 /* AppDelegate.swift in Sources */,
+				3138776023AB8BB600CEF01F /* CustomCell.swift in Sources */,
 				52B52588225E0CAD00E3CDD4 /* TableViewRefresh.swift in Sources */,
 				52B52586225E0CA300E3CDD4 /* TableViewSection.swift in Sources */,
 				52B52582225E0C4A00E3CDD4 /* ListViewController.swift in Sources */,

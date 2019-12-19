@@ -95,6 +95,8 @@ final class TableViewMultipleSelection: UIViewController {
 extension TableViewMultipleSelection: UITableViewDataSource {
     
     
+    
+    
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     
     return result.count
@@ -107,6 +109,7 @@ extension TableViewMultipleSelection: UITableViewDataSource {
   }
     
 }
+
 
 extension TableViewMultipleSelection: UITableViewDelegate {
     

@@ -29,6 +29,7 @@ final class ListViewController: UIViewController {
       TableViewRefresh(),
       TableViewMultipleSelection(),
       TableViewAccessoryType(),
+      TableViewNumberUpViewController(),
     ]
   }
 }
