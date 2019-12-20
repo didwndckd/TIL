@@ -29,10 +29,27 @@ final class ViewController: UIViewController {
     
     tableView.dataSource = self
     tableView.register(ItemCell.self, forCellReuseIdentifier: "ItemCell")
-    tableView.rowHeight = 80
+    tableView.rowHeight = 100
     
     
   }
+    
+    
+    func alert() {
+        
+        let alertController = UIAlertController(title: "알림", message: "재고가 부족합니다.", preferredStyle: .alert)
+        
+        let okAction = UIAlertAction(title: "확인", style: .default)
+        
+        alertController.addAction(okAction)
+        
+        present(alertController, animated: true)
+        
+        
+    }
+    
+    
+    
 }
 
 // MARK: - UITableViewDataSource
@@ -43,13 +60,41 @@ extension ViewController: UITableViewDataSource {
   }
 
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
+    guard let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath) as? ItemCell else {fatalError()}
     
-    cell.textLabel?.text = phoneList[indexPath.row].name
-    cell.imageView?.image = UIImage(named: phoneList[indexPath.row].name)
-    
+    cell.delegate = self
+    cell.productName.text = phoneList[indexPath.row].name
+    cell.productImageView.image = UIImage(named: phoneList[indexPath.row].name)
+    cell.currentOrderAmount.text = "\(phoneList[indexPath.row].currentOrderMount)"
     
     return cell
   }
 }
 
+
+extension ViewController: ItemCellDelegate {
+    func buttonAction(cell: ItemCell) {
+        guard let index = tableView.indexPath(for: cell)?.row else{return}
+        
+        if phoneList[index].maximumMount > phoneList[index].currentOrderMount {
+            
+            phoneList[index].currentOrderMount += 1
+            cell.currentOrderAmount.text = "\(phoneList[index].currentOrderMount)"
+            
+            
+        }else {
+            cell.backgroundColor = UIColor.withAlphaComponent(.red)(0.5)
+            UIView.animate(withDuration: 0.5, animations: {(
+                cell.backgroundColor = .white
+                
+                )})
+            alert()
+        }
+        
+    }
+    
+    
+    
+    
+    
+}
