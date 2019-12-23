@@ -10,203 +10,91 @@ import UIKit
 
 final class ViewController: UIViewController {
     
-    @IBOutlet weak var additionButton: CustomButton!
-    @IBOutlet weak var divisionButton: CustomButton!
-    @IBOutlet weak var multiplicationButton: CustomButton!
-    @IBOutlet weak var subtractionButton: CustomButton!
-    @IBOutlet weak var displayLabel: UILabel!
-    var buttons: [CustomButton] = []
-   
+    @IBOutlet var myView: CustomView!
     
-    var value: Double = 0
-    var currentNumbertext = "0"
-    var currentNumber: Double = 0
+    private var beforeButton: UIButton?
     
-    let model = Model(currentOperator: .none)
+    
+    
+    var model = Model()
 
   override func viewDidLoad() {
     super.viewDidLoad()
-    buttons = [additionButton, divisionButton, multiplicationButton, subtractionButton]
+    
+    myView.delegate = self
+    
   }
     
-    @IBAction func didTapNumber(_ sender: UIButton) {
+    
+    func setCurrentNumber(number: String) -> String? {
         
-        print("didTapNumber:", sender.tag)
-        sender.backgroundColor = sender.backgroundColor?.withAlphaComponent(0.5)
+        guard let displayNumber = Double(number) else {return nil}
         
-        UIView.animate(withDuration: 0.1, animations: {(
-            sender.backgroundColor = sender.backgroundColor?.withAlphaComponent(1)
-            )})
+        model.currentNumber = displayNumber
         
-        guard currentNumbertext.count < 13 else {return}
-        currentNumbertext += "\(sender.tag)"
-        disPlay(number: currentNumbertext)
-         
+        return formatterNumber(number: displayNumber)
         
     }
     
-    func disPlay(number: String) {
+    
+    func formatterNumber(number: Double) -> String? {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 3
+        let finalDisplayNumber = formatter.string(from: number as NSNumber)
+        return finalDisplayNumber
+    }
+    
+    
+    
+    
+    
+    func setValue(value: Double?) -> String? {
         
-        guard let displayNumber = Double(number) else {return}
-        
-        currentNumber = displayNumber
+        guard let finalValue = value else {
+            return formatterNumber(number: model.currentNumber)
+        }
         
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.minimumFractionDigits = 0
         formatter.maximumFractionDigits = 3
-        print(displayLabel.font.pointSize)
-        let finalDisplayNumber = formatter.string(from: displayNumber as NSNumber)
-        displayLabel.text = finalDisplayNumber
+        let finalDisplayNumber = formatter.string(from: finalValue as NSNumber)
+        return finalDisplayNumber
     }
     
-    func setLabeltoValue(value: Double) {
-        
-        self.value = value
-        currentNumbertext = ""
-        currentNumber = value
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 3
-        let finalDisplayNumber = formatter.string(from: self.value as NSNumber)
-        displayLabel.text = finalDisplayNumber
-        
+   
+    
+    
+    
+    
+}
 
+
+
+extension ViewController: CustomViewDelegate {
+    
+    func tapNumberButtonAction(tag: Int) -> String?  {
+        
+        guard model.currentNumbertext.count < 13 else {
+            return formatterNumber(number: model.currentNumber)
+            
+        }
+        model.currentNumbertext += "\(tag)"
+        return setCurrentNumber(number: model.currentNumbertext)
         
     }
     
-    @IBAction func AllClear(_ sender: UIButton) {
-        
-        sender.backgroundColor = .gray
-        
-        UIView.animate(withDuration: 0.1, animations: {(
-            sender.backgroundColor = .lightGray
-            )})
-        
-        value = 0
-        currentNumbertext = ""
+    func allClearAction() {
+        model.value = 0
+        model.currentNumbertext = ""
         model.currentOperator = .none
-        displayLabel.text = "0"
     }
     
-    func selectOperator(sender: UIButton) {
-        
-        for i in buttons {
-            if sender.restorationIdentifier == i.restorationIdentifier {
-                i.backgroundColor = i.backgroundColor?.withAlphaComponent(0.5)
-            }else{
-                i.backgroundColor = i.backgroundColor?.withAlphaComponent(1)
-            }
-        }
-        
-    }
-    
-    
-    
-    
-    @IBAction func didTapOperationButton(_ sender: UIButton) {
-        
-        selectOperator(sender: sender)
-        
-        switch sender.restorationIdentifier {
-        case "addition":
-            
-            print("addition")
-            guard Double(currentNumbertext) != nil else {
-                model.currentOperator = .addition
-                return
-            }
-            guard model.currentOperator != .none else {
-                model.currentOperator = .addition
-                value = currentNumber
-                currentNumbertext = ""
-                return
-            }
-            
-            let value = model.currentOperator.operation(value: self.value, currentNumber: currentNumber)
-            
-            setLabeltoValue(value: value)
-            model.currentOperator = .addition
-            
-        case "subtraction":
-            print("subtraction")
-            
-            guard Double(currentNumbertext) != nil else {
-                model.currentOperator = .subtraction
-                return
-            }
-            guard model.currentOperator != .none else {
-                model.currentOperator = .subtraction
-                value = currentNumber
-                currentNumbertext = ""
-                return
-            }
-            
-            let value = model.currentOperator.operation(value: self.value, currentNumber: currentNumber)
-            
-            setLabeltoValue(value: value)
-            model.currentOperator = .subtraction
-            
-        case "multiplication":
-            print("multiplication")
-            
-            guard Double(currentNumbertext) != nil else {
-                model.currentOperator = .multiplication
-                return
-            }
-            guard model.currentOperator != .none else {
-                model.currentOperator = .multiplication
-                value = currentNumber
-                currentNumbertext = ""
-                return
-            }
-            
-            let value = model.currentOperator.operation(value: self.value, currentNumber: currentNumber)
-            
-            setLabeltoValue(value: value)
-            model.currentOperator = .multiplication
-            
-        case "division":
-            print("division")
-            guard Double(currentNumbertext) != nil else {
-                model.currentOperator = .division
-                return
-            }
-            guard model.currentOperator != .none else {
-                model.currentOperator = .division
-                value = currentNumber
-                currentNumbertext = ""
-                return
-            }
-            
-            let value = model.currentOperator.operation(value: self.value, currentNumber: currentNumber)
-            
-            setLabeltoValue(value: value)
-            model.currentOperator = .division
-            
-        case "equal":
-            print("equal")
-            sender.backgroundColor = sender.backgroundColor?.withAlphaComponent(0.5)
-            UIView.animate(withDuration: 0.1, animations: {(
-                sender.backgroundColor = sender.backgroundColor?.withAlphaComponent(1)
-                
-                )})
-            guard model.currentOperator != .none else {
-                model.currentOperator = .none
-                currentNumbertext = ""
-                return
-            }
-            
-            let value = model.currentOperator.operation(value: self.value, currentNumber: currentNumber)
-            
-            setLabeltoValue(value: value)
-            model.currentOperator = .none
-            
-        default:
-            return
-        }
-        
+    func operationAction(argumentOperator: Operator) -> String? {
+        let value = model.operation(paramOperator: argumentOperator)
+        return setValue(value: value)
     }
     
     

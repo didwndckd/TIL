@@ -11,7 +11,7 @@
         <scene sceneID="vEG-bd-q1N">
             <objects>
                 <viewController id="pbn-JH-sGP" customClass="ViewController" customModule="CalculatorExample" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" contentMode="scaleToFill" id="x4T-aV-eoe">
+                    <view key="view" contentMode="scaleToFill" id="x4T-aV-eoe" customClass="CustomView" customModule="CalculatorExample" customModuleProvider="target">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
@@ -27,7 +27,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="0"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="fTP-eR-xzR"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="aYK-Im-pEC"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="2RG-gA-zox" userLabel="Number1" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -36,7 +36,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="1"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="nON-Uf-eio"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="dP6-qY-5Cc"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="2" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="AAX-r8-vRG" userLabel="Number2" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -45,7 +45,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="2"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="0RE-BF-1NH"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="1PD-X8-bit"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lA3-cE-ODk" userLabel="Number3" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -54,7 +54,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="3"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="CLC-qk-MMp"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="YZA-XF-XKN"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="4" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="m8J-sz-2T9" userLabel="Number4" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -63,7 +63,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="4"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="87j-fP-niy"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="dso-8V-7wI"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="5" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Lvq-Rj-Qo0" userLabel="Number5" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -72,7 +72,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="5"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="mna-p4-aEa"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="zDw-AO-CL8"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="6" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jJ3-Pp-L66" userLabel="Number6" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -81,7 +81,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="6"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="nME-bo-U85"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="mEE-iY-BHh"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="7" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="aEa-Ip-mQD" userLabel="Number7" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -90,7 +90,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="7"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="Fho-7E-dhf"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="8qP-YS-ytn"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="8" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="UmS-f5-qWv" userLabel="Number8" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -99,7 +99,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="8"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="TKy-OU-7YB"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="0Q5-dW-jnF"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="9" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Asx-cF-8Cx" userLabel="Number9" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -108,16 +108,16 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="9"/>
                                         <connections>
-                                            <action selector="didTapNumber:" destination="pbn-JH-sGP" eventType="touchUpInside" id="1dM-KK-GVU"/>
+                                            <action selector="didTapNumber:" destination="x4T-aV-eoe" eventType="touchUpInside" id="MH0-RY-aUd"/>
                                         </connections>
                                     </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="rdP-Fm-uOu" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
+                                    <button opaque="NO" contentMode="scaleToFill" restorationIdentifier="AllClear" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="rdP-Fm-uOu" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
                                         <rect key="frame" x="90.666666666666686" y="272.33333333333337" width="83" height="82.666666666666686"/>
                                         <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="35"/>
                                         <state key="normal" title="AC"/>
                                         <connections>
-                                            <action selector="AllClear:" destination="pbn-JH-sGP" eventType="touchUpInside" id="r8h-ii-pve"/>
+                                            <action selector="didTapAllClearButton:" destination="x4T-aV-eoe" eventType="touchUpInside" id="GEf-dE-66O"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" restorationIdentifier="equal" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="W83-6l-3mG" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -126,7 +126,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="="/>
                                         <connections>
-                                            <action selector="didTapOperationButton:" destination="pbn-JH-sGP" eventType="touchUpInside" id="yQh-2y-BhS"/>
+                                            <action selector="didTapOperator:" destination="x4T-aV-eoe" eventType="touchUpInside" id="g0q-tC-Qjq"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="7" contentMode="scaleToFill" restorationIdentifier="multiplication" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="hOo-nv-Lxc" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -135,7 +135,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="×"/>
                                         <connections>
-                                            <action selector="didTapOperationButton:" destination="pbn-JH-sGP" eventType="touchUpInside" id="IJT-hu-5EK"/>
+                                            <action selector="didTapOperator:" destination="x4T-aV-eoe" eventType="touchUpInside" id="rnP-Pb-N48"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="4" contentMode="scaleToFill" restorationIdentifier="subtraction" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Z9X-nL-V9A" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -144,7 +144,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="-"/>
                                         <connections>
-                                            <action selector="didTapOperationButton:" destination="pbn-JH-sGP" eventType="touchUpInside" id="JVA-SJ-gts"/>
+                                            <action selector="didTapOperator:" destination="x4T-aV-eoe" eventType="touchUpInside" id="pua-Ov-agE"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" tag="1" contentMode="scaleToFill" restorationIdentifier="addition" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Vqf-hD-aZ0" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -153,7 +153,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="+"/>
                                         <connections>
-                                            <action selector="didTapOperationButton:" destination="pbn-JH-sGP" eventType="touchUpInside" id="PeL-xH-mRG"/>
+                                            <action selector="didTapOperator:" destination="x4T-aV-eoe" eventType="touchUpInside" id="0tt-Pd-s7B"/>
                                         </connections>
                                     </button>
                                     <button opaque="NO" contentMode="scaleToFill" restorationIdentifier="division" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="NcZ-RC-cCR" customClass="CustomButton" customModule="CalculatorExample" customModuleProvider="target">
@@ -162,7 +162,7 @@
                                         <fontDescription key="fontDescription" type="system" weight="medium" pointSize="40"/>
                                         <state key="normal" title="÷"/>
                                         <connections>
-                                            <action selector="didTapOperationButton:" destination="pbn-JH-sGP" eventType="touchUpInside" id="413-LP-fdC"/>
+                                            <action selector="didTapOperator:" destination="x4T-aV-eoe" eventType="touchUpInside" id="8kF-Sj-C10"/>
                                         </connections>
                                     </button>
                                 </subviews>
@@ -272,13 +272,12 @@
                                 <exclude reference="nfG-kJ-McK"/>
                             </mask>
                         </variation>
+                        <connections>
+                            <outlet property="displayLabel" destination="1Yl-R6-zrV" id="Pg6-3c-uGk"/>
+                        </connections>
                     </view>
                     <connections>
-                        <outlet property="additionButton" destination="Vqf-hD-aZ0" id="E3a-QA-EmK"/>
-                        <outlet property="displayLabel" destination="1Yl-R6-zrV" id="YcJ-Zw-7gR"/>
-                        <outlet property="divisionButton" destination="NcZ-RC-cCR" id="SGg-di-Qs1"/>
-                        <outlet property="multiplicationButton" destination="hOo-nv-Lxc" id="ryy-my-BnE"/>
-                        <outlet property="subtractionButton" destination="Z9X-nL-V9A" id="mV1-0Y-0Ks"/>
+                        <outlet property="myView" destination="x4T-aV-eoe" id="9pg-pY-qNb"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="oUJ-xH-FGF" sceneMemberID="firstResponder"/>

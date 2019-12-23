@@ -8,8 +8,9 @@
 
 import UIKit
 
-class CustomButton: UIButton {
 
+class CustomButton: UIButton {
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -19,10 +20,45 @@ class CustomButton: UIButton {
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-//        fatalError("init(coder:) has not been implemented")
         
         layer.cornerRadius = 45
+        addTarget(self, action: #selector(didTapButton(_:)), for: .touchUpInside)
+    }
+    
+    @objc func didTapButton (_ sender: UIButton) {
+        if let identifier = restorationIdentifier {
+            
+            switch identifier {
+            case "equal":
+                blinkEvent()
+            case "AllClear":
+                blinkEvent()
+            default:
+                print("Button")
+                didTapOperatorButton()
+            }
+            
+        }else{
+            blinkEvent()
+        }
         
     }
+    
+    private func blinkEvent () {
+        backgroundColor = backgroundColor?.withAlphaComponent(0.5)
+        UIView.animate(withDuration: 0.1, animations: {(
+            self.backgroundColor = self.backgroundColor?.withAlphaComponent(1)
+        )})
+    }
+    
+    private func didTapOperatorButton() {
+        backgroundColor = backgroundColor?.withAlphaComponent(0.5)
+    }
+    
+    func didTapOtherOperatorButton() {
+       backgroundColor = backgroundColor?.withAlphaComponent(1)
+    }
+    
+    
     
 }

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		3138776223AC8E3A00CEF01F /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3138776123AC8E3A00CEF01F /* Model.swift */; };
 		3138776423ACCA6C00CEF01F /* CustomButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3138776323ACCA6C00CEF01F /* CustomButton.swift */; };
+		31F1555F23B0985A005A4F8C /* CustomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F1555E23B0985A005A4F8C /* CustomView.swift */; };
 		52A8183522662B2F00DD6FC7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A8183422662B2F00DD6FC7 /* AppDelegate.swift */; };
 		52A8183722662B2F00DD6FC7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A8183622662B2F00DD6FC7 /* ViewController.swift */; };
 		52A8183A22662B2F00DD6FC7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 52A8183822662B2F00DD6FC7 /* Main.storyboard */; };
@@ -19,6 +20,7 @@
 /* Begin PBXFileReference section */
 		3138776123AC8E3A00CEF01F /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 		3138776323ACCA6C00CEF01F /* CustomButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomButton.swift; sourceTree = "<group>"; };
+		31F1555E23B0985A005A4F8C /* CustomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomView.swift; sourceTree = "<group>"; };
 		52A8183122662B2F00DD6FC7 /* CalculatorExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalculatorExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52A8183422662B2F00DD6FC7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		52A8183622662B2F00DD6FC7 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -60,6 +62,7 @@
 			children = (
 				52A8183422662B2F00DD6FC7 /* AppDelegate.swift */,
 				52A8183622662B2F00DD6FC7 /* ViewController.swift */,
+				31F1555E23B0985A005A4F8C /* CustomView.swift */,
 				3138776123AC8E3A00CEF01F /* Model.swift */,
 				3138776323ACCA6C00CEF01F /* CustomButton.swift */,
 				52A8183822662B2F00DD6FC7 /* Main.storyboard */,
@@ -141,6 +144,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31F1555F23B0985A005A4F8C /* CustomView.swift in Sources */,
 				3138776423ACCA6C00CEF01F /* CustomButton.swift in Sources */,
 				3138776223AC8E3A00CEF01F /* Model.swift in Sources */,
 				52A8183722662B2F00DD6FC7 /* ViewController.swift in Sources */,
