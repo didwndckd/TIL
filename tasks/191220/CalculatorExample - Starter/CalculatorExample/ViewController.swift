@@ -88,6 +88,7 @@ extension ViewController: CustomViewDelegate {
     
     func allClearAction() {
         model.value = 0
+        model.currentNumber = 0
         model.currentNumbertext = ""
         model.currentOperator = .none
     }

@@ -28,33 +28,29 @@ class CustomView: UIView {
     
     @IBAction func didTapNumber(_ sender: UIButton) {
         let displayText = delegate?.tapNumberButtonAction(tag: sender.tag)
-        
-        print("didTapNumber:", sender.tag)
 
+        print("didTapNumber:", sender.tag)
         displayLabel.text = displayText
         
+        if let button = beforeButton as? CustomButton {
+                   button.didTapOtherOperatorButton()
+               }
+        beforeButton = nil
+
     }
-    
-    
+
+
     @IBAction func didTapAllClearButton(_ sender: UIButton) {
-        
         displayLabel.text = "0"
-        
         delegate?.allClearAction()
-        
-    }
-    
-    func selectOperator(sender: UIButton) {
-        print("View")
-        if let beforeButton = beforeButton {
-            beforeButton.backgroundColor = beforeButton.backgroundColor?.withAlphaComponent(1)
+        if let button = beforeButton as? CustomButton {
+            button.didTapOtherOperatorButton()
         }
-        
-        sender.backgroundColor = sender.backgroundColor?.withAlphaComponent(0.5)
-        
-        beforeButton = sender
-        
+        beforeButton = nil
+
     }
+
+
     
     @IBAction func didTapOperator(_ sender: UIButton) {
                 
