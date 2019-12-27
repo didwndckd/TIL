@@ -22,14 +22,15 @@ class ViewController: UIViewController {
         let buttons = [barButtonItem, barButtonItem2]
         
         navigationItem.rightBarButtonItems = buttons
-        view.backgroundColor = .yellow
+        view.backgroundColor = .white
         
     }
     
     @objc func pushViewController(_ sender: Any) {
         
         let seconVC = SecondViewController()
-        show(seconVC, sender: nil)
+        self.navigationController?.pushViewController(seconVC, animated: true)
+//        show(seconVC, sender: nil)
         
     }
     

@@ -15,6 +15,7 @@ class ThirdViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
        print(tag, "viewDidLoad")
+        view.backgroundColor = .brown
     }
     
     override func viewWillAppear(_ animated: Bool) {
