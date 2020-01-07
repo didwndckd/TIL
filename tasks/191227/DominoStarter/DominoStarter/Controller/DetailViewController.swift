@@ -124,6 +124,9 @@ class DetailViewController: UIViewController {
     func orderSet(count: Int) {
         if let index = WishList.shared.orderList.firstIndex(where: {$0.name == productTitle}){
             WishList.shared.orderList[index].count = count
+            if WishList.shared.orderList[index].count == 0 {
+                WishList.shared.orderList.remove(at: index)
+            }
         }else {
             WishList.shared.orderList.append(Order(name: productTitle, count: count, price: price))
         }
@@ -135,13 +138,13 @@ class DetailViewController: UIViewController {
         case "+":
             orderCount += 1
             orderSet(count: orderCount)
-            print(WishList.shared.orderList[0].count)
+//            print(WishList.shared.orderList[0].count)
             
         case "-":
             if orderCount > 0 {
                 orderCount -= 1
                 orderSet(count: orderCount)
-                print(WishList.shared.orderList[0].count)
+//                print(WishList.shared.orderList[0].count)
             }
         default:
             return
