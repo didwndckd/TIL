@@ -97,3 +97,7 @@
 ### 19.12.27
 
 - TestApp(PizzaOrder)
+
+### 20.01.07
+
+- GestureRecognizer
