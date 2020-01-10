@@ -101,3 +101,11 @@
 ### 20.01.07
 
 - GestureRecognizer
+
+### 20.01.09
+
+- CoreLocation
+
+### 20.01.10
+
+- ScrollView
