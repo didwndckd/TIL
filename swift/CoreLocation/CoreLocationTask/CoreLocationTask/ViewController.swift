@@ -31,12 +31,52 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+       
+        
+        checkAuthorizationStatus()
+        locationManager.delegate = self
         
         
         mapView.showsUserLocation = true
         mapView.delegate = self
         setupNavigation()
         setupUI()
+    }
+    
+    private func checkAuthorizationStatus() {
+        print("------------checkAuthorizationStatus------------")
+       switch CLLocationManager.authorizationStatus() {
+        case .notDetermined :
+            // 권한에 대한 선택을 하지 않은 상태
+            print("status: notDetermined")
+            locationManager.requestWhenInUseAuthorization()
+        case .restricted:
+            // 자녀 보호 기능과 같은 활성 제한으로 사용자가 이 앱의 상태를 변경할 수 없음
+            print("status: restricted")
+            break
+        case .denied:
+            // 사용자가 권한을 직접 거부한 상태
+            print("status: denied")
+            break
+        case .authorizedWhenInUse:
+            print("status: authorizedWhenInUse")
+            startUpdatingLocation()
+        case .authorizedAlways:
+            print("status: authorizedAlways")
+            startUpdatingLocation()
+        @unknown default: break
+            
+        }
+        print("-----------------------------------------")
+        
+    }
+    
+    private func startUpdatingLocation() {
+        let status = CLLocationManager.authorizationStatus()
+        guard status == .authorizedWhenInUse || status == .authorizedWhenInUse else {
+            return
+        }
+        guard CLLocationManager.locationServicesEnabled() else { return }
     }
     
     private func setupNavigation() {
@@ -49,6 +89,7 @@ class ViewController: UIViewController {
     }
     
     private func setupUI() {
+        // mapView의 AutoLayout 설정
         let guide = view.safeAreaLayoutGuide
         view.backgroundColor = .systemBackground
         view.addSubview(mapView)
@@ -123,13 +164,16 @@ class ViewController: UIViewController {
         //mapView의 addAnnotation을 호출 (매개인자는 위에 만들어 놓은 MKPointAnnotation 객체)
         
         drawQuadrangle(currentCoordinate: coordinate)
-        //draw
-        drawLine(currentCoordinate: coordinate)
+        //사각형 그리기 메서드 호출
         
+        drawLine(currentCoordinate: coordinate)
+        //두개의 지점을 이어주는 선 그리기 메서드 호출
     }
     
     private func drawQuadrangle (currentCoordinate: CLLocationCoordinate2D) {
         let center = currentCoordinate
+        // drawLine과 같은 부분이지만 사각형을 그리는 부분이기 때문에
+        // 현 포인트로부터 사각형을 그릴 네개의 지점을 정하고 그릴 순서대로 [CLLocationCoordinate2D] 배열에 넣어준다
         
         var point1 = center; point1.latitude += 0.02; point1.longitude -= 0.02
         var point2 = center; point2.latitude += 0.02; point2.longitude += 0.02
@@ -147,11 +191,20 @@ class ViewController: UIViewController {
             lastCoordinate = currentCoordinate
             return
         }
+        //lastPoint 변수 옵셔널 바인딩 후 nil이 아닐 경우
+        
         print("drawLine()")
         let points = [lastPoint, currentCoordinate]
+        // 전에 찍은 포인트와 현재의 포인트를 [CLLocationCoordinate2D] 배열에 넣어준다.
+        
         let polyLine = MKPolyline(coordinates: points, count: points.count)
+        // MKPoliyline 객체를 생성-> 포인트 배열과 배열의 길이를 매개인자로 넣어준다
+        
         mapView.addOverlay(polyLine)
+        // mapView의 addOverlay -> 선을 그려주는 메서드를 호출 -> mapView의 Delegate에서 처리
+        
         lastCoordinate = currentCoordinate
+        // lastCoordinate를 현재 포인트로 업데이트 해준다
         
     }
     
@@ -173,15 +226,43 @@ extension ViewController: MKMapViewDelegate {
     
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         // 지도에 선 긋는 메서드
+        // 매개인자로 받아온 orverlay를 MKPolyline으로 형변환 후 그 polyline으로
         print("addOverlay")
         if let polyLine = overlay as? MKPolyline {
             let renderer = MKPolylineRenderer(polyline: polyLine)
             renderer.strokeColor = .red
+            // 선의 색깔
             renderer.lineWidth = 2
+            // 선의 굵기
+            
             return renderer
+            // 만들어놓은 renderer객체를 반환해 준다.
+            
         }
         
         return MKOverlayRenderer(overlay: overlay)
+        
+    }
+    
+    
+}
+
+extension ViewController: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        // 초기에 권한에 대한 조작을 하지않아도 무조건 호출된다
+        // 권한을 바꾸면 다시 호출한다
+        print("------------locationManager(didChangeAuthorization)-------------")
+        
+        switch status {
+        case .authorizedWhenInUse:
+            print("authorizedWhenInUse")
+        case .authorizedAlways:
+            print("authorizedAlways")
+        default:
+            print("Unauthorized")
+        }
+        
         
     }
     
