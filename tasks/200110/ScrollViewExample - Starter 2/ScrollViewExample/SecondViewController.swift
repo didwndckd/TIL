@@ -69,7 +69,7 @@ class SecondViewController: UIViewController {
             view.heightAnchor.constraint(equalTo: scrollView.heightAnchor).isActive = true
             
             if i == (pageControl.subviews.endIndex - 1) {
-                view.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
+                view.trailingA= falsdnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
             }
             views.append(view)
         }

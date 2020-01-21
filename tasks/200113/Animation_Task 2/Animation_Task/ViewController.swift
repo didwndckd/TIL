@@ -48,8 +48,12 @@ class ViewController: UIViewController {
                                 let margin = button.button.bounds.width + 16
                                 button.bottomConstraint.constant -= margin
                                 button.button.transform = .identity
+                                self.view.layoutIfNeeded()
+                                // view.layoutIfNeeded() ->
+                                // 원래는 런루프를 돌다가 돌아 왔을때 UI의 변경사항을 적용하는데
+                                // layoutIfNeeded()를 사용하면 런루프를 기다리지않고 즉시 적용한다
                             }
-                            self.view.layoutIfNeeded()
+                            
             })
         }else {
             self.leftButtonStatus = true
@@ -61,9 +65,9 @@ class ViewController: UIViewController {
                                 let margin: CGFloat = 32
                                 button.button.transform = .init(scaleX: 0.2, y: 0.2)
                                 button.bottomConstraint.constant = index == 0 ? -margin : 0
-                                
+                                self.view.layoutIfNeeded()
                             }
-                            self.view.layoutIfNeeded()
+                            
             })
         }
 
@@ -96,12 +100,13 @@ class ViewController: UIViewController {
                             relativeDuration: relativeDutation,
                             animations: {
                                 buttonsObject.button.transform = .identity
-                                buttonsObject.button.center.y -= margin
-                                
+//                                buttonsObject.button.center.y -= margin
+                                buttonsObject.bottomConstraint.constant -= margin
+                                self.view.layoutIfNeeded()
                                 
                         })
                     }
-                    self.view.layoutIfNeeded()
+                    
 
             },
                 completion: {
@@ -128,8 +133,10 @@ class ViewController: UIViewController {
                             relativeDuration: relativeDutation,
                             animations: {
                                 buttonsObject.button.transform = .init(scaleX: 0.4, y: 0.4)
-                                buttonsObject.button.center.y += margin
-                                
+//                                buttonsObject.button.center.y += margin
+                                buttonsObject.bottomConstraint.constant += margin
+                                self.view.layoutIfNeeded()
+//                                self.view.setNeedsLayout()
                         })
                        
                     }

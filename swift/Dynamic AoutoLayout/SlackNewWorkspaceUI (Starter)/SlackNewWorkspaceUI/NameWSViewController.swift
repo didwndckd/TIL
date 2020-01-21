@@ -155,6 +155,7 @@ extension NameWSViewController: UITextFieldDelegate {
     let replacedText = (text as NSString).replacingCharacters(in: range, with: string)
     nextButton.isSelected = !replacedText.isEmpty
     
+    
     UIView.animate(withDuration: 0.3, delay: 0, options: [], animations: {
       if replacedText.isEmpty {
         self.floatingCenterYConst.priority = .defaultLow

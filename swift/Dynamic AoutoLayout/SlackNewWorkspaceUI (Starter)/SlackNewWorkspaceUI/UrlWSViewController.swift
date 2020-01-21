@@ -107,13 +107,22 @@ final class UrlWSViewController: UIViewController {
   }
   
   private func setupConstraints() {
+    let a = {(a: Int) -> Int in
+        return 3
+    }
+    print(type(of: a))
+    print(type(of: i()))
+    
     nextButton.layout.top().trailing(constant: -16)
     backButton.layout.leading(constant: 16).centerY(equalTo: nextButton.centerYAnchor)
     
     urlTextField.layout.leading(constant: 16).centerY(constant: -115)
+    
     titleLabel.layout
       .leading(equalTo: urlTextField.leadingAnchor)
       .centerY(equalTo: urlTextField.centerYAnchor, constant: -26)
+    
+    
     errorMessageLabel.layout
       .leading(equalTo: urlTextField.leadingAnchor)
       .centerY(equalTo: urlTextField.centerYAnchor, constant: +26)
@@ -131,6 +140,9 @@ final class UrlWSViewController: UIViewController {
     placeholderLeadingConst.isActive = true
   }
   
+    func i() -> Int {
+    return 3
+    }
   
   // MARK: - Action Handler
   
