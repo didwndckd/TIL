@@ -40,6 +40,7 @@ final class UrlWSViewController: UIViewController {
   private let urlTextField: UITextField = {
     let textField = UITextField()
     textField.font = UIFont.systemFont(ofSize: 23, weight: .thin)
+    textField.backgroundColor = .red
     textField.borderStyle = .none
     textField.returnKeyType = .go
     textField.autocorrectionType = .no
@@ -68,7 +69,7 @@ final class UrlWSViewController: UIViewController {
   
   private let descriptionLabel: UILabel = {
     let label = UILabel()
-    label.text = "This is the address that you'll use to sign in to Slack."
+    label.text = "This is the address that you'll use to sign in to Slack"
     label.textColor = UIColor.darkText.withAlphaComponent(0.7)
     label.font = UIFont.systemFont(ofSize: 15, weight: .regular)
     label.numberOfLines = 2
@@ -107,11 +108,6 @@ final class UrlWSViewController: UIViewController {
   }
   
   private func setupConstraints() {
-    let a = {(a: Int) -> Int in
-        return 3
-    }
-    print(type(of: a))
-    print(type(of: i()))
     
     nextButton.layout.top().trailing(constant: -16)
     backButton.layout.leading(constant: 16).centerY(equalTo: nextButton.centerYAnchor)
@@ -139,22 +135,19 @@ final class UrlWSViewController: UIViewController {
       .constraint(equalTo: urlTextField.leadingAnchor, constant: textSize.width)
     placeholderLeadingConst.isActive = true
   }
-  
-    func i() -> Int {
-    return 3
-    }
+
   
   // MARK: - Action Handler
   
   @objc private func didTapBackButton(_ sender: UIButton) {
-    navigationController?.popViewController(animated: true)
+    navigationController?.popViewController(animated: true)// 네비게이션의 rootViewController로 이동
   }
   
   @objc private func didTapNextButton(_ sender: UIButton) {
     guard nextButton.isSelected, !["error", "fail"].contains(urlTextField.text!) else {
       shakeAnimation()
       errorMessageLabel.isHidden = false
-      AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+      AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) // 핸드폰 진동 메서드
       return
     }
     print("didTapNextButton")
@@ -197,14 +190,22 @@ extension UrlWSViewController: UITextFieldDelegate {
       return true
     }
     let replacedText = text.replacingCharacters(in: range, with: string)
+    // replacingCharacters -> return을 하기전에 마지막 들어온 텍스트를 붙인 text?
+    
+    
     nextButton.isSelected = !replacedText.isEmpty
     errorMessageLabel.isHidden = true
     
+    print(replacedText)
     guard replacedText.count <= 20 else { return false }
     
+    
     let textFieldAttr = [NSAttributedString.Key.font: textField.font!]
+    //NSAttributedString.key.font 타입을 가지는 Dictionary 를 만들어준다
     let textWidthSize = (replacedText as NSString).size(withAttributes: textFieldAttr).width
+    // NSString의 size함수의 매개인자로 위에 만들어 놓은 textFieldAttr을 넣어주고 width로 텍스트의 width를 구한다
     placeholderLeadingConst.constant = textWidthSize
+    //.slack.com의 constant를 텍스트 사이즈로 맞춰주게되면 textFied의 사이즈에 맞게 바뀐다
     
     return true
   }
