@@ -35,8 +35,6 @@ class ViewController: UIViewController {
         
         checkAuthorizationStatus()
         locationManager.delegate = self
-        
-        
         mapView.showsUserLocation = true
         mapView.delegate = self
         setupNavigation()
@@ -67,7 +65,6 @@ class ViewController: UIViewController {
         @unknown default: break
             
         }
-        print("-----------------------------------------")
         
     }
     
@@ -77,6 +74,8 @@ class ViewController: UIViewController {
             return
         }
         guard CLLocationManager.locationServicesEnabled() else { return }
+        
+        
     }
     
     private func setupNavigation() {
@@ -248,6 +247,21 @@ extension ViewController: MKMapViewDelegate {
 }
 
 extension ViewController: CLLocationManagerDelegate {
+    
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        print("locationManager: didUpdateLocation")
+        
+        let current = locations.last!
+        let coordinate = current.coordinate
+        print(abs(current.timestamp.timeIntervalSinceNow))
+        if abs(current.timestamp.timeIntervalSinceNow) < 10 {
+            
+        }
+        
+    }
+    
+    
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         // 초기에 권한에 대한 조작을 하지않아도 무조건 호출된다
