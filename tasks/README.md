@@ -113,3 +113,19 @@
 ### 20.01.13
 
 - Animation
+
+### 20.01.21
+
+- High-Order Function
+
+### 20.01.18
+
+- UICollectionView(1)
+
+
+
+
+
+
+
+
