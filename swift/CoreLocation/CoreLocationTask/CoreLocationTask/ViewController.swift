@@ -70,12 +70,15 @@ class ViewController: UIViewController {
     
     private func startUpdatingLocation() {
         let status = CLLocationManager.authorizationStatus()
-        guard status == .authorizedWhenInUse || status == .authorizedWhenInUse else {
+        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
             return
         }
         guard CLLocationManager.locationServicesEnabled() else { return }
-        
-        
+//        locationManager.startUpdatingLocation()
+        let coordinate = locationManager.location?.coordinate
+        let spen = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+        let rgion = MKCoordinateRegion(center: coordinate!, span: spen)
+        mapView.setRegion(rgion, animated: true)
     }
     
     private func setupNavigation() {
@@ -249,14 +252,20 @@ extension ViewController: MKMapViewDelegate {
 extension ViewController: CLLocationManagerDelegate {
     
     
+    
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print("locationManager: didUpdateLocation")
+        
         
         let current = locations.last!
         let coordinate = current.coordinate
-        print(abs(current.timestamp.timeIntervalSinceNow))
+        
         if abs(current.timestamp.timeIntervalSinceNow) < 10 {
-            
+            print("locationManager: didUpdateLocation")
+            let span = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+            let region = MKCoordinateRegion(center: coordinate, span: span)
+            mapView.setRegion(region, animated: true)
+            manager.stopUpdatingLocation()
         }
         
     }
