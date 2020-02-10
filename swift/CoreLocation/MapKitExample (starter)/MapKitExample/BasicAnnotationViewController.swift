@@ -38,14 +38,17 @@ final class BasicAnnotationViewController: UIViewController {
     cityHall.subtitle = "서울특별시"
     cityHall.coordinate = CLLocationCoordinate2DMake(37.566308, 126.977948)
     mapView.addAnnotation(cityHall)
+    
     let namsan = MKPointAnnotation()
     namsan.title = "남산"
     namsan.coordinate = CLLocationCoordinate2DMake(37.551416, 126.988194)
     mapView.addAnnotation(namsan)
+    
     let gimpoAirport = MKPointAnnotation()
     gimpoAirport.title = "김포공항"
     gimpoAirport.coordinate = CLLocationCoordinate2DMake(37.559670, 126.794320)
     mapView.addAnnotation(gimpoAirport)
+    
     let gangnam = MKPointAnnotation()
     gangnam.title = "강남역"
     gangnam.coordinate = CLLocationCoordinate2DMake(37.498149, 127.027623)

@@ -60,16 +60,16 @@ class SecondViewController: UIViewController {
             view.translatesAutoresizingMaskIntoConstraints = false
             scrollView.addSubview(view)
             
-            let leadingConstraint = i == 0 ? scrollView.leadingAnchor : views[i - 1].trailingAnchor
+            let leadingConstraint = i == 0 ? scrollView.topAnchor : views[i - 1].bottomAnchor
             
-            view.leadingAnchor.constraint(equalTo: leadingConstraint).isActive = true
-            view.topAnchor.constraint(equalTo: scrollView.topAnchor).isActive = true
-            view.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor).isActive = true
+            view.topAnchor.constraint(equalTo: leadingConstraint).isActive = true
+            view.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor).isActive = true
+            view.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
             view.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
             view.heightAnchor.constraint(equalTo: scrollView.heightAnchor).isActive = true
             
             if i == (pageControl.subviews.endIndex - 1) {
-                view.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor).isActive = true
+                view.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor).isActive = true
             }
             views.append(view)
         }
@@ -94,6 +94,7 @@ extension SecondViewController: UIScrollViewDelegate {
         print("scrollViewDidEndDecelerating()")
         // 스크롤뷰 드래그가 끝난후 스크롤뷰가 멈췄을 때 호출
         pageControl.currentPage = Int(scrollView.contentOffset.x / scrollView.bounds.width)
+        print(scrollView.contentSize)
     }
     
     
