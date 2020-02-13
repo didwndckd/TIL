@@ -26,7 +26,6 @@
 //: ## Global functions
 print("\n---------- [ Global ] ----------\n")
 
-//print는 Global 함수임
 print(1)
 max(1, 2)
 func globalFunction() { }
@@ -37,12 +36,14 @@ print("\n---------- [ Nested ] ----------\n")
 
 // 캡쳐는 나중에 다시 다룰 내용이므로 가볍게 받아들일 것
 
-func outsideFunction() -> () -> () {// 함수를 리턴할 수도 있다 () -> ()  는 인풋, 아웃풋이 없는 함수를 반환
+func outsideFunction() -> () -> () {
   var x = 0
+  
   func nestedFunction() {
     x += 1    // 그 자신의 함수가 가지지 않은 값을 사용
     print(x)
   }
+  
   return nestedFunction
 }
 let nestedFunction = outsideFunction()
@@ -60,17 +61,17 @@ nestedFunction()
  }
  */
 
-
 print("\n---------- [ Basic ] ----------\n")
 
 func aFunction() {
   print("This is a function.")
 }
 aFunction()
+aFunction()
 
 ({
   print("This is a closure.")
-})() // () 붙이면 바로 실행함
+})()
 
 
 
@@ -80,6 +81,7 @@ print("\n---------- [ Save closure to variable ] ----------\n")
 let closure = {
   print("This is a closure.")
 }
+closure()
 closure()
 
 
@@ -91,6 +93,9 @@ function()
 // 같은 타입일 경우 함수나 클로저 관계없이 치환 가능
 function = closure
 function()
+type(of: function)
+type(of: closure)
+
 
 
 print("\n---------- [ Closure Syntax ] ----------\n")
@@ -128,6 +133,8 @@ let closureWithParamAndReturnType3 = { param in
 print(closureWithParamAndReturnType3("closure"))
 
 
+
+
 /*:
  ---
  ### Question
@@ -137,7 +144,6 @@ print(closureWithParamAndReturnType3("closure"))
  */
 // 1번 문제 예.   "Swift" -> 5
 // 2번 문제 예.   5 -> 6
-
 let a : (String) -> Int = {(str : String) -> Int in
     return str.count
 }
@@ -149,6 +155,8 @@ a("aaaaaaaaaaa")
 })(12)
 
 
+
+
 /*:
  ---
  ### Closure를 쓰는 이유?
@@ -156,7 +164,7 @@ a("aaaaaaaaaaa")
  */
 /*
  - 문법 간소화 / 읽기 좋은 코드
- - 지연 생성  정확하게 필요한 시점에 생성
+ - 지연 생성
  - 주변 컨텍스트의 값을 캡쳐하여 작업 수행 가능
 */
 
@@ -249,8 +257,6 @@ print("\n---------- [ Trailing ] ----------\n")
 
 // 후위 또는 후행 클로저
 // closureParamFunction { <#code#> }
-// 마지막 인자로 들어온 클로저는 ArgumentName 을 생략이 가능하다
-// 마지막 인자로 들어온 클로저는 파라미터 () 바깥으로 빼서 쓸수도 있음
 
 closureParamFunction(closure: {
   print("Inline closure - Explicit closure parameter name")
@@ -275,8 +281,9 @@ multiClosureParams(closure1: {
   print("inline")
 })
 
-multiClosureParams(closure1: { print("inline")})
-{ // closure2 임  ArgumentName 생략하고 바깥으로 뺀거
+multiClosureParams(closure1: {
+  print("inline")
+}) {
   print("trailing")
 }
 
@@ -311,6 +318,8 @@ let multiply2 : (Int , Int ) -> Int = {$0*$1}
 
 multiply2(3, 2)
 multiply(10 , 2)
+
+
 /*:
  ---
  ### Answer
