@@ -48,13 +48,15 @@ final class ViewController: UIViewController {
         let duration = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? TimeInterval // 키보드가 올라오는 시간
         else { return }
         
+        
     }
   
   @IBAction private func architecture() {
     print("\n---------- [ Architecture ] ----------\n")
     
+    
     //환경변수에 대한 조건문 (어떤 환경 일때에 대한 조건)
-    #if targetEnvironment(simulator)
+    #if targetEnvironment(simulator) // 시뮬레이터 상황
     print("Simulator")
     label.text = "Simulator"
     #else
@@ -64,10 +66,9 @@ final class ViewController: UIViewController {
     
     // DEBUGMODE 에서만 작동
     #if DEBUG
-    
-    #else
-    
+    print("debugging")
     #endif
+    
     
     // iOS 여부
     print("TARGET_OS_IOS: ", TARGET_OS_IOS)
