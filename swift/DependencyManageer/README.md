@@ -14,7 +14,7 @@ $ sudo gem install cocoapods
 
 - **Edit Podfile**
 
-```zsh
+```Bash
 $ pod init
 $ vi Podfile
 ```
@@ -34,7 +34,7 @@ end
 
 - **Install Library**
 
-```zsh
+```Bash
 $ pod repo update
 $ pod install $ open [ProjectName].xcworkspace
 ```
@@ -44,7 +44,7 @@ $ pod install $ open [ProjectName].xcworkspace
 
 - **Install Carthage**
 
-```zsh
+```Bash
 // 미설치시 설치
 $ brew update && brew install carthage
 // brew 가 없을 경우 https://brew.sh 에서 설치
@@ -57,7 +57,7 @@ $ brew upgrade carthage
 
 사용할 프로젝트의 [ProjectName].xcodeproj가 있는 폴더에 Cartfile을 만든다.
 
-```zsh
+```Bash
 $ vi Cartfile
 ```
 
@@ -78,7 +78,7 @@ github "onevcat/Kingfisher"
 
 - **Install Library**
 
-```zsh
+```Bash
 $ carthage update  
 // 전체 업데이트
  
@@ -91,15 +91,15 @@ $ carthage update [LibraryName]
 
 - **Link Binary With Libraries**
 
-<img src = "https://github.com/JoongChangYang/TIL/tree/master/Assets/swift/LinkBinaryWithLibraries">
+<img src = "https://github.com/JoongChangYang/TIL/blob/master/Assets/swift/LinkBinaryWithLibraries.png">
 
 - **New Run Script Phase**
 
-<img src = "https://github.com/JoongChangYang/TIL/tree/master/Assets/swift/NewRunScriptPhase">
+<img src = "https://github.com/JoongChangYang/TIL/blob/master/Assets/swift/NewRunScroptPhase.png">
 
 - **Run Script**
 
-<img src = "https://github.com/JoongChangYang/TIL/tree/master/Assets/swift/RunScript">
+<img src = "https://github.com/JoongChangYang/TIL/tree/master/Assets/swift/RunScript.png">
 
 - **Setting**
 
