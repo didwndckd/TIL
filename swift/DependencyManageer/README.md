@@ -14,7 +14,7 @@ $ sudo gem install cocoapods
 
 - **Edit Podfile**
 
-```Bash
+```shell
 $ pod init
 $ vi Podfile
 ```
@@ -34,7 +34,7 @@ end
 
 - **Install Library**
 
-```Bash
+```shell
 $ pod repo update
 $ pod install $ open [ProjectName].xcworkspace
 ```
@@ -44,7 +44,7 @@ $ pod install $ open [ProjectName].xcworkspace
 
 - **Install Carthage**
 
-```Bash
+```shell
 // 미설치시 설치
 $ brew update && brew install carthage
 // brew 가 없을 경우 https://brew.sh 에서 설치
@@ -57,7 +57,7 @@ $ brew upgrade carthage
 
 사용할 프로젝트의 [ProjectName].xcodeproj가 있는 폴더에 Cartfile을 만든다.
 
-```Bash
+```shell
 $ vi Cartfile
 ```
 
@@ -78,7 +78,7 @@ github "onevcat/Kingfisher"
 
 - **Install Library**
 
-```Bash
+```shell
 $ carthage update  
 // 전체 업데이트
  
