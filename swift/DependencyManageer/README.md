@@ -99,7 +99,7 @@ $ carthage update [LibraryName]
 
 - **Run Script**
 
-<img src = "https://github.com/JoongChangYang/TIL/tree/master/Assets/swift/RunScript.png">
+<img src = "https://github.com/JoongChangYang/TIL/blob/master/Assets/swift/RunScript.png">
 
 - **Setting**
 
