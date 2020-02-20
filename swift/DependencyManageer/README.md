@@ -8,18 +8,18 @@
 
 - **CocoaPods Install**
 
-```zsh
+```Shell
 $ sudo gem install cocoapods
 ```
 
 - **Edit Podfile**
 
-```shell
+```Shell
 $ pod init
 $ vi Podfile
 ```
 
-```vim
+```vi
 # Uncomment the next line to define a global platform for your project
 # platform :ios, '9.0'
 
@@ -34,7 +34,7 @@ end
 
 - **Install Library**
 
-```shell
+```Shell
 $ pod repo update
 $ pod install $ open [ProjectName].xcworkspace
 ```
@@ -44,7 +44,7 @@ $ pod install $ open [ProjectName].xcworkspace
 
 - **Install Carthage**
 
-```shell
+```Shell
 // 미설치시 설치
 $ brew update && brew install carthage
 // brew 가 없을 경우 https://brew.sh 에서 설치
@@ -57,7 +57,7 @@ $ brew upgrade carthage
 
 사용할 프로젝트의 [ProjectName].xcodeproj가 있는 폴더에 Cartfile을 만든다.
 
-```shell
+```Shell
 $ vi Cartfile
 ```
 
@@ -70,7 +70,7 @@ github “[GITHUB ACCOUNT]/[REPO NAME]”
 
 예시
 
-```vim
+```vi
 # 사용할 라이브러리 작성
 ggithub "Alamofire/Alamofire"
 github "onevcat/Kingfisher"
@@ -78,7 +78,7 @@ github "onevcat/Kingfisher"
 
 - **Install Library**
 
-```shell
+```Shell
 $ carthage update  
 // 전체 업데이트
  
