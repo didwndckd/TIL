@@ -72,7 +72,7 @@ github “[GITHUB ACCOUNT]/[REPO NAME]”
 
 ```vi
 # 사용할 라이브러리 작성
-ggithub "Alamofire/Alamofire"
+github "Alamofire/Alamofire"
 github "onevcat/Kingfisher"
 ```
 
