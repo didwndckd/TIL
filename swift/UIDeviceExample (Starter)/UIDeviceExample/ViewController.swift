@@ -123,7 +123,7 @@ final class ViewController: UIViewController {
             selector: #selector(didChangeBatteryState(_:)),
             name: UIDevice.batteryStateDidChangeNotification,
             object: nil)
-    }else {
+    } else {
         notiCenter.removeObserver(
             self,
             name: UIDevice.batteryStateDidChangeNotification,

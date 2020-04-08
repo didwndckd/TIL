@@ -130,7 +130,7 @@ final class AnimationViewController: UIViewController {
                                 delay: 0,
                                 animations: {
                                     // 우 하단으로 이동
-                                    UIView.addKeyframe(withRelativeStartTime: 0.0,          relativeDuration: 0.25,
+                                    UIView.addKeyframe(withRelativeStartTime: 0.0, relativeDuration: 0.25,
                                                        animations: {
                                                         self.loginButton.center.x += 50
                                                         self.loginButton.center.y += 20

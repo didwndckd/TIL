@@ -122,8 +122,9 @@ class ViewController: UIViewController {
                 return
                 
             }
+            print(placeMark)
             guard let place = placeMark?.first else { return }
-            print(place)
+//            print(place)
             
             self.setRegion(place: place)
             // 주소를 CLplacemark타입으로 변경한 것을 setRegion() 함수의 매개인자로 넣어 호출
