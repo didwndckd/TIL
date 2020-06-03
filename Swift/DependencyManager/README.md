@@ -8,7 +8,7 @@
 
 - **CocoaPods Install**
 
-  ```shell
+  ```zsh
   $ sudo gem install cocoapods
   ```
 
@@ -40,7 +40,8 @@
 
   ```Shell
   $ pod repo update
-  $ pod install $ open [ProjectName].xcworkspace
+  $ pod install
+  $ open [ProjectName].xcworkspace
   ```
 
   
