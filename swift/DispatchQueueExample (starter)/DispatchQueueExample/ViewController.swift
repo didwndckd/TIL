@@ -229,4 +229,31 @@ final class ViewController: UIViewController {
         print("TimeOut")
     }
   }
+    
+    @IBAction func myTest(_ sender: Any) {
+        
+        for i in 0...100 {
+            DispatchQueue.main.async {
+                print("Main Queue async: \(i)")
+            }
+        }
+        
+        let queue = DispatchQueue(label: "doan")
+        
+        print("=======================Start1==============================================")
+        queue.sync {
+            for i in 0...100 {
+                print("Custom Queue1:", i)
+            }
+        }
+        print("=======================Start2==============================================")
+        queue.sync {
+            for i in 0...100 {
+                print("Custom Queue2:", i)
+            }
+        }
+        
+    }
+    
+    
 }
