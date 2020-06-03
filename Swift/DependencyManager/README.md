@@ -8,7 +8,7 @@
 
 - **CocoaPods Install**
 
-  ```zsh
+  ```Bash
   $ sudo gem install cocoapods
   ```
 
