@@ -8,5 +8,5 @@
 
 ### Contents
 
-- [Swift](https://github.com/JoongChangYang/TIL/tree/master/swift)
+- [Swift](https://github.com/JoongChangYang/TIL/tree/master/Swift)
 - [Git](https://github.com/JoongChangYang/TIL/tree/master/git)
