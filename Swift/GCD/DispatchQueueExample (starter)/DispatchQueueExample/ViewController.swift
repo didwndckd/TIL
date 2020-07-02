@@ -22,6 +22,7 @@ final class ViewController: UIViewController {
     
 
   func bigTask() {
+    
     print("= Big task start =")
     for _ in 0...5_000_000 { _ = 1 + 1 }
     print("= Big task end =")
@@ -231,29 +232,11 @@ final class ViewController: UIViewController {
   }
     
     @IBAction func myTest(_ sender: Any) {
-        
-        for i in 0...100 {
-            DispatchQueue.main.async {
-                print("Main Queue async: \(i)")
-            }
-        }
-        
-        let queue = DispatchQueue(label: "doan")
-        
-        print("=======================Start1==============================================")
-        queue.sync {
-            for i in 0...100 {
-                print("Custom Queue1:", i)
-            }
-        }
-        print("=======================Start2==============================================")
-        queue.sync {
-            for i in 0...100 {
-                print("Custom Queue2:", i)
-            }
-        }
-        
+      let queue = DispatchQueue(label: "doan")
+      queue.sync {
+        print(Thread.isMainThread)
+        self.buttonDidTap(1)
+      }
     }
-    
     
 }
