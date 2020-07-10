@@ -28,6 +28,7 @@ let pListEncoder = PropertyListEncoder()
 let encodedMacBook = try! pListEncoder.encode(macBook)
 print(encodedMacBook)
 
+
 let appSupportDir = FileManager.default.urls(
   for: .documentDirectory, in: .userDomainMask
   ).first!
