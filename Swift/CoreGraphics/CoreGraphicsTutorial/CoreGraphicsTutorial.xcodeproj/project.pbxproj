@@ -28,7 +28,6 @@
 		316213F824BB084B00266686 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		316213FE24BB09D500266686 /* SymbolButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymbolButton.swift; sourceTree = "<group>"; };
 		31D822E224BB52E8007D768A /* PlusButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlusButton.swift; sourceTree = "<group>"; };
-		31D822E424BB53B8007D768A /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,7 +44,6 @@
 		316213DE24BB084900266686 = {
 			isa = PBXGroup;
 			children = (
-				31D822E424BB53B8007D768A /* README.md */,
 				316213E924BB084900266686 /* CoreGraphicsTutorial */,
 				316213E824BB084900266686 /* Products */,
 			);
