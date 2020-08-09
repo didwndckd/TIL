@@ -11,7 +11,7 @@ import UIKit
 final class ViewController: UIViewController {
   
   @IBOutlet private weak var testView: UIView!
-
+  
   @IBAction private func buttonDidTap(_ sender: Any) {
     print("---------- [ Change Color ] ----------\n")
     let r = CGFloat.random(in: 0...1.0)
@@ -19,36 +19,40 @@ final class ViewController: UIViewController {
     let b = CGFloat.random(in: 0...1.0)
     testView.backgroundColor = UIColor(red: r, green: g, blue: b, alpha: 1)
   }
+  
+  
+  func bigTask(_ label: String = "") {
     
-
-  func bigTask() {
-    
-    print("= Big task start =")
-    for _ in 0...5_000_000 { _ = 1 + 1 }
-    print("= Big task end =")
+    print("= Big task start =", label)
+    for i in 0...5_000_000 {
+      if i % 1_000_000 == 0 {
+        print(label, "->", i)
+      }
+    }
+    print("= Big task end =", label)
   }
   
   @IBAction func bigTaskOnMainThread() {
-    print("start")
+    print("start:")
     bigTask()
-    print("end")
+    print("end:")
     //serial queue 에서 작업 하기 때문에 작업이 끝날때까지 다른작업을 할 수 없다 (동기방식)
   }
   
+  
+  @IBAction func uiTaskOnBackgroundThread() {
+    print("\n---------- [ uiTaskOnBackgroundThread ] ----------\n")
     
-    @IBAction func uiTaskOnBackgroundThread() {
-        print("\n---------- [ uiTaskOnBackgroundThread ] ----------\n")
-        
-        DispatchQueue.global().async { // concurrent - async
-            self.bigTask()
-            DispatchQueue.main.async { // serial - async
-                self.buttonDidTap(self)
-                //UI관련 작업은 main에서만 해야 한다.
-            }
-        }
-        
+    DispatchQueue.global().async { // concurrent - async
+      self.bigTask()
+      DispatchQueue.main.async { // serial - async
+        self.buttonDidTap(self)
+        //UI관련 작업은 main에서만 해야 한다.
+      }
     }
     
+  }
+  
   
   func log(_ str: String) {
     print(str, terminator: " - ")
@@ -83,7 +87,7 @@ final class ViewController: UIViewController {
     // serialQueue -> 1 - 2 - 3 - 4
     //
   }
-    
+  
   
   @IBAction private func concurrentSyncOrder(_ sender: UIButton) {
     print("\n---------- [ Concurrent Sync ] ----------\n")
@@ -135,7 +139,7 @@ final class ViewController: UIViewController {
       let bigNumber = 8_000_000
       let divideNumber = 2_000_000
       for i in 1...bigNumber {
-//        print(i)
+        //        print(i)
         guard i % divideNumber == 0 else { continue }
         print(i / divideNumber * 25, "%")
       }
@@ -146,13 +150,13 @@ final class ViewController: UIViewController {
   
   @IBAction func waitWorkItem() {
     print("\n---------- [ waitWorkItem ] ----------\n")
-
+    
     let workItem = createDispatchWorkItem()
     let myQueue = DispatchQueue(label: "kr.giftbot.myQueue")
-//    print(DispatchQueue.main.label)
+    //    print(DispatchQueue.main.label)
     // async vs sync
     myQueue.async(execute: workItem)
-//    myQueue.sync(execute: workItem)
+    //    myQueue.sync(execute: workItem)
     
     print("before waiting")
     workItem.wait() // async를 원하는 시점에 sync 처럼 동작. 실행이 완료될 때까지 대기 다른 스레드를 대기시키는?
@@ -167,7 +171,7 @@ final class ViewController: UIViewController {
   
   @IBAction func initiallyInactiveQueue() {
     print("\n---------- [ initiallyInactiveQueue ] ----------\n")
-
+    
     let workItem = createDispatchWorkItem()
     inactiveQueue.async(execute: workItem)
     
@@ -191,9 +195,9 @@ final class ViewController: UIViewController {
       print("Task\(task) 종료")
     }
     
-//    queue1.async { calculate(task: 1, limit: 12_000_000) }
-//    queue1.async { calculate(task: 2, limit:  5_000_000) }
-//    queue2.async { calculate(task: 3, limit:  2_000_000) }
+    //    queue1.async { calculate(task: 1, limit: 12_000_000) }
+    //    queue1.async { calculate(task: 2, limit:  5_000_000) }
+    //    queue2.async { calculate(task: 3, limit:  2_000_000) }
     
     let group = DispatchGroup()
     queue1.async(group: group) { calculate(task: 1, limit: 12_000_000) }
@@ -209,14 +213,14 @@ final class ViewController: UIViewController {
     myWorkItem = DispatchWorkItem {
       let bigNumber = 8_000_000
       let divideNumber = bigNumber / 4
-       
+      
       for i in 1...bigNumber {
         guard i % divideNumber == 0 else { continue }
         guard !self.myWorkItem.isCancelled else { return }
         print(i / divideNumber * 25, "%")
       }
     }
-
+    
     DispatchQueue.global().async(execute: myWorkItem)
     // 3초안에 실행 안되면 취소
     let timeLimit = 3.0
@@ -224,19 +228,36 @@ final class ViewController: UIViewController {
     let timeoutResult = self.myWorkItem.wait(timeout: .now() + timeLimit)
     switch timeoutResult {
     case .success:
-        print("success within \(timeLimit) seconds")
+      print("success within \(timeLimit) seconds")
     case .timedOut:
-        self.myWorkItem.cancel()
-        print("TimeOut")
+      self.myWorkItem.cancel()
+      print("TimeOut")
     }
+    
+    runLoop?.invalidate()
   }
+  
+  private var runLoop: Timer?
+  
+  @IBAction func myTest(_ sender: Any) {
     
-    @IBAction func myTest(_ sender: Any) {
-      let queue = DispatchQueue(label: "doan")
-      queue.sync {
-        print(Thread.isMainThread)
-        self.buttonDidTap(1)
-      }
-    }
+    present(TestViewController(), animated: true)
     
+    
+    
+  }
+  
+  private func checkThread(label: String) {
+    print("====================================")
+    print("ThreadCheck:", label)
+    print("current", Thread.current)
+    print("is Main:", Thread.isMainThread)
+    print("===========================================")
+  }
+  //
+  //  @objc private func runLoopCallback(_ timer: Timer) {
+  //    print("RunLoop")
+  //    print("timer:", timer.fireDate)
+  //  }
+  
 }
