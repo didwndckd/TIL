@@ -47,7 +47,7 @@
 
 - `DispatchQueue`는 **Serial / Concurrent Queue**로 구분, 각 queue에서는 들어온 작업 **block**들을 **Sync / Async** 방식으로 실행
 - **Serial / Concurrent**: **하나의 queue**안에서 작업실행 방식을 결정
-- **Sync / Async**: **서로다른 queue**간에 작업 실행 방식을 결정
+- **Sync / Async**: 전체 실행 방식을 결정
 
 
 

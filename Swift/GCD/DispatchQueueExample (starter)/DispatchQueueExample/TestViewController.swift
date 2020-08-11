@@ -216,10 +216,16 @@ class TestViewController: UIViewController {
   }
   
   @objc private func startAction(_ sender: UIButton) {
-    tasks.forEach({
-      print("\nStartTask: \($0.name)\n")
-      $0.task()
-      print("\nEndTask: \($0.name)\n")
+    tasks.forEach({ task in
+      
+      DispatchQueue.global().async {
+        print("\nStartTask: \(task.name)\n")
+        self.checkThread(label: "함수 시작")
+        task.task()
+        print("\nEndTask: \(task.name)\n")
+        
+      }
+      
     })
     
   }
