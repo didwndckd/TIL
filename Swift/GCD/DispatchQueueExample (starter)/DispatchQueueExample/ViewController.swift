@@ -160,10 +160,7 @@ final class ViewController: UIViewController {
     
     let workItem = createDispatchWorkItem()
     let myQueue = DispatchQueue(label: "kr.doan.myQueue")
-    //    print(DispatchQueue.main.label)
-    // async vs sync
     myQueue.async(execute: workItem)
-    //    myQueue.sync(execute: workItem)
     
     print("Before waiting")
     workItem.wait() // async를 원하는 시점에 sync 처럼 동작. 실행이 완료될 때까지 대기 다른 스레드를 대기시키는?
@@ -344,10 +341,6 @@ final class ViewController: UIViewController {
   //  }
   
 }
-
-
-
-
 
 
 

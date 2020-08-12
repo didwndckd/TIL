@@ -258,20 +258,22 @@
   >
   > `async`로 호출하여도 `wait()`을 만나면 마치 `sync`처럼 동작하게 된다.
 
-   ``` swift
+  ```swift
   let myQueue = DispatchQueue(label: "kr.doan.myQueue")
-myQueue.async(execute: workItem)
+	myQueue.async(execute: workItem)
+  
   print("Before waiting")
-  workItem.wait() 
+  workItem.wait()
   print("After waiting")
-  Before waiting
   //  Before waiting
   //  25 %
   //  50 %
   //  75 %
   //  100 %
   //  After waiting
-   ```
+  ```
+  
+  
   
 - **Cancle WorkItem**
 
@@ -314,10 +316,6 @@ myQueue.async(execute: workItem)
   // 50 %
   // TimeOut
   ```
-
-  
-
-  
 
   
 
