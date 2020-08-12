@@ -35,7 +35,7 @@ enum Queue: String, QueueComponent, CaseIterable {
 
 enum Synchronize: String, QueueComponent, CaseIterable {
   case sync
-  case aSync
+  case async
   
   func string() -> String {
     self.rawValue
@@ -194,7 +194,7 @@ class TestViewController: UIViewController {
     var task: () -> Void
     
     switch synchronize {
-    case .aSync:
+    case .async:
       task = {
         dispatchQueue.async(qos: qos.qos()) {
           
@@ -216,15 +216,23 @@ class TestViewController: UIViewController {
   }
   
   @objc private func startAction(_ sender: UIButton) {
+//    serialQueue.sync {
+//      self.checkThread(label: "OUt")
+//      self.serialQueue.sync {
+//        self.checkThread(label: "In")
+//        print("Not DeadLock")
+//      }
+//    }
+    
     tasks.forEach({ task in
       
-      DispatchQueue.global().async {
+//      DispatchQueue.global().async {
         print("\nStartTask: \(task.name)\n")
         self.checkThread(label: "함수 시작")
         task.task()
         print("\nEndTask: \(task.name)\n")
         
-      }
+//      }
       
     })
     
@@ -257,6 +265,7 @@ class TestViewController: UIViewController {
     \n========================================\n
     """
     print(output)
+    
   }
   
   private func changeBackground() {

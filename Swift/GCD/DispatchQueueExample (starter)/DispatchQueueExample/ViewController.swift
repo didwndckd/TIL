@@ -33,6 +33,7 @@ final class ViewController: UIViewController {
   }
   
   @IBAction func bigTaskOnMainThread() {
+    
     print("start:")
     bigTask()
     print("end:")
@@ -60,20 +61,21 @@ final class ViewController: UIViewController {
   
   @IBAction private func serialSyncOrder(_ sender: UIButton) {
     print("\n---------- [ Serial Sync ] ----------\n")
-    let serialQueue = DispatchQueue(label: "kr.giftbot.serialQueue")
+    let serialQueue = DispatchQueue(label: "kr.doan.serialQueue")
     serialQueue.sync { log("1") }
-    log("A") // -> main에서 실행
+    log("A")
     serialQueue.sync { log("2") }
     log("B")
     serialQueue.sync { log("3") }
     log("C")
     print()
+    // 1 - A - 2 - B - 3 - C
     // sync - 호출한 함수가 종료되어야 다음 작업이 진행됨
   }
   
   @IBAction private func serialAsyncOrder(_ sender: UIButton) {
     print("\n---------- [ Serial Async ] ----------\n")
-    let serialQueue = DispatchQueue(label: "kr.giftbot.serialQueue")
+    let serialQueue = DispatchQueue(label: "kr.doan.serialQueue")
     serialQueue.async { self.log("1") }
     log("A")
     serialQueue.async { self.log("2") }
@@ -81,7 +83,7 @@ final class ViewController: UIViewController {
     serialQueue.async { self.log("3") }
     log("C")
     print()
-    
+    //A - 1 - B - 2 - C - 3
     // A, B, C 순서 동일 / 1, 2, 3 순서 동일
     // async - 함수를 호출하고 바로 종료시킨다. -> 실행 시점은 운영체제에서 결정하기때문에 언제가 될지는 알수 없음
     // serialQueue -> 1 - 2 - 3 - 4
@@ -92,7 +94,7 @@ final class ViewController: UIViewController {
   @IBAction private func concurrentSyncOrder(_ sender: UIButton) {
     print("\n---------- [ Concurrent Sync ] ----------\n")
     let concurrentQueue = DispatchQueue(
-      label: "kr.giftbot.concurrentQueue",
+      label: "kr.doan.concurrentQueue",
       attributes: [.concurrent]
     )
     concurrentQueue.sync { log("1") }
@@ -102,6 +104,8 @@ final class ViewController: UIViewController {
     concurrentQueue.sync { log("3") }
     log("C")
     print()
+    
+    // 1 - A - 2 - B - 3 - C
     // sync - 무조건 호출한 작업이 끝나야 다음 작업을 실행하기 때문에 concurrent이던 아니던 상관없음
     
   }
@@ -109,7 +113,7 @@ final class ViewController: UIViewController {
   @IBAction private func concurrentAsyncOrder(_ sender: UIButton) {
     print("\n---------- [ Concurrent Async ] ----------\n")
     let concurrentQueue = DispatchQueue(
-      label: "kr.giftbot.concurrentQueue",
+      label: "kr.doan.concurrentQueue",
       attributes: [.concurrent]
     )
     concurrentQueue.async { self.log("1") }
@@ -234,10 +238,8 @@ final class ViewController: UIViewController {
       print("TimeOut")
     }
     
-    runLoop?.invalidate()
+    
   }
-  
-  private var runLoop: Timer?
   
   @IBAction func myTest(_ sender: Any) {
     
