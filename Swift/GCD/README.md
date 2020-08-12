@@ -153,7 +153,7 @@
     target: DispatchQueue? = nil
   )
   
-  let queue = DispatchQueue(label: "doan.serialQueue")
+  let queue = DispatchQueue(label: "kr.doan.serialQueue")
   
   let queueOptions = DispatchQueue(
     label: "doan.concurrentQueue",
@@ -213,30 +213,238 @@
 
 - `.concurrent`: **Concurrent Queue**로 생성. 이 옵션 미 지정시 **Serial Queue**가 기본값
 
-- `.initallyInactive`: **Inactive**상태로 생성. 작업 수행 시점에 `activate()` 메서드를 호출해야 동작
+- `.initiallyInactive`: **Inactive**상태로 생성. 작업 수행 시점에 `activate()` 메서드를 호출해야 동작
 
   ```swift
   extension DispatchQueue {
-  public struct Attributes : OptionSet {
-  public static let concurrent: DispatchQueue.Attributes
-  public static let initiallyInactive: DispatchQueue.Attributes
-  	} 
+    public struct Attributes : OptionSet {
+      public static let concurrent: DispatchQueue.Attributes
+      public static let initiallyInactive: DispatchQueue.Attributes
+    }
   }
+  
+  let inactiveQueue = DispatchQueue(
+    label: "kr.doan.inactiveQueue",
+    attributes: [.initiallyInactive, .concurrent] // ConcurrentQueue
+  )
+  inactiveQueue.async { print("Task") }
+  print("= Do Something... =")
+  inactiveQueue.activate() // 필요한 타이밍에 activate 메서드를 통해 활성화(Queue에서 작업을 꺼내 실행하겠다는 의미.)
+  // = Do Something... =
+  // Task
+  ```
+
+### DispatchWorkItem
+
+- **DispatchQueue**에 전달할 작업을 캡슐화 한것
+
+  ```swift
+  let workItem = DispatchWorkItem {
+    let bigNumber = 8_000_000
+    let divideNumber = 2_000_000
+    for i in 1...bigNumber {
+      guard i % divideNumber == 0 else { continue }
+      print(i / divideNumber * 25, "%")
+    }
+  }
+  
+  let myQueue = DispatchQueue(label: "kr.doan.myQueue")
+  myQueue.async(execute: workItem)
+  ```
+
+- **Wait WorkItem**
+
+  > `DispatchWorkItem`의 `wait()` method를 이용하여 workItem의 작업이 완료될때까지 해당 Thread를 대기시킬 수 있다.
+  >
+  > `async`로 호출하여도 `wait()`을 만나면 마치 `sync`처럼 동작하게 된다.
+
+   ``` swift
+  let myQueue = DispatchQueue(label: "kr.doan.myQueue")
+myQueue.async(execute: workItem)
+  print("Before waiting")
+  workItem.wait() 
+  print("After waiting")
+  Before waiting
+  //  Before waiting
+  //  25 %
+  //  50 %
+  //  75 %
+  //  100 %
+  //  After waiting
+   ```
+  
+- **Cancle WorkItem**
+
+  > `DispatchWorkItem`의 `cancel()`method를 이용해 작업을 취소할 수 있다. 
+  >
+  > 정확히는 작업 자체를 취소하는게 아니고 `DispatchWorkItem`의 `isCancelled`를 `true`로 바꾸는 것.
+  >
+  > `isCancelled`를 사용하여 내부에서 `DispatchWorkItem`의 작업을 직접 종료 해야한다.
+
+  - `DispatchTimeoutResult`를 이용하여 정해진 시간이 지난 경우 또는 정해진 시간 내에 작업을 끝마친 경우에 따라 다른 동작을 할 수 있다.
+
+    ```swift
+    cancellableWorkItem = DispatchWorkItem {
+      let bigNumber = 8_000_000
+      let divideNumber = bigNumber / 4
+      
+      for i in 1...bigNumber {
+        guard i % divideNumber == 0 else { continue }
+        guard !self.cancellableWorkItem.isCancelled else { return }
+        print(i / divideNumber * 25, "%")
+      }
+    }
+    
+    DispatchQueue.global().async(execute: cancellableWorkItem)
+    // 3초안에 실행 안되면 취소
+    let timeLimit = 3.0
+    
+    let timeoutResult: DispatchTimeoutResult = cancellableWorkItem.wait(timeout: .now() + timeLimit) 
+    // 3초 wait()
+    
+    switch timeoutResult {
+    case .success:
+      print("success within \(timeLimit) seconds")
+    case .timedOut:
+      cancellableWorkItem.cancel()
+      print("TimeOut")
+    }
+    
+    // 25 %
+    // 50 %
+    // TimeOut
+    ```
+
+    
+
+### **DispatchGroup**
+
+> 여러 큐의 작업을 그룹화 하여 동기화 할 수 있다.
+
+
+
+#### Group Notify
+
+- **Queue**의 `async(group:)`에 `DispatchGroup`을 할당 하여 동기화 할 수 있다.
+
+- 여러 개의 queue에서 async로 동작하는 작업들 중 특정 작업을 async 작업이 모두 종료된 후에 실행하려고 한다면 `DispatchGroup`을 사용해서 async로 실행되는 작업들의 가장 마지막에 특정 작업을 실행시킬 수 있다.
+
+- `DispatchGroup`의 `notify(queue:execute:)`에 group에 속한 모든 queue의 작업이 종료된 후 실행될 작업을 전달한다.
+
+  ```swift
+  let queue1 = DispatchQueue(label: "kr.doan.concurrentQueue", zattributes: .concurrent)
+  let queue2 = DispatchQueue(label: "kr.doan.serialQueue")
+
+  func calculate(task: Int, limit: Int) {
+    print("Task\(task) 시작")
+    for _ in 0...limit { _ = 1 + 1 }
+    print("Task\(task) 종료")
+  }
+
+  // DispatchGroup을 사용하지 않은 경우
+  queue1.async { calculate(task: 1, limit: 12_000_000) }
+  queue1.async { calculate(task: 2, limit:  5_000_000) }
+  queue2.async { calculate(task: 3, limit:  2_000_000) }
+  // print("모든 작업 완료")
+  // 모든 작업 완료
+  // Task1 시작
+  // Task3 시작
+  // Task2 시작
+  // Task3 종료
+  // Task2 종료
+  // Task1 종료
+
+  // DispatchGroup을 사용하여 aync작업을 group에 포함시킨 경우
+  let group = DispatchGroup()
+  queue1.async(group: group) { calculate(task: 1, limit: 12_000_000) }
+  queue1.async(group: group) { calculate(task: 2, limit:  5_000_000) }
+  queue2.async(group: group) { calculate(task: 3, limit:  2_000_000) }
+  group.notify(queue: .main){ print("모든 작업 완료") }
+  // Task3 시작
+  // Task1 시작
+  // Task2 시작
+  // Task3 종료
+  // Task2 종료
+  // Task1 종료
+  // 모든 작업 완료
+  ```
+
+- **Queue**의 `async(group:)`에 `DispatchGroup`을 할당 하지 않고도 동기화 할 수 있다.
+
+- `DispatchGroup`의 `enter()`와 `leave()` method로 할 수 있다.
+
+- 작업 실행 전에 `enter()`를 호출 하고 종료시에 `leave()`를 호출한다. group의 `enter()`의 갯수만큼 `leave()`가 호출되어 `enter()`가? 남지않게되면  `DispatchGroup`의 `notify(queue:execute:)`에 예약한 작업을 처리한다.
+
+  ```swift
+  let queue1 = DispatchQueue(label: "kr.doan.concurrentQueue", attributes: .concurrent)
+  let queue2 = DispatchQueue(label: "kr.doan.serialQueue")
+  
+  func calculate(task: Int, limit: Int) {
+    print("Task\(task) 시작")
+    for _ in 0...limit { _ = 1 + 1 }
+    print("Task\(task) 종료")
+  }
+  
+  // DispatchGroup의 enter()와 leave()를 사용한 경우
+  let group = DispatchGroup()
+  group.enter() 
+  queue1.async {
+    calculate(task: 1, limit: 12_000_000)
+    group.leave()
+  }
+  
+  group.enter()
+  queue1.async {
+    calculate(task: 2, limit:  5_000_000)
+    group.leave()
+  }
+  
+  group.enter()
+  queue2.async {
+    calculate(task: 3, limit:  2_000_000)
+    group.leave()
+  }
+  
+  group.notify(queue: .main){ print("모든 작업 완료") }
+  // Task1 시작 
+  // Task3 시작 
+  // Task2 시작 
+  // Task3 종료 
+  // Task2 종료 
+  // Task1 종료 
+  // 모든 작업 완료
   ```
 
   
 
-### DispatchWorkItem
+#### Group Wait
 
+- 위의 `DispatchWorkItem`의 `wait()`과 비슷함 그룹의 작업이 모두 종료 될때까지 해당 Thread는 대기한다.
 
+  ```swift
+  // DispatchGroup wait을 사용한 경우
+  let group = DispatchGroup()
+  queue1.async(group: group) { calculate(task: 1, limit: 12_000_000) }
+  queue1.async(group: group) { calculate(task: 2, limit:  5_000_000) }
+  queue2.async(group: group) { calculate(task: 3, limit:  2_000_000) }
+  let groupTimeResult = group.wait(timeout: .distantFuture) // 작업이 끝날때까지 기다린다.
+  
+  switch groupTimeResult {
+  case .success:
+    print("모든 작업 완료")
+  case .timedOut:
+    print("TimeOut")
+  }
+  // Task1 시작
+  // Task2 시작
+  // Task3 시작
+  // Task3 종료
+  // Task2 종료
+  // Task1 종료
+  // 모든 작업 완료
+  ```
 
-
-
-
-
-
-
-
+  
 
 
 

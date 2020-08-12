@@ -8,6 +8,8 @@
 
 import UIKit
 
+
+
 final class ViewController: UIViewController {
   
   @IBOutlet private weak var testView: UIView!
@@ -140,6 +142,7 @@ final class ViewController: UIViewController {
     // 출력 순서
     // 25%, 50% , 75%, 100%
     let workItem = DispatchWorkItem {
+      print("Started workItem")
       let bigNumber = 8_000_000
       let divideNumber = 2_000_000
       for i in 1...bigNumber {
@@ -156,15 +159,15 @@ final class ViewController: UIViewController {
     print("\n---------- [ waitWorkItem ] ----------\n")
     
     let workItem = createDispatchWorkItem()
-    let myQueue = DispatchQueue(label: "kr.giftbot.myQueue")
+    let myQueue = DispatchQueue(label: "kr.doan.myQueue")
     //    print(DispatchQueue.main.label)
     // async vs sync
     myQueue.async(execute: workItem)
     //    myQueue.sync(execute: workItem)
     
-    print("before waiting")
+    print("Before waiting")
     workItem.wait() // async를 원하는 시점에 sync 처럼 동작. 실행이 완료될 때까지 대기 다른 스레드를 대기시키는?
-    print("after waiting")
+    print("After waiting")
   }
   
   
@@ -172,12 +175,14 @@ final class ViewController: UIViewController {
     label: "kr.giftbot.inactiveQueue",
     attributes: [.initiallyInactive, .concurrent] // activate로 실행 시켜야함
   )
-  
+
+
   @IBAction func initiallyInactiveQueue() {
     print("\n---------- [ initiallyInactiveQueue ] ----------\n")
     
     let workItem = createDispatchWorkItem()
     inactiveQueue.async(execute: workItem)
+    //    inactiveQueue.sync(execute: workItem)
     
     print("= Do Something... =")
     
@@ -189,9 +194,9 @@ final class ViewController: UIViewController {
   @IBAction func groupNotify() {
     print("\n---------- [ groupNotify ] ----------\n")
     
-    let queue1 = DispatchQueue(label: "kr.giftbot.example.queue1",
+    let queue1 = DispatchQueue(label: "kr.doan.concurrentQueue",
                                attributes: .concurrent)
-    let queue2 = DispatchQueue(label: "kr.giftbot.example.queue2")
+    let queue2 = DispatchQueue(label: "kr.doan.serialQueue")
     
     func calculate(task: Int, limit: Int) {
       print("Task\(task) 시작")
@@ -199,45 +204,121 @@ final class ViewController: UIViewController {
       print("Task\(task) 종료")
     }
     
-    //    queue1.async { calculate(task: 1, limit: 12_000_000) }
-    //    queue1.async { calculate(task: 2, limit:  5_000_000) }
-    //    queue2.async { calculate(task: 3, limit:  2_000_000) }
+    // DispatchGroup을 사용하지 않은 경우
+//    queue1.async { calculate(task: 1, limit: 12_000_000) }
+//    queue1.async { calculate(task: 2, limit:  5_000_000) }
+//    queue2.async { calculate(task: 3, limit:  2_000_000) }
+//    print("모든 작업 완료")
+//    모든 작업 완료
+//    Task1 시작
+//    Task3 시작
+//    Task2 시작
+//    Task3 종료
+//    Task2 종료
+//    Task1 종료
     
+    // DispatchGroup을 사용하여 aync작업을 group에 포함시킨 경우
     let group = DispatchGroup()
     queue1.async(group: group) { calculate(task: 1, limit: 12_000_000) }
     queue1.async(group: group) { calculate(task: 2, limit:  5_000_000) }
     queue2.async(group: group) { calculate(task: 3, limit:  2_000_000) }
     group.notify(queue: .main){ print("모든 작업 완료") }
+//    Task3 시작
+//    Task1 시작
+//    Task2 시작
+//    Task3 종료
+//    Task2 종료
+//    Task1 종료
+//    모든 작업 완료
+    
+    // DispatchGroup의 enter()와 leave()를 사용한 경우
+//    let group = DispatchGroup()
+//    group.enter()
+//    queue1.async {
+//      calculate(task: 1, limit: 12_000_000)
+//      group.leave()
+//    }
+//
+//    group.enter()
+//    queue1.async {
+//      calculate(task: 2, limit:  5_000_000)
+//      group.leave()
+//    }
+//
+//    group.enter()
+//    queue2.async {
+//      calculate(task: 3, limit:  2_000_000)
+//      group.leave()
+//    }
+//
+//    group.notify(queue: .main){ print("모든 작업 완료") }
+//    Task1 시작
+//    Task3 시작
+//    Task2 시작
+//    Task3 종료
+//    Task2 종료
+//    Task1 종료
+//    모든 작업 완료
+    
+    
+    // DispatchGroup wait을 사용한 경우
+//    let group = DispatchGroup()
+//    queue1.async(group: group) { calculate(task: 1, limit: 12_000_000) }
+//    queue1.async(group: group) { calculate(task: 2, limit:  5_000_000) }
+//    queue2.async(group: group) { calculate(task: 3, limit:  2_000_000) }
+//    let groupTimeResult = group.wait(timeout: .distantFuture)
+//
+//    switch groupTimeResult {
+//    case .success:
+//      print("모든 작업 완료")
+//    case .timedOut:
+//      print("TimeOut")
+//    }
+    //Task1 시작
+    //Task2 시작
+    //Task3 시작
+    //Task3 종료
+    //Task2 종료
+    //Task1 종료
+    //모든 작업 완료
+
+    
   }
   
   
-  var myWorkItem: DispatchWorkItem!
+  var cancellableWorkItem: DispatchWorkItem!
   
   @IBAction func cancelDispatchWorkItem() {
-    myWorkItem = DispatchWorkItem {
+    
+    cancellableWorkItem = DispatchWorkItem {
       let bigNumber = 8_000_000
       let divideNumber = bigNumber / 4
       
       for i in 1...bigNumber {
         guard i % divideNumber == 0 else { continue }
-        guard !self.myWorkItem.isCancelled else { return }
+        guard !self.cancellableWorkItem.isCancelled else { return }
         print(i / divideNumber * 25, "%")
       }
     }
     
-    DispatchQueue.global().async(execute: myWorkItem)
+    DispatchQueue.global().async(execute: cancellableWorkItem)
     // 3초안에 실행 안되면 취소
     let timeLimit = 3.0
     
-    let timeoutResult = self.myWorkItem.wait(timeout: .now() + timeLimit)
+    let timeoutResult: DispatchTimeoutResult = cancellableWorkItem.wait(timeout: .now() + timeLimit) // 3초 wait()
+    
     switch timeoutResult {
     case .success:
       print("success within \(timeLimit) seconds")
     case .timedOut:
-      self.myWorkItem.cancel()
+      cancellableWorkItem.cancel()
       print("TimeOut")
     }
     
+//    DispatchQueue.main.asyncAfter(deadline: .now() + timeLimit, execute: {
+//      self.myWorkItem.cancel()
+//      print("canceled")
+//    })
     
   }
   
@@ -263,3 +344,11 @@ final class ViewController: UIViewController {
   //  }
   
 }
+
+
+
+
+
+
+
+
