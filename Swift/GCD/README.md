@@ -280,42 +280,46 @@ myQueue.async(execute: workItem)
   > 정확히는 작업 자체를 취소하는게 아니고 `DispatchWorkItem`의 `isCancelled`를 `true`로 바꾸는 것.
   >
   > `isCancelled`를 사용하여 내부에서 `DispatchWorkItem`의 작업을 직접 종료 해야한다.
+  >
+  > `DispatchTimeoutResult`를 이용하여 정해진 시간이 지난 경우 또는 정해진 시간 내에 작업을 끝마친 경우에 따라 다른 동작을 할 수 있다.
 
-  - `DispatchTimeoutResult`를 이용하여 정해진 시간이 지난 경우 또는 정해진 시간 내에 작업을 끝마친 경우에 따라 다른 동작을 할 수 있다.
-
-    ```swift
-    cancellableWorkItem = DispatchWorkItem {
-      let bigNumber = 8_000_000
-      let divideNumber = bigNumber / 4
-      
-      for i in 1...bigNumber {
-        guard i % divideNumber == 0 else { continue }
-        guard !self.cancellableWorkItem.isCancelled else { return }
-        print(i / divideNumber * 25, "%")
-      }
+  ```swift
+  cancellableWorkItem = DispatchWorkItem {
+    let bigNumber = 8_000_000
+    let divideNumber = bigNumber / 4
+    
+    for i in 1...bigNumber {
+      guard i % divideNumber == 0 else { continue }
+      guard !self.cancellableWorkItem.isCancelled else { return }
+      print(i / divideNumber * 25, "%")
     }
-    
-    DispatchQueue.global().async(execute: cancellableWorkItem)
-    // 3초안에 실행 안되면 취소
-    let timeLimit = 3.0
-    
-    let timeoutResult: DispatchTimeoutResult = cancellableWorkItem.wait(timeout: .now() + timeLimit) 
-    // 3초 wait()
-    
-    switch timeoutResult {
-    case .success:
-      print("success within \(timeLimit) seconds")
-    case .timedOut:
-      cancellableWorkItem.cancel()
-      print("TimeOut")
-    }
-    
-    // 25 %
-    // 50 %
-    // TimeOut
-    ```
+  }
+  
+  DispatchQueue.global().async(execute: cancellableWorkItem)
+  // 3초안에 실행 안되면 취소
+  let timeLimit = 3.0
+  
+  let timeoutResult: DispatchTimeoutResult = cancellableWorkItem.wait(timeout: .now() + timeLimit) 
+  // 3초 wait()
+  
+  switch timeoutResult {
+  case .success:
+    print("success within \(timeLimit) seconds")
+  case .timedOut:
+    cancellableWorkItem.cancel()
+    print("TimeOut")
+  }
+  
+  // 25 %
+  // 50 %
+  // TimeOut
+  ```
 
-    
+  
+
+  
+
+  
 
 ### **DispatchGroup**
 
@@ -445,15 +449,3 @@ myQueue.async(execute: workItem)
   ```
 
   
-
-
-
-
-
-
-
-
-
-
-
-
