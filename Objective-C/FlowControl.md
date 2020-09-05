@@ -19,15 +19,16 @@
   swift와는 다르게 break;를 하지않으면 다음 case 까지 실행한다
 
   ```objective-c
-  switch (기본 자료형 조건) {
-   case 값1:
-  		// code...
-  		break;
-  	case 값2:
-  		// code...
-  		break;
-  	default:
-  		break;
+  switch (기본 자료형) {
+    case 값1:
+      // code...
+      break;
+    case 값2:
+      // code...
+      break;
+    default:
+      // code...
+      break;
   }
   ```
 
@@ -49,7 +50,7 @@
   int i = 10;
   while (i < 10) {
   	NSLog(@"In for loop %i", i);
-  	i++;
+    i++;
   }
   ```
 
