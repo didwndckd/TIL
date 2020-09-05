@@ -69,7 +69,7 @@
     >
     > :(타입)이름 :(타입)이름2 :(타입)이름3
 
-    ​	 **- ** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`...;
+    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`...;
 
     ​	 **- ** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`...;
 
