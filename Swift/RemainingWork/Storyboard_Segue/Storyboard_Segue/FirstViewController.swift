@@ -50,7 +50,6 @@ class FirstViewController: UIViewController {
 //        segue.destination 목적지
 //        segue.identifier 식별자
 //        segue.source 출발지
-        
         print("프리페어")
         guard let secondVC = segue.destination as? SecondViewController else{return}
         
@@ -73,7 +72,7 @@ class FirstViewController: UIViewController {
     
     @IBAction func didTapPlusFive(_ sender: Any) {
         if count < 20 { // count가 20보다 작아야 세그를 다음으로 지정한다.endd
-        performSegue(withIdentifier: "PlusFive", sender: sender)
+        performSegue(withIdentifier: "PlusFive", sender: 1)
         // shouldperform 호출 안함 왜냐하면 이미 세그를 정해 놨기 때문에
         }
     }

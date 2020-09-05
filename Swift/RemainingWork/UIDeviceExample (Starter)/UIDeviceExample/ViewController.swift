@@ -39,17 +39,17 @@ final class ViewController: UIViewController {
     
     
   }
+  
+  @objc func keyBoardWillShowNotification(_ noti: Notification) {
     
-    @objc func keyBoardWillShowNotification(_ noti: Notification) {
-        
-        guard
-        let userInfo = noti.userInfo,
-        let frame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect, // 키보드의 프레임 값
-        let duration = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? TimeInterval // 키보드가 올라오는 시간
-        else { return }
-        
-        
-    }
+    guard
+      let userInfo = noti.userInfo,
+      let frame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect, // 키보드의 프레임 값
+      let duration = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? TimeInterval // 키보드가 올라오는 시간
+      else { return }
+    
+    
+  }
   
   @IBAction private func architecture() {
     print("\n---------- [ Architecture ] ----------\n")
@@ -91,9 +91,9 @@ final class ViewController: UIViewController {
     print("isMultitaskingSupported: ", device.isMultitaskingSupported)
     
     //extension
-    print("modelIdentifire: ", device.identifier)
-    print("modelName: ", device.modelName)
-    label.text = "\(device.identifier), \(device.modelName)"
+        print("modelIdentifire: ", device.identifier)
+        print("modelName: ", device.modelName)
+        label.text = "\(device.identifier), \(device.modelName)"
     
     
   }
@@ -118,16 +118,16 @@ final class ViewController: UIViewController {
     device.isBatteryMonitoringEnabled.toggle()
     
     if device.isBatteryMonitoringEnabled {
-        notiCenter.addObserver(
-            self,
-            selector: #selector(didChangeBatteryState(_:)),
-            name: UIDevice.batteryStateDidChangeNotification,
-            object: nil)
+      notiCenter.addObserver(
+        self,
+        selector: #selector(didChangeBatteryState(_:)),
+        name: UIDevice.batteryStateDidChangeNotification,
+        object: nil)
     } else {
-        notiCenter.removeObserver(
-            self,
-            name: UIDevice.batteryStateDidChangeNotification,
-            object: nil)
+      notiCenter.removeObserver(
+        self,
+        name: UIDevice.batteryStateDidChangeNotification,
+        object: nil)
     }
     
   }
@@ -149,16 +149,16 @@ final class ViewController: UIViewController {
     print("ProximityMoniterring: ", device.isProximityMonitoringEnabled)
     
     if device.isProximityMonitoringEnabled {
-        notiCenter.addObserver(
-            self,
-            selector: #selector(didChangeProximityState(_:)),
-            name: UIDevice.proximityStateDidChangeNotification,
-            object: nil)
+      notiCenter.addObserver(
+        self,
+        selector: #selector(didChangeProximityState(_:)),
+        name: UIDevice.proximityStateDidChangeNotification,
+        object: nil)
     }else {
-        notiCenter.removeObserver(
-            self,
-            name: UIDevice.proximityStateDidChangeNotification,
-            object: nil)
+      notiCenter.removeObserver(
+        self,
+        name: UIDevice.proximityStateDidChangeNotification,
+        object: nil)
     }
   }
   
@@ -176,27 +176,27 @@ final class ViewController: UIViewController {
     label.text = "\(device.isGeneratingDeviceOrientationNotifications)"
     
     notiCenter.addObserver(
-        self,
-        selector: #selector(orientationDidChange(_:)),
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil)
+      self,
+      selector: #selector(orientationDidChange(_:)),
+      name: UIDevice.orientationDidChangeNotification,
+      object: nil)
   }
   
   @objc func orientationDidChange(_ noti: Notification) {
     
     if let device = noti.object as? UIDevice {
-        print("Device Orientation: ", device.orientation)
+      print("Device Orientation: ", device.orientation)
     }
     
     if #available(iOS 13, *) {
-        let scene = UIApplication.shared.connectedScenes.first
-        let orientation = (scene as! UIWindowScene).interfaceOrientation
-        print("Interface Orientation: ",orientation) // 콘텐츠가 표시되는 방향
+      let scene = UIApplication.shared.connectedScenes.first
+      let orientation = (scene as! UIWindowScene).interfaceOrientation
+      print("Interface Orientation: ",orientation) // 콘텐츠가 표시되는 방향
     }else {
-        let orientation = UIApplication.shared.statusBarOrientation
-        print("StatusBar Orientation: ", orientation)
-        print(orientation.isPortrait)
-        print(orientation.isLandscape)
+      let orientation = UIApplication.shared.statusBarOrientation
+      print("StatusBar Orientation: ", orientation)
+      print(orientation.isPortrait)
+      print(orientation.isLandscape)
     }
     
     // StatusBar Orientation의 값 중 ipsideDown은 노치 있는 기기에서는 미지원 ( iPhone8 이하에서만 지원)
@@ -206,20 +206,24 @@ final class ViewController: UIViewController {
   @IBAction private func endOrientationNotification() {
     
     while device.isGeneratingDeviceOrientationNotifications {
-        // beginGeneratingDeviceOrientationNotifications이 true/false 가 아니라 count 이기 때문에 begin 한 횟수만큼 꺼줘야함
-        device.endGeneratingDeviceOrientationNotifications()
+      // beginGeneratingDeviceOrientationNotifications이 true/false 가 아니라 count 이기 때문에 begin 한 횟수만큼 꺼줘야함
+      device.endGeneratingDeviceOrientationNotifications()
     }
     
     
     notiCenter.removeObserver(
-        self,
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil)
+      self,
+      name: UIDevice.orientationDidChangeNotification,
+      object: nil)
     
     label.text = "\(device.isGeneratingDeviceOrientationNotifications)"
   }
-    
 
+  
+  func test() {
+    
+  }
+  
 }
 
 
