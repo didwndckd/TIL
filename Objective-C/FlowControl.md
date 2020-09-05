@@ -6,11 +6,11 @@
 
   ```objective-c
   if (Boolean) {
-  	// code...
+    // code...
   } else if (Boolean) {
-  	// code...
+    // code...
   } else {
-  	// code...
+    // code...
   }
   ```
 
@@ -39,8 +39,8 @@
 - **for 구문**
 
   ``` objective-c
-  for (int i=0; i<10; i++) {
-  	NSLog(@"In for loop %i", i);
+  for (int i = 0; i < 10; i++;) {
+    NSLog(@"In for loop %i", i);
   }
   ```
 
@@ -48,8 +48,8 @@
 
   ``` objective-c
   int i = 10;
-  while (i < 10) {
-  	NSLog(@"In for loop %i", i);
+  while (i< 10) {
+    NSLog(@"In for loop %i", i);
     i++;
   }
   ```
