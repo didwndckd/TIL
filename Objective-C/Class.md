@@ -57,7 +57,7 @@
 
   - 메서드 선언
 
-    **-**(`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
+    **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
 
     매개 변수가 없으면 생략한다  
 
@@ -96,11 +96,11 @@
 
   - 메서드 구현
 
-    **-**(`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
+    **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
 
     매개 변수가 없으면 생략한다
 
-    ​	 **-**(`ReturnType`) `methodName` { `code...` } 
+    ​	 **-** (`ReturnType`) `methodName` { `code...` } 
 
     매개변수가 여러개인 경우
 
