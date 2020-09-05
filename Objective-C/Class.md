@@ -57,11 +57,11 @@
 
   - 메서드 선언
 
-    **- **(`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
+    **-**(`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
 
     매개 변수가 없으면 생략한다  
 
-    ​	**- ** (`ReturnType`)`methodName`;
+    ​	**-** (`ReturnType`)`methodName`;
 
     매개변수가 여러개인 경우
 
@@ -71,7 +71,7 @@
 
     ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`...;
 
-    ​	 **- ** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`...;
+    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`...;
 
     ```objective-c
     #import <Foundation/Foundation.h>
@@ -96,11 +96,11 @@
 
   - 메서드 구현
 
-    **- **(`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
+    **-**(`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
 
     매개 변수가 없으면 생략한다
 
-    ​	 **- **(`ReturnType`) `methodName` { `code...` } 
+    ​	 **-**(`ReturnType`) `methodName` { `code...` } 
 
     매개변수가 여러개인 경우
 
@@ -108,9 +108,9 @@
     >
     > :(타입)이름 :(타입)이름2 :(타입)이름3
 
-    ​	**- ** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`... { `code...`} 
+    ​	**-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`... { `code...`} 
 
-    ​	 **- ** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`... { `code...`} 
+    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`... { `code...`} 
 
     ``` objective-c
     #import "Person.h"
