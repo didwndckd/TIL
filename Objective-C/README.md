@@ -13,4 +13,5 @@
 | **Class**<br />클래스 선언, 구현, 멤버변수, 메서드           | [Class](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Class.md) |
 | **String**<br />문자열, NSString, NSMutableString, 관련 메서드 | [String](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/String.md) |
 | **Array**<br />배열, NSArray, NSMutableArray                 | [Array](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Array.md) |
+| **Dictionary**<br />딕셔너리, NSDictionary, NSMutableDictionary | [Dictionary](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Dictionary.md) |
 
