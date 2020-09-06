@@ -2,7 +2,14 @@
 
 > Objective-C의 클래스는 선언부와 구현부로 나누어져있다.
 
+- [Basic]()
+- [Variable]()
+- [Method]()
+- [Property, synthesize]()
 
+
+
+## Basic
 
 - **클래스 선언부**
 
@@ -31,7 +38,9 @@
   @end
   ```
 
-- **멤버 변수(Member varuable) 정의**
+## Variable
+
+- **멤버 변수(Member variable) 정의**
 
   멤버 변수는 `@interface` 의 {} 내부에 작성
 
@@ -49,6 +58,8 @@
   @end
   ```
 
+## Method
+
 - **멤버 메서드(Member method) 정의**
 
   멤버 메서드 또한 선언부와 구현부로 나누어진다
@@ -57,21 +68,23 @@
 
   - 메서드 선언
 
-    **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
+    - 기본
 
-    매개 변수가 없으면 생략한다  
+      **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName`;
+
+    - 매개 변수가 없으면 생략
 
     ​	**-** (`ReturnType`)`methodName`;
 
-    매개변수가 여러개인 경우
+    - 매개변수가 여러개인 경우
 
-    > colon(:) 을 기준으로 매개변수를 나눈다
-    >
-    > :(타입)이름 :(타입)이름2 :(타입)이름3
-
-    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`...;
-
-    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`...;
+      > colon(:) 을 기준으로 매개변수를 나눈다
+      >
+      > :(타입)이름 :(타입)이름2 :(타입)이름3
+      
+      **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`...;
+      
+      **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`...;
 
     ```objective-c
     #import <Foundation/Foundation.h>
@@ -97,22 +110,25 @@
 
   - 메서드 구현
 
-    **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
+    - 기본
 
-    매개 변수가 없으면 생략한다
+      **-** (`ReturnType`)`methodName`:(`ParameterType`)`parameterName` { `code...` } 
+
+    - 매개 변수가 없으면 생략
 
     ​	 **-** (`ReturnType`) `methodName` { `code...` } 
 
-    매개변수가 여러개인 경우
+    - 매개변수가 여러개인 경우
 
-    > colon(:) 을 기준으로 매개변수를 나눈다
-    >
-    > :(타입)이름 :(타입)이름2 :(타입)이름3
+      > colon(:) 을 기준으로 매개변수를 나눈다
+      >
+      > :(타입)이름 :(타입)이름2 :(타입)이름3
 
-    ​	**-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`... { `code...`} 
+      **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` : (`ParameterType2`)`parameterName2`... { `code...`} 
 
-    ​	 **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`... { `code...`} 
+      **-** (`ReturnType`)`methodName`:(`ParameterType1`)`parameterName1` `ArgumentName2`: (`ParameterType2`)`parameterName2`... { `code...`} 
 
+      
     ``` objective-c
     #import "Person.h"
     
@@ -193,11 +209,13 @@
     // age, tall getter 메서드를 호출하여 반환 받은 값을 NSLog로 출력
     ```
 
-- **프로퍼티(property), 신디싸이즈(synthesize)**
+## Property, Synthesize
+
+- **프로퍼티(Property), 신디싸이즈(Synthesize)**
 
   > 클래스 외부에서는 멤버 변수에 직접 접근이 불가능하기때문에 필수적으로 getter, setter 메서드를 작성하여 접근해야하는데 이런 노가다성 코드를 줄이기위해 있는것이 **프로퍼티, 신디싸이즈** 이다.
 
-  - 프로퍼티(property)
+  - 프로퍼티(Property)
 
     클래스 선언부에 사용
 
@@ -219,7 +237,7 @@
     @end
     ```
 
-  - 신디싸이즈(synthesize)
+  - 신디싸이즈(Synthesize)
 
     클래스 구현부에 사용
 
