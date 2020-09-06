@@ -18,7 +18,7 @@
 
 - `- (instancetype)initWithObjects:(ObjectType)firstObj, ...;`
 
-  > 인스턴스 메서드로 동적할당을 통한 인스턴스 생성 후 호출 가능
+  > 인스턴스 메서드로 동적할당 후 호출 가능
 
   ``` objective-c
   NSArray *summer = [[NSArray alloc]initWithObjects:@"6월", @"7월", @"8월", nil];
