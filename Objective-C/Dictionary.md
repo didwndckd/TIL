@@ -3,9 +3,9 @@
 
 
 
-- [NSDictionary]()
-- [NSMutableDictionary]()
-- [Method]()
+- [NSDictionary](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Dictionary.md#nsdictionary)
+- [NSMutableDictionary](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Dictionary.md#nsmutabledictionary)
+- [Method](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Dictionary.md#method)
 
 
 
