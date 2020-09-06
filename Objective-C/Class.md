@@ -2,10 +2,10 @@
 
 > Objective-C의 클래스는 선언부와 구현부로 나누어져있다.
 
-- [Basic]()
-- [Variable]()
-- [Method]()
-- [Property, synthesize]()
+- [Basic](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Class.md#basic)
+- [Variable](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Class.md#variable)
+- [Method](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Class.md#method)
+- [Property, Synthesize](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/Class.md#property-synthesize)
 
 
 
