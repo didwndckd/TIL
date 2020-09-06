@@ -53,6 +53,37 @@
   }
   ```
 
+- **for in 구문**
+
+  > collection 타입을 순회하는 반복문
+
+  ``` objective-c
+  // Array
+  NSArray *summer = [[NSArray alloc]initWithObjects:@"6월", @"7월", @"8월", nil];
+  
+  for (NSString *month in summer) {
+    NSLog(@"month: %@", month);
+  }
+  /*
+  6월
+  7월
+  8월
+  */
+  
+  // Dictionary
+  NSDictionary *dic = [[NSDictionary alloc]initWithObjectsAndKeys:@"양중창", @"이름", @"모름", @"나이", nil];
+  
+  for (NSString *key in dic) {
+    NSLog(@"%@: %@", key, [dic objectForKey:key]);
+  }
+  /*
+  나이: 모름
+  이름: 양중창
+  */
+  ```
+
+  
+
 ### while 구문
 
 - **Basic**
