@@ -57,9 +57,11 @@
 
   > collection 타입을 순회하는 반복문
 
-  for (`Type` *`element` in `collection`) { code... }
-
   ``` objective-c
+  for (Type *element in collection) {
+    // code...
+  }
+  
   // Array
   NSArray *summer = [[NSArray alloc]initWithObjects:@"6월", @"7월", @"8월", nil];
   
