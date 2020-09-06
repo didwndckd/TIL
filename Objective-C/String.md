@@ -2,8 +2,8 @@
 
 > 문자열
 
-- [NSString]()
-- [NSMutableString]()
+- [NSString](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/String.md#nsstring)
+- [NSMutableString](https://github.com/JoongChangYang/TIL/blob/master/Objective-C/String.md#nsmutablestring)
 
 ## NSString
 
