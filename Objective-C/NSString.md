@@ -1,6 +1,6 @@
 # NSString
 
-> 문자열 클래스 
+> 문자열 클래스 자기 자신을 바꿀 수 없다.
 
 ### 초기화
 
@@ -104,7 +104,7 @@
 
 
 
-## NSMutableString
+# NSMutableString
 
 > 자기 자신을 바꿀 수 있는 문자열 클래스 NSString을 상속받는다.
 
