@@ -91,6 +91,7 @@
     - (void)print; // -> () -> void
     - (void)setPersonAge:(int)a Tall: (int)t Number: (int)n; // (int, int, int) -> void
     - (void)setPerson:(int)a :(int)t :(int)n; // (int, int, int) -> void
+    + (Person *)initPerson:(int)a :(int)t; //(int, int) -> Person
     @end
     ```
 
@@ -151,6 +152,13 @@
       tall = t;
       NSLog(@"setPerson() %i", n);
     }
+    
+    + (Person *)initPerson:(int)a :(int)t {
+      Person *person = [[Person alloc]init];
+      [person setPersonAge:a Tall:t Number:10];
+      return person;
+    }
+    
     @end
     ```
 
