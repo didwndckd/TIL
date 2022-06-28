@@ -23,6 +23,6 @@
 
   - 유형이 지워진 키 경로라는 말이 이뜻인듯?
 
-- `_AppendKeyPath` 프로토콜을 채택하여 `appending(path: AnyKeyPath) -> AnyKeyPath?`함수를 사용하여 `KeyPath` 추가 가능
+- `_AppendKeyPath` 프로토콜을 채택하여 `appending(path: AnyKeyPath) -> AnyKeyPath?` 함수를 사용하여 `KeyPath` 추가 가능
 
-  - 프로토콜 확장을 통해 타입별로 `KeyPath` 추가 함수를 구현하고 있다.
+  - 내부적으로 프로토콜 확장을 통해 타입별로 `KeyPath` 추가 함수를 구현하고 있음
