@@ -37,7 +37,7 @@
     // String타입의 count 프로퍼티 경로
     let anyKeyPath: AnyKeyPath = \String.count
     
-    let str = "joong chang yang"
+    let str = "Joong Chang Yang"
     
     // AnyKeyPath를 사용하여 접근하게되면 Any? 타입으로 나옴
     let count = str[keyPath: anyKeyPath] 
@@ -69,7 +69,7 @@
     // Root 타입이 명시되어있어 String 하위 경로만 사용 가능
     let anyKeyPath: PartialKeyPath<String> = \String.count 
     
-    let str = "joong chang yang"
+    let str = "Joong Chang Yang"
     
     // AnyKeyPath와는 달리 Root 타입 정보가 명시되어있어서 해당하는 하위 경로가 있다는걸 보장 하기에 Any 타입이 나옴
     let count = str[keyPath: anyKeyPath] 
