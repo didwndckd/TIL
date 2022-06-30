@@ -5,7 +5,7 @@
 - 객체의 값을 **직접** 가져오지않고, Key 또는 `KeyPath`를 이용하여 **간접적으로** 데이터를 가져오거나 수정하는 방법
 - Swift에서는 `KeyPath`를 사용함
   - 어떤 **프로퍼티의 위치** 참조
-  - 파일 시스템이랑 비슷한 구조, 루트 위치부터 경로로 찾아감
+  - 루트 위치부터 경로로 찾아감 `\Root.path.path`
   - 간접적으로 특정 타입의 어떤 값을 가리켜야 할지 미리 지정해두고 사용
 
 
@@ -21,7 +21,7 @@
 
 - Equatable, Hashable 프로토콜을 채택하고있어서 비교, `Dictionaty`의 `Key`값으로 사용이 가능함
 
-- 타입 프로퍼티로 `rootType: Any.Type`, `valueType: Any.Type`이 있으나 사용하려 하면 메서드를 반드시 override 해야한다며 `Fatal Error` 발생
+- 타입 프로퍼티로 `rootType: Any.Type`, `valueType: Any.Type`이 있으나 접근하려 하면 메서드를 반드시 override 해야한다며 `Fatal Error` 발생
 
   ![AnyKeyPath.rootValue](assets/AnyKeyPath.rootValue.png)
 
@@ -41,7 +41,7 @@
     // String타입의 count 프로퍼티 경로
     let anyKeyPath: AnyKeyPath = \String.count
     
-    let str = "Joong Chang Yang"
+    let str = "Yang Jungchang"
     
     // AnyKeyPath를 사용하여 접근하게되면 Any? 타입으로 나옴
     let count = str[keyPath: anyKeyPath] 
@@ -49,7 +49,7 @@
     
     /*
     출력 결과
-    count: Optional(16)
+    count: Optional(14)
     */
     ```
   
@@ -61,33 +61,81 @@
 
 [공식문서](https://developer.apple.com/documentation/swift/partialkeypath)
 
-- `AnyKeyPath` 클래스를 상속받음
+- `AnyKeyPath` 클래스를 상속
 
-- 루트 타입을 명시 하기에 타입 프로퍼티 `rootType: AnyType`을 사용하면 값이 나올줄 알았는데  `AnyKeyPath`와 같이 `Fatal Error` 발생함
+- Root 타입을 명시 하기에 타입 프로퍼티 `rootType: Any.Type`에 접근하면 값이 나올줄 알았는데  `AnyKeyPath`와 같이 `Fatal Error` 발생 (왜일까...)
 
 - 사용
 
-  - 사용 방법은 `AnyKeyPath`와 동일하다
-
-    ```swift
-    // Root 타입이 명시되어있어 String 하위 경로만 사용 가능
-    let anyKeyPath: PartialKeyPath<String> = \String.count 
-    
-    let str = "Joong Chang Yang"
-    
-    // AnyKeyPath와는 달리 Root 타입 정보가 명시되어있어서 해당하는 하위 경로가 있다는걸 보장 하기에 Any 타입이 나옴
-    let count = str[keyPath: anyKeyPath] 
-    print("count: \(count)")
-    
-    /*
-    출력 결과
-    count: 16
-    */
-    ```
+  ```swift
+  // Root 타입이 명시되어있어 String 하위 경로만 사용 가능
+  let anyKeyPath: PartialKeyPath<String> = \String.count 
+  
+  let str = "Yang Jungchang"
+  
+  // AnyKeyPath와는 달리 Root 타입 정보가 명시되어있어서 해당하는 하위 경로가 있다는걸 보장 하기에 Any 타입이 나옴
+  let count = str[keyPath: anyKeyPath] 
+  print("count: \(count)")
+  
+  /*
+  출력 결과
+  count: 14
+  */
+  ```
 
 
 
 ## KeyPath\<Root, Value\>
 
-> 
+> 특정 루트 유형에서 특정 결과 값 유형까지의 키 경로
+
+[공식문서](https://developer.apple.com/documentation/swift/keypath)
+
+- `PartialKeyPath` 클래스 상속
+
+- **Read-only** 
+
+- Root 타입과 Value 타입을 명시 하며 타입 프로퍼티 `rootType: Any.Type`과 `valueType: Any.Type`에 접근해 타입 값을 가져올 수 있음
+
+  ``` swift
+  print("Root: \(KeyPath<String, Int>.rootType)")
+  print("Value: \(KeyPath<String, Int>.valueType)")
+  
+  /*
+  출력 결과
+  Root: String
+  Value: Int
+  */
+  ```
+
+- 사용
+
+  ```swift
+  struct Person {
+      let name: String
+      let address: Address
+  }
+  
+  struct Address {
+      let town: String
+  }
+  
+  // Root와 Value 타입이 명시되어있어 Person의 하위 프로퍼티이면서 String 타입의 프로퍼티만 할당 가능
+  let nameKeyPath: KeyPath<Person, String> = \Person.name
+  
+  let yjc = Person(name: "Yang Jungchang", adress: Address(town: "서울"))
+  
+  let name = yjc[keyPath: nameKeyPath]
+  print("name: \(name)") // name: Yang Jungchang
+  
+  // 경로를 따라 Person -> address -> town 프로퍼티까지 접근
+  // 해당 프로퍼티가 상수라서 KeyPath<Person, String>으로 타입 추론됨
+  let townKeyPath = \Person.address.town
+  
+  let town = yjc[keyPath: townKeyPath]
+  print("town: \(town)") // town: 서울
+  
+  ```
+
+  
 
