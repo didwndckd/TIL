@@ -123,7 +123,7 @@
   // Root와 Value 타입이 명시되어있어 Person의 하위 프로퍼티이면서 String 타입의 프로퍼티만 할당 가능
   let nameKeyPath: KeyPath<Person, String> = \Person.name
   
-  let yjc = Person(name: "Yang Jungchang", adress: Address(town: "서울"))
+  let yjc = Person(name: "Yang Jungchang", address: Address(town: "서울"))
   
   let name = yjc[keyPath: nameKeyPath]
   print("name: \(name)") // name: Yang Jungchang
