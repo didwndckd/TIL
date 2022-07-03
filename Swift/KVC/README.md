@@ -63,6 +63,8 @@
 
 - `AnyKeyPath` 클래스를 상속
 
+- Root 타입은 명시를 하고 Value 타입은 명시하지 않기에 Root 빼고 지워져있다는듯...
+
 - Root 타입을 명시 하기에 타입 프로퍼티 `rootType: Any.Type`에 접근하면 값이 나올줄 알았는데  `AnyKeyPath`와 같이 `Fatal Error` 발생 (왜일까...)
 
 - 사용
