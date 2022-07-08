@@ -11,5 +11,5 @@
 - [DependencyManager](DependencyManager)
 - [ImagePiker](ImagePicker)
 - [CoreGraphics](CoreGraphics)
-- [KeyPath](KeyPath)
+- [Key-Value-Coding(KVC)](KVC)
 
