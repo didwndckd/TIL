@@ -61,7 +61,7 @@
 
 [공식문서](https://developer.apple.com/documentation/swift/partialkeypath)
 
-- `AnyKeyPath` 클래스를 상속
+- `AnyKeyPath` 클래스 상속
 
 - Root 타입은 명시를 하고 Value 타입은 명시하지 않기에 Root 빼고 지워져 있다는듯...
 
@@ -148,7 +148,7 @@
 
 [공식문서](https://developer.apple.com/documentation/swift/writablekeypath)
 
-- `KeyPath`클래스 상속
+- `KeyPath ` 클래스 상속
 
 - 읽기, 쓰기 가능
 
@@ -166,9 +166,11 @@
       var town: String
   }
   
-  let townKeyPath: WritableKeyPath<Person, String> = \Person.address.town
-          
+  // struct이기에 var 선언해야 WritableKeyPath 사용 가능
   var yjc = Person(name: "양중창", address: Address(town: "서울"))
+  
+  // Person.address는 변수, Address.town 또한 변수이기에 WritableKeyPath 타입
+  let townKeyPath: WritableKeyPath<Person, String> = \Person.address.town
   
   // town KeyPath로 접근해 값을 읽음
   let twon = yjc[keyPath: townKeyPath]
@@ -183,5 +185,82 @@
   yjc[keyPath: nameKeyPath] = "양창중" // KeyPath 타입은 read-olny이기에 값을 변경하려 하면 컴파일 에러
   ```
 
-  
 
+
+## ReferenceWritableKeyPath\<Root, Valeu\>
+
+> 참조 의미 체계를 사용하여 결과 값에서 읽고 쓰는 것을 지원하는 키 경로
+
+[공식문서](https://developer.apple.com/documentation/swift/referencewritablekeypath)
+
+- `WritableKeyPath` 클래스 상속
+
+- `WritableKeyPath`와 마찬가지로 읽기, 쓰기 가능
+
+- [`KeyPath`, `WritableKeyPath`]이냐 `ReferenceWritableKeyPath`의 차이는 해당 프로퍼티가 속한 타입에 있음, 참조 타입과 값타입의 개념과 같음
+
+  - 만약 해당 프로퍼티가 `참조 타입`의 프로퍼티라면 `ReferenceWritableKeyPath`가 될 것이고, `값 타입`의 프로퍼티라면 `KeyPath` 또는 `WritableKeyPath`가 될 것임
+
+- 해당 프로퍼티가 `참조 타입`에 속하더라도 **상수**라면 해당 프로퍼티의 키경로는 `KeyPath`가 된다.
+
+  ``` swift
+  struct Person {
+      let name: String
+      var age: Int
+      let address: Address
+  }
+  
+  class Address {
+      let country: String
+      var town: String
+      
+      init(country: String, town: String) {
+          self.country = country
+          self.town = town
+      }
+  }
+  
+  let yjc = Person(name: "양중창", age: 31, address: Address(country: "대한민국", town: "서울"))
+  
+  let nameKeyPath = \Person.name // KeyPath<Person, String>
+  let ageKeyPath = \Person.age // WritableKeyPath<Person, Int>
+  let addressKeyPath = \Person.address // KeyPath<Person, Address>
+  let countryKeyPath = \Person.address.country // KeyPath<Person, String>
+  let townKeyPath = \Person.address.town // ReferenceWritableKeyPath<Person, String>
+  
+  print("name: \(yjc[keyPath: nameKeyPath])") // name: 양중창
+  print("age: \(yjc[keyPath: ageKeyPath])") // age: 31
+  print("address: \(yjc[keyPath: addressKeyPath])") // address: Playground.Address
+  print("country: \(yjc[keyPath: countryKeyPath])") // country: 대한민국
+  print("town: \(yjc[keyPath: townKeyPath])") // town: 서울
+  ```
+
+- 사용
+
+  ``` swift
+  struct Person {
+      let name: String
+      var age: Int
+      let address: Address
+  }
+  
+  class Address {
+      let country: String
+      var town: String
+      
+      init(country: String, town: String) {
+          self.country = country
+          self.town = town
+      }
+  }
+  
+  let yjc = Person(name: "양중창", age: 31, address: Address(country: "대한민국", town: "서울"))
+  
+  // Person.address가 let이더라도 참조타입이기에 내부 Address.town 프로퍼티 값 변경이 가능함
+  let townKeyPath: ReferenceWritableKeyPath<Person, String> = \Person.address.town
+  
+  yjc[keyPath: townKeyPath] = "경기도"
+  print("town: \(yjc.address.town)") // town: 서울
+  ```
+  
+  
