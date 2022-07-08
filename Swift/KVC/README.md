@@ -97,7 +97,7 @@
 
 - **Read-only** 
 
-- Root 타입과 Value 타입을 명시 하며 타입 프로퍼티 `rootType: Any.Type`과 `valueType: Any.Type`에 접근해 타입 값을 가져올 수 있음
+- Root 타입과 Value 타입을 명시 하며 타입 프로퍼티 `rootType: Any.Type`과 `valueType: Any.Type`에 접근해 타입 값을 가져올 수 있음(하위 클래스는 당연 가능)
 
   ``` swift
   print("Root: \(KeyPath<String, Int>.rootType)")
@@ -137,6 +137,50 @@
   let town = yjc[keyPath: townKeyPath]
   print("town: \(town)") // town: 서울
   
+  ```
+
+
+
+
+## WritableKeyPath\<Root, Value\>
+
+> 결과 값에서 읽고 쓰기를 지원하는 키 경로
+
+[공식문서](https://developer.apple.com/documentation/swift/writablekeypath)
+
+- `KeyPath`클래스 상속
+
+- 읽기, 쓰기 가능
+
+- 해당 프로퍼티나 객체가 변수이어야만 사용 가능 아니면 에러!!
+
+- 사용
+
+  ```swift
+  struct Person {
+      let name: String
+      var address: Address
+  }
+  
+  struct Address {
+      var town: String
+  }
+  
+  let townKeyPath: WritableKeyPath<Person, String> = \Person.address.town
+          
+  var yjc = Person(name: "양중창", address: Address(town: "서울"))
+  
+  // town KeyPath로 접근해 값을 읽음
+  let twon = yjc[keyPath: townKeyPath]
+  print("twon: \(town)")
+  
+  // town KeyPath로 접근해 값을 변경함
+  yjc[keyPath: townKeyPath] = "경기도"
+  print("town: \(yjc.address.town)") // town: 경기도
+  
+  // Person.name 프로퍼티는 let으로 선언되어있어 WritableKeyPath가 아닌 KeyPath 타입으로 추론됨
+  let nameKeyPath = \Person.name
+  yjc[keyPath: nameKeyPath] = "양창중" // KeyPath 타입은 read-olny이기에 값을 변경하려 하면 컴파일 에러
   ```
 
   
