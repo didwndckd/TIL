@@ -13,7 +13,7 @@
 - [AnyKeyPath](#anykeypath)
 - [PartialKeyPath\<Root\>](#partialkeypathroot)
 - [KeyPath\<Root, Value\>](#keypathroot-value)
-- [WritableKeyPath\<Root, Value\>](#keypathroot-value)
+- [WritableKeyPath\<Root, Value\>](#writablekeypathroot-value)
 - [ReferenceWritableKeyPath\<Root, Valeu\>](#referencewritablekeypathroot-valeu)
 - [_AppendKeyPath](#_appendkeypath)
 
