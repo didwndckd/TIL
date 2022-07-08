@@ -8,6 +8,15 @@
   - 루트 위치부터 경로로 찾아감 `\Root.path.path`
   - 간접적으로 특정 타입의 어떤 값을 가리켜야 할지 미리 지정해두고 사용
 
+### 목차
+
+- [AnyKeyPath](#anykeypath)
+- [PartialKeyPath\<Root\>](#partialkeypathroot)
+- [KeyPath\<Root, Value\>](#keypathroot-value)
+- [WritableKeyPath\<Root, Value\>](#keypathroot-value)
+- [ReferenceWritableKeyPath\<Root, Valeu\>](#referencewritablekeypathroot-valeu)
+- [_AppendKeyPath](#_appendkeypath)
+
 
 
 
@@ -262,5 +271,72 @@
   yjc[keyPath: townKeyPath] = "경기도"
   print("town: \(yjc.address.town)") // town: 서울
   ```
+
+
+
+## _AppendKeyPath
+
+> 키 경로 타입의 경로 추가 프로토콜
+
+- `AnyKeyPath`에서 채택하는 프로토콜, 따라서 하위 타입들은 모두 채택되어 있음
+
+- 이 프로토콜을 직접 사용하지 말라고 되어있음
+
+- 키 경로 타입의 경로를 추가하는 함수가 모여있음
+
+- `appending(path:)` 함수가 타입별로 확장 구현되어 있음
+
+  ``` swift
+  @inlinable public func appending<Root>(path: AnyKeyPath) -> PartialKeyPath<Root>? where Self == PartialKeyPath<Root>
   
+  @inlinable public func appending<Root, AppendedRoot, AppendedValue>(path: KeyPath<AppendedRoot, AppendedValue>) -> KeyPath<Root, AppendedValue>? where Self == PartialKeyPath<Root>
+  
+  @inlinable public func appending<Root, AppendedRoot, AppendedValue>(path: ReferenceWritableKeyPath<AppendedRoot, AppendedValue>) -> ReferenceWritableKeyPath<Root, AppendedValue>? where Self == PartialKeyPath<Root>
+  
+  @inlinable public func appending<Root, Value, AppendedValue>(path: KeyPath<Value, AppendedValue>) -> KeyPath<Root, AppendedValue> where Self : KeyPath<Root, Value>
+  
+  @inlinable public func appending<Root, Value, AppendedValue>(path: ReferenceWritableKeyPath<Value, AppendedValue>) -> ReferenceWritableKeyPath<Root, AppendedValue> where Self == KeyPath<Root, Value>
+  
+  @inlinable public func appending<Root, Value, AppendedValue>(path: WritableKeyPath<Value, AppendedValue>) -> WritableKeyPath<Root, AppendedValue> where Self == WritableKeyPath<Root, Value>
+  
+  @inlinable public func appending<Root, Value, AppendedValue>(path: ReferenceWritableKeyPath<Value, AppendedValue>) -> ReferenceWritableKeyPath<Root, AppendedValue> where Self == WritableKeyPath<Root, Value>
+  
+  @inlinable public func appending<Root, Value, AppendedValue>(path: WritableKeyPath<Value, AppendedValue>) -> ReferenceWritableKeyPath<Root, AppendedValue> where Self == ReferenceWritableKeyPath<Root, Value>
+  
+  // extension where Self == AnyKeyPath
+  @inlinable public func appending(path: AnyKeyPath) -> AnyKeyPath?
+  ```
+
+- 사용
+
+  ``` swift
+  struct Person {
+      let name: String
+      var age: Int
+      let address: Address
+  }
+  
+  struct Address {
+      let country: String
+      let town: String
+  }
+  
+  let yjc = Person(name: "양중창", age: 31, address: Address(country: "대한민국", town: "서울"))
+  
+  // 시작점이 될 키 경로
+  let addressKeyPath = \Person.address
+  
+  // Person.address에 Address.town 경로 추가
+  // Person.address는 Address 타입이기에 Address.town 경로 추가가 가능함
+  // 즉 KeyPath<Person, Address> 타입에서 Address 타입을 Root로 가지는 다음 경로를 추가할 수 있음
+  let townKeyPath = addressKeyPath.appending(path: \Address.town)
+  print("town: \(yjc[keyPath: townKeyPath])") // town: 서울
+  
+  // townKeyPath는 KeyPath<Person, String> 타입
+  // 이미 Value 타입이 String이라는 것을 알기에 매개변수에 들어갈 Root 타입을 생략할 수 있음
+  // 이 함수는 appending<Person, String, Int>(path: KeyPath<String, Int>) -> KeyPath<Person, Int>가 됨
+  let townCountKeyPath = townKeyPath.appending(path: \.count)
+  print("town.count: \(yjc[keyPath: townCountKeyPath])") // town.count: 2
+  ```
+
   
