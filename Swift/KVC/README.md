@@ -148,7 +148,7 @@
 
 [공식문서](https://developer.apple.com/documentation/swift/writablekeypath)
 
-- `KeyPath ` 클래스 상속
+- `KeyPath` 클래스 상속
 
 - 읽기, 쓰기 가능
 
