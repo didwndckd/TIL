@@ -102,3 +102,26 @@ struct JoinedShape<T: Shape, U: Shape>: Shape {
 let joinedTriangles = JoinedShape(top: smallTriangle, bottom: flippedTriangle)
 print("joinedTriangles")
 print(joinedTriangles.draw())
+
+struct Square: Shape {
+    var size: Int
+    func draw() -> String {
+        let line = String(repeating: "*", count: self.size)
+        let result = Array<String>(repeating: line, count: size)
+        return result.joined(separator: "\n")
+    }
+}
+
+// 사다리꼴
+func makeTrapezoid() -> some Shape {
+    let top = Triangle(size: 2)
+    let middle = Square(size: 2)
+    let bottom = FlippedShape(shape: top)
+    let trapezoid = JoinedShape(top: top,
+                                bottom: JoinedShape(top: middle, bottom: bottom))
+    return trapezoid
+}
+
+let trapezoid = makeTrapezoid()
+print("trapezoid")
+print(trapezoid.draw())
