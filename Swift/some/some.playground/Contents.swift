@@ -125,3 +125,27 @@ func makeTrapezoid() -> some Shape {
 let trapezoid = makeTrapezoid()
 print("trapezoid")
 print(trapezoid.draw())
+
+
+// 제네릭 + some
+func flip<T: Shape>(_ shape: T) -> some Shape {
+    return FlippedShape(shape: shape)
+}
+
+func join<T: Shape, U: Shape>(_ top: T, _ bottom: U) -> some Shape {
+    return JoinedShape(top: top, bottom: bottom)
+}
+
+let opaqueJoinedTriangles = join(smallTriangle, flip(smallTriangle))
+print("opaqueJoinedTriangles")
+print(opaqueJoinedTriangles.draw())
+
+// 반환 타입은 단일이어야 함
+//func invalidFlip<T: Shape>(_ shape: T) -> some Shape {
+//    if shape is Square {
+//        return shape // Error
+//    }
+//    return FlippedShape(shape: shape) // Error
+//}
+
+
