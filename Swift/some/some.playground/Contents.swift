@@ -141,11 +141,63 @@ print("opaqueJoinedTriangles")
 print(opaqueJoinedTriangles.draw())
 
 // 반환 타입은 단일이어야 함
-//func invalidFlip<T: Shape>(_ shape: T) -> some Shape {
+//func invalidFlip<T: Shape>(_ shape: T) -> some Shape { // Error: Function declares an opaque return type 'some Shape', but the return statements in its body do not have matching underlying types
 //    if shape is Square {
-//        return shape // Error
+//        return shape
 //    }
-//    return FlippedShape(shape: shape) // Error
+//    return FlippedShape(shape: shape)
 //}
 
+func `repeat`<T: Shape>(shape: T, count: Int) -> some Collection {
+    return Array<T>(repeating: shape, count: count)
+}
 
+print("repeat")
+print(`repeat`(shape: smallTriangle, count: 3))
+
+
+//func protoFlip<T: Shape>(_ shape: T) -> Shape {
+//    return FlippedShape(shape: shape)
+//}
+
+func protoFlip<T: Shape>(_ shape: T) -> Shape {
+    if shape is Square {
+        return shape
+    }
+    return FlippedShape(shape: shape)
+}
+
+print("protoFlip smallTriangle")
+print(protoFlip(smallTriangle).draw())
+
+print("protoFlip Square")
+print(protoFlip(Square(size: 4)).draw())
+
+
+//let protoFlippedTriangle = protoFlip(smallTriangle)
+//let sameThing = protoFlip(smallTriangle)
+//protoFlippedTriangle == sameThing // Error
+
+protocol Container {
+    associatedtype Item
+    var count: Int { get }
+    subscript(i: Int) -> Item { get }
+}
+
+extension Array: Container {}
+
+//func makeProtocolContainer<T>(item: T) -> Container { // Error: Use of protocol 'Container' as a type must be written 'any Container'
+//    return [item]
+//}
+
+//func makeProtocolContainer<T, C: Container>(item: T) -> C { // Error: Cannot convert return expression of type '[T]' to return type 'C'
+//    return [item]
+//}
+
+func makeOpaqueContainer<T>(item: T) -> some Container {
+    return [item]
+}
+
+let opaqueContainer = makeOpaqueContainer(item: 12)
+let twelve = opaqueContainer[0]
+print(type(of: twelve))

@@ -9,3 +9,6 @@
 
 
 
+### 참조
+
+- https://bbiguduk.gitbook.io/swift/language-guide-1/opaque-types#the-problem-that-opaque-types-solve
