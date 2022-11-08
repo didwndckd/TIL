@@ -3,5 +3,5 @@
 - [GCD](GCD)
 - [DependencyManager](DependencyManager)
 - [Key-Value-Coding(KVC)](KVC)
-- [some](some)
+- [Opaque Types](Opaque Types)
 

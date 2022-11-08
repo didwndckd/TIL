@@ -201,3 +201,28 @@ func makeOpaqueContainer<T>(item: T) -> some Container {
 let opaqueContainer = makeOpaqueContainer(item: 12)
 let twelve = opaqueContainer[0]
 print(type(of: twelve))
+
+func foo<T: Equatable>(_ x: T, _ y: T) -> some Equatable {
+    let condition = x == y // OK, x와 y는 같은 타입
+    return condition ? 1738 : 679
+}
+
+let x = foo("apples", "bananas")
+//let x = foo("apples", "apples")
+let y = foo("apples", "some fruit nobody's ever heard of")
+//let y = foo(1, 2)
+print(x == y) // OK, x와 y는 같은 Opaque Type
+
+let url = URL(string: "https://www.google.com")!
+let config = URLSessionConfiguration.default.httpCookieStorage?.cookies
+
+var request = URLRequest(url: url)
+var session = URLSession().dataTask(with: request)
+request.httpShouldHandleCookies = false
+
+
+import WebKit
+
+let webViewConfig = WKWebViewConfiguration()
+
+let webView = WKWebView(frame: .zero, configuration: .init())
