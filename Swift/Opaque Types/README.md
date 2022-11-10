@@ -12,3 +12,5 @@
 ### 참조
 
 - https://bbiguduk.gitbook.io/swift/language-guide-1/opaque-types#the-problem-that-opaque-types-solve
+- https://jcsoohwancho.github.io/2019-08-24-Opaque-Type-%EC%82%B4%ED%8E%B4%EB%B3%B4%EA%B8%B0/
+- https://github.com/apple/swift-evolution/blob/main/proposals/0244-opaque-result-types.md

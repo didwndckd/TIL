@@ -213,16 +213,42 @@ let y = foo("apples", "some fruit nobody's ever heard of")
 //let y = foo(1, 2)
 print(x == y) // OK, x와 y는 같은 Opaque Type
 
-let url = URL(string: "https://www.google.com")!
-let config = URLSessionConfiguration.default.httpCookieStorage?.cookies
+protocol WrappedPrize {
+    associatedtype Prize
+    
+    var wrapColor: String! { get } // 포장 색상
+    var prize: Prize! { get } // 실제 상품
+}
 
-var request = URLRequest(url: url)
-var session = URLSession().dataTask(with: request)
-request.httpShouldHandleCookies = false
+protocol Gundam {}
+protocol Pokemon {}
 
+struct WrappedGundam: WrappedPrize {
+    var wrapColor: String!
+    var prize: Gundam! // ! 붙이니까 되네?
+}
 
-import WebKit
+struct WrappedPokemon: WrappedPrize {
+    var wrapColor: String!
+    var prize: Pokemon!
+}
 
-let webViewConfig = WKWebViewConfiguration()
+protocol ReverseGenericProtocol {
+    init()
+}
 
-let webView = WKWebView(frame: .zero, configuration: .init())
+struct ReverseGenericStruct: ReverseGenericProtocol {
+    init() {}
+}
+
+struct ReverseGenericStruct2: ReverseGenericProtocol {
+    init() {}
+}
+
+func generic<T: ReverseGenericProtocol>() -> T {
+    return T.init()
+}
+
+let r1: ReverseGenericStruct = generic()
+let r2: ReverseGenericStruct2 = generic()
+
