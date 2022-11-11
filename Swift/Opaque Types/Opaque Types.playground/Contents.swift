@@ -210,7 +210,7 @@ func foo<T: Equatable>(_ x: T, _ y: T) -> some Equatable {
 let x = foo("apples", "bananas")
 //let x = foo("apples", "apples")
 let y = foo("apples", "some fruit nobody's ever heard of")
-//let y = foo(1, 2)
+//let y = foo(1, 2) // 이거 쓰면 아래 에러: Binary operator '==' cannot be applied to operands of type 'some Equatable' (result of 'foo') and 'some Equatable' (result of 'foo')
 print(x == y) // OK, x와 y는 같은 Opaque Type
 
 protocol WrappedPrize {
@@ -233,22 +233,168 @@ struct WrappedPokemon: WrappedPrize {
     var prize: Pokemon!
 }
 
-protocol ReverseGenericProtocol {
+protocol GenericProtocol: Equatable {
     init()
 }
 
-struct ReverseGenericStruct: ReverseGenericProtocol {
+struct GenericStruct: GenericProtocol {
     init() {}
 }
 
-struct ReverseGenericStruct2: ReverseGenericProtocol {
+struct GenericStruct2: GenericProtocol {
     init() {}
 }
 
-func generic<T: ReverseGenericProtocol>() -> T {
+func generic<T: GenericProtocol>() -> T {
     return T.init()
 }
 
-let r1: ReverseGenericStruct = generic()
-let r2: ReverseGenericStruct2 = generic()
+let g1: GenericStruct = generic()
+let g2: GenericStruct2 = generic()
+
+//func reverseGeneric() -> <T: GenericProtocol> T {
+//    return GenericStruct()
+//}
+
+func reverseGeneric() -> some GenericProtocol {
+    return GenericStruct()
+}
+
+func reverseGeneric2() -> some GenericProtocol {
+    return GenericStruct()
+}
+
+//let rg1 = reverseGeneric()
+//let rg2 = reverseGeneric2()
+//let rgResult = rg1 == rg2
+
+func makeMeACollection<T>(with: T) -> some RangeReplaceableCollection & MutableCollection {
+    return [with]
+}
+
+var c = makeMeACollection(with: 17)
+c.append(c.first!)// ok RangeReplaceableCollection
+c[c.startIndex] = c.first! // ok MutableCollection
+print(c.reversed()) // ok Collection/Sequance
+
+
+func foo<C: Collection>(_ c : C) {
+    print(c)
+}
+
+foo(c)
+
+var cc = [c]
+cc.append(c)
+var c2 = makeMeACollection(with: 38)
+cc.append(c2)
+var d = makeMeACollection(with: "seventeen")
+//c = d // Error: Cannot assign value of type 'some MutableCollection & RangeReplaceableCollection' (result of 'makeMeACollection(with:)') to type 'some MutableCollection & RangeReplaceableCollection' (result of 'makeMeACollection(with:)')
+
+func foo() -> some BinaryInteger {
+    return 219
+}
+
+var fooResult = foo()
+let i = 912
+//fooResult = i // Error: Cannot assign value of type 'Int' to type 'some BinaryInteger'
+
+if let x = foo() as? Int {
+    print("It's an Int, \(x)")
+} else {
+    print("Guessed wrong")
+}
+
+func a() -> any Collection {
+    return [1]
+}
+
+protocol P {}
+extension Int: P {}
+extension String: P {}
+
+func f1() -> some P {
+    return "opaque"
+}
+
+func f2(i: Int) -> some P {
+    if i > 10 { return i }
+    return 0
+}
+
+//func f2(flip: Bool) -> some P { // Error: Function declares an opaque return type 'some P', but the return statements in its body do not have matching underlying types
+//    if flip { return 17 }
+//    return "a string"
+//}
+
+//func f3() -> some P {
+//    return 3.1419 // Error: Return type of global function 'f3()' requires that 'Double' conform to 'P'
+//}
+
+//func f4() -> some P {
+//    let p: P = "hello"
+//    return p // Error: Type 'any P' cannot conform to 'P'
+//}
+
+func f5() -> some P {
+    return f1()
+}
+
+protocol Initializable {
+    init()
+}
+
+func f6<T: P & Initializable>(_ : T.Type) -> some P {
+    return T()
+}
+
+extension Int: Initializable {
+    init() {
+        self = 0
+    }
+}
+
+print(f6(Int.self))
+
+func f7(_ i: Int) -> some P {
+    if i == 0 {
+        return f7(1)
+    } else if i < 0 {
+//        let result: Int = f7(-i) // Error: Cannot convert value of type 'some P' to specified type 'Int'
+        let result = f7(-i)
+        return result
+    } else {
+        return 0
+    }
+}
+// Implementing a function returning an opaque type
+
+import SwiftUI
+
+//var body: HStack<TupleView<(Text, Text, Text)>> {
+//    HStack {
+//        Text("A")
+//        Text("B")
+//        Text("C")
+//    }
+//}
+
+var body: any View {
+    HStack {
+        Text("A")
+        Text("B")
+        Text("C")
+    }
+}
+
+let hstack = HStack {
+    Text("A")
+    Text("B")
+    Text("C")
+}
+
+protocol Test {
+    associatedtype Item
+    var item: Item { get }
+}
 
