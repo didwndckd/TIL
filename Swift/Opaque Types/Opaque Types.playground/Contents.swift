@@ -380,15 +380,108 @@ func f8(_ i: Int) -> some P {
     return Wrapper(value: f7(i)) // 이건 가능
 }
 
-// 불투명 타입 반환 함수는 무조건 리턴 해줘야 함 구체 타입 반환 함수는 fatalError 가능함
+
+// 불투명 타입 반환 함수는 무조건 리턴 해줘야 함 구체 타입 반환 함수는 fatalError 반환 가능함
+func f9() -> some P {
+    return 1
+//    fatalError("not implemented") // Error: Return type of global function 'f9()' requires that 'Never' conform to 'P'
+}
+
 func f9Int() -> Int {
     fatalError("error")
 }
-//func f9() -> some P {
-//    fatalError("not implemented") // Error: Return type of global function 'f9()' requires that 'Never' conform to 'P'
+
+let delayF9 = { f9() }
+
+// fatalError 는 Never 타입 반환이라 Never에 해당 불투명 타입을 채택시키면 fatalError 반환 가능 하지만 위 구체 타입 반환 함수에서의 fatalError와는 다름
+extension Never: P {}
+func f9b() -> some P {
+    return fatalError("not implement")
+}
+
+// Properties and subscripts
+
+// 불투명 타입은 프로퍼티로도 사용 가능
+//struct GameObject {
+//    var shape: some Shape {
+//        return Triangle(size: 1)
+//    }
+//
+////    var shape: some Shape = Triangle(size: 1)
 //}
 
+let strings: some Collection = ["hello", "world"]
 
+public protocol P2 {
+    mutating func flip()
+}
+
+//struct Impl: P {}
+//
+//struct Vender {
+//    private var storage: [Impl] = []
+//
+//    var count: Int {
+//        return self.storage.count
+//    }
+//
+//    subscript(index: Int) -> some P {
+//        get {
+//            return self.storage[index]
+//        }
+//        set(newValue) {
+//            self.storage[index] = newValue
+//        }
+//    }
+//}
+
+// Associated type inference
+
+// 함수 결과로 불투명 타입 변수에 할당 할 수 있지만 타입의 이름을 지정 할 수 없다?
+let vf1 = f1() // type of vf1 is the opaque result type of f1()
+
+protocol GameObject {
+    associatedtype ObjectShape: Shape
+    var shape: ObjectShape { get }
+}
+
+struct Player: GameObject {
+    var shape: some Shape {
+        return Triangle(size: 1)
+    }
+}
+
+let pos: Player.ObjectShape
+pos = Player().shape // Player.ObjectShape
+let pos2 = Player().shape // some Shape
+
+//protocol P3 {
+//    associatedtype A: P3
+//    func foo<T: P3>(x: T) -> A
+//}
+
+//struct Foo: P3 {
+//    func foo<T: P3>(x: T) -> some P3 {
+//        return x
+//    }
+//}
+
+// Detailed design
+
+// Grammar of opaque result types
+// some 키워드 뒤에 오는 타입은 의미상 클래스 또는 실존 유형 타입으로 제한됨 Any, AnyObject, 프로토콜, 클래스 등으로만 구성되어야 하고 & 사용 가능
+
+// Restrictions on opaque result types
+
+func f(flip: Bool) -> (some P)? {
+    if flip {
+        return 1
+    } else {
+        return nil
+    }
+}
+
+let fResult = f(flip: true)
 
 import SwiftUI
 
