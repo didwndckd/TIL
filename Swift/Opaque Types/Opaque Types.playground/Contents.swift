@@ -264,6 +264,7 @@ func reverseGeneric2() -> some GenericProtocol {
     return GenericStruct()
 }
 
+// 불투명 타입 반환 결과는 호출된 함수 정보도 가지고있는듯 ...
 //let rg1 = reverseGeneric()
 //let rg2 = reverseGeneric2()
 //let rgResult = rg1 == rg2
@@ -356,6 +357,7 @@ extension Int: Initializable {
 
 print(f6(Int.self))
 
+// 불투명 타입을 반환하는 함수는 재귀 호출이 허용되지만 같은 구체 타입을 반환해야 함, 그리고 구체 타입 리턴은 하나는 있어야 함 그래야 어떤 타입을 반환하는지 아니까
 func f7(_ i: Int) -> some P {
     if i == 0 {
         return f7(1)
@@ -367,7 +369,26 @@ func f7(_ i: Int) -> some P {
         return 0
     }
 }
-// Implementing a function returning an opaque type
+
+struct Wrapper<T: P>: P {
+    var value: T
+}
+
+// 이 경우는 재귀로 만들어진 불투명 타입을 반환 할 수 없음 무한 재귀 호출이라서 그런듯
+func f8(_ i: Int) -> some P {
+//    return Wrapper(value: f8(i + 1)) // Error: Function opaque return type was inferred as 'Wrapper<some P>', which defines the opaque type in terms of itself
+    return Wrapper(value: f7(i)) // 이건 가능
+}
+
+// 불투명 타입 반환 함수는 무조건 리턴 해줘야 함 구체 타입 반환 함수는 fatalError 가능함
+func f9Int() -> Int {
+    fatalError("error")
+}
+//func f9() -> some P {
+//    fatalError("not implemented") // Error: Return type of global function 'f9()' requires that 'Never' conform to 'P'
+//}
+
+
 
 import SwiftUI
 
@@ -379,13 +400,13 @@ import SwiftUI
 //    }
 //}
 
-var body: any View {
-    HStack {
-        Text("A")
-        Text("B")
-        Text("C")
-    }
-}
+//var body: some View {
+//    HStack {
+//        Text("A")
+//        Text("B")
+//        Text("C")
+//    }
+//}
 
 let hstack = HStack {
     Text("A")
