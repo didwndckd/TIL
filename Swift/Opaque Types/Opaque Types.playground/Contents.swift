@@ -477,11 +477,18 @@ func f(flip: Bool) -> (some P)? {
     if flip {
         return 1
     } else {
-        return nil
+//        return nil
+        return 0
     }
 }
 
 let fResult = f(flip: true)
+
+
+protocol Q {
+    // 프로토콜 요구사항에는 불투명 타입을 사용할 수 없음
+//    func f() -> some P // Error: some' type cannot be the return type of a protocol requirement; did you mean to add an associated type?
+}
 
 import SwiftUI
 
