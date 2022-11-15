@@ -490,6 +490,51 @@ protocol Q {
 //    func f() -> some P // Error: some' type cannot be the return type of a protocol requirement; did you mean to add an associated type?
 }
 
+class C {
+    func f() -> some P {
+        return 0
+    }
+    
+    func g() -> P {
+        return "0"
+    }
+}
+
+class D: C {
+    // 불투명 타입을 반환하는 함수는 오버라이드 불가 부모 클래스와 같은 유형을 반환하도록 제한
+//    override func f() -> some P { // Error: Method does not override any method from its superclass
+//        return 2
+//    }
+    
+    override func g() -> P {
+        return 2
+    }
+}
+
+// Uniqueness of opaque result types
+
+func makeOpaque<T>(_ : T.Type) -> some Any {
+    return 1
+}
+
+var xx = makeOpaque(Int.self)
+//xx = makeOpaque(Double.self) // Error: Cannot assign value of type 'some Any' (result of 'makeOpaque') to type 'some Any' (result of 'makeOpaque')
+
+extension Array where Element: Comparable {
+    func opaqueSorted() -> some Sequence {
+        return self.sorted()
+    }
+}
+
+var xxx = [1, 2, 3].opaqueSorted()
+//xxx = ["a", "b", "c"].opaqueSorted() // Error: Cannot convert value of type 'String' to expected element type 'Int'
+xxx = [3, 4, 5].opaqueSorted()
+
+// Opaque type aliases
+
+//typealias LazyCompactMapCollection<Elements, ElementOfResult> -> <C: Collection> C where C.Element == ElementOfResult = LazyMapSequence<LazyFilterSequence<LazyMapSequence<Elements, ElementOfResult?>>,ElementOfResult>
+
+
 import SwiftUI
 
 //var body: HStack<TupleView<(Text, Text, Text)>> {
