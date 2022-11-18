@@ -564,3 +564,14 @@ protocol Test {
     var item: Item { get }
 }
 
+
+
+struct FlippedShape2: Shape {
+    var shape: Shape
+    func draw() -> String {
+        let lines = shape.draw().split(separator: "\n")
+        return lines.reversed().joined(separator: "\n")
+    }
+}
+let flippedTriangle2 = FlippedShape(shape: smallTriangle)
+print(flippedTriangle2.draw())
