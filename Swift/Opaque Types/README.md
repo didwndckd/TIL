@@ -79,7 +79,7 @@ print(joinedTriangles.draw())
 // *
 ```
 
-
+위 코드의 경우 
 
 
 
