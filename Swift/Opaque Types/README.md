@@ -99,7 +99,7 @@ func max<T>(_ x: T, _ y: T) -> T where T: Comparable { ... }
 
 불투명 타입 반환은 제네릭 타입 반환과 반대로 이루어진다 제네릭 타입 반환은 호출자에 의해 반환 타입이 정해지는 반면 불투명 타입 반환은 함수 내부에서 추상화된 방식으로 반환되는 타입을 정하게 된다.
 
-아래 예제를 보면 `makeTrapezoid()` 함수는 정확한 타입을 노출하지않고 사다리꼴을 반환한다.
+아래 예제를 보면 `makeTrapezoid()` 함수는 정확한 타입을 노출하지않고 사다리꼴을 반환한다. `some Shape`로 반환 타입을 선언하고 내부에서 `Shape` 프로토콜을 준수하는 특정 구체적 타입의 값을 반환한다. 이렇게 구현하게 되면 현재 `makeTRapezoid()` 함수는 내부에 삼각형, 사각형, 뒤집힌 삼각형 등의 조합으로 이루어져있는데 모듈 외부에서는 함수의 구체적인 반환 타입에 의존적이지 않기때문에 추후 수정에 용이함
 
 ``` swift
 struct Square: Shape {
@@ -130,6 +130,24 @@ print(trapezoid.draw())
 // **
 // *
 ```
+
+
+
+## 불투명 타입 반환 제약 조건
+
+불투명 반환 타입을 가진 함수가 여러 위치에서 반환하는 경우 모든 반환 값은 동일한 타입을 반환해야 한다. 아래 예제는 함수 내에서 조건에 따라 다른 타입을 반환 하는데 이는 불투명 타입 반환 제약 조건에 부합하지 않음
+
+``` swift
+// Error: Function declares an opaque return type 'some Shape', but the return statements in its body do not have matching underlying types
+func invalidFlip<T: Shape>(_ shape: T) -> some Shape {
+    if shape is Square {
+        return shape
+    }
+    return FlippedShape(shape: shape)
+}
+```
+
+
 
 
 
