@@ -131,6 +131,26 @@ print(trapezoid.draw())
 // *
 ```
 
+불투명 반환 타입은 제네릭과 결합해 사용할 수 있음
+
+``` swift
+func flip<T: Shape>(_ shape: T) -> some Shape {
+    return FlippedShape(shape: shape)
+}
+func join<T: Shape, U: Shape>(_ top: T, _ bottom: U) -> some Shape {
+    JoinedShape(top: top, bottom: bottom)
+}
+
+let opaqueJoinedTriangles = join(smallTriangle, flip(smallTriangle))
+print(opaqueJoinedTriangles.draw())
+// *
+// **
+// ***
+// ***
+// **
+// *
+```
+
 
 
 ## 불투명 타입 반환 제약 조건
