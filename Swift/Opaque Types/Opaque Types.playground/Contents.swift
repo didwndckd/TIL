@@ -575,3 +575,5 @@ struct FlippedShape2: Shape {
 }
 let flippedTriangle2 = FlippedShape(shape: smallTriangle)
 print(flippedTriangle2.draw())
+
+
