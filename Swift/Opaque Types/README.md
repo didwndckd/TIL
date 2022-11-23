@@ -42,7 +42,7 @@ print(smallTriangle.draw())
 
 여기까지는 일반적인 프로토콜을 채택한 구조체이다. 하지만 어떤 `Shape`를 채택하는 타입을 받아서 `draw()` 함수를 통해 그것을 수직으로 뒤집는 타입이 있다고 가정했을 때 이 접근방식에는 정확한 제네릭 타입을 노출해야하는 제한이 있다.
 
-- 사실 지금의 경우에는 제네릭을 쓰지 않고도 구현은 가능함 `Shape`가 `associatedtype`을 가지면 제네릭을 필수로 써야함
+- 사실 지금의 경우에는 제네릭을 쓰지 않고도 구현은 가능함 `Shape`가 `associatedtype`이나 `Self`를 사용하면 제네릭을 필수로 써야함
 
 ``` swift
 struct FlippedShape<T: Shape>: Shape {
@@ -167,6 +167,22 @@ func invalidFlip<T: Shape>(_ shape: T) -> some Shape {
 }
 ```
 
+항상 단일 타입을 반환해야 한다고 해서 불투명 타입 반환에 제네릭 사용을 막지는 않는다. 다음 예제에서는 매개변수 타입에 따라 다른 타입을 반환 하지만 호출 할 때마다 항상 `[T]` 타입을 반환 하는것은 똑같기에 단일 타입을 반환한다는 제약 조건은 성립한다.
+
+``` swift
+func `repeat`<T: Shape>(shape: T, count: Int) -> some Collection {
+    return Array<T>(repeating: shape, count: count)
+}
+```
+
+
+
+## 불투명 타입과 프로토콜의 차이점
+
+불투명 타입을 반환하는 것과 프로토콜 타입을 반환하는것의 차이는 **타입 정체성**을 유지하느냐 안하느냐의 차이에 있다. 사실 불투명 타입 반환에서 단일 타입을 반환해야 하는 이유도 여기에 있다. **타입 정체성**을 보장해야 하기에 단일 타입을 반환해야 하는것이다.
+
+불투명 타입은 하나의 특정 타입을 참조하지만 함수 호출자는 어떤 타입인지 볼 수 없고 프로토콜 타입은 프로토콜을 준수하는 모든 타입을 참조할 수 있다. 일반적으로 프로토콜 타입은 저장하는 값의 **기본 타입에 대해 더 많은 유연성을 제공**하고 불투명 타입은 **기본 타입에 대해 더 강력한 보증**을 할 수 있다.
+
 
 
 
@@ -180,5 +196,7 @@ func invalidFlip<T: Shape>(_ shape: T) -> some Shape {
 - https://github.com/apple/swift-evolution/blob/main/proposals/0244-opaque-result-types.md
 
 - https://jcsoohwancho.github.io/2019-08-24-Opaque-Type-%EC%82%B4%ED%8E%B4%EB%B3%B4%EA%B8%B0/
+
+- https://protocorn93.github.io/2019/12/12/Opaque-Types-in-Swift/
 
   
