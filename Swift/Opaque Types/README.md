@@ -185,7 +185,83 @@ func `repeat`<T: Shape>(shape: T, count: Int) -> some Collection {
 
 ### 프로토콜
 
+프로토콜 타입을 반환하는것은 타입 정체성을 지우고 유연성을 제공한다. 아래 코드를 보면 불투명 타입과 달리 `Shape` 프로토콜을 채택한 타입은 뭐든 반환 가능하다.
 
+``` swift
+func protoFlip<T: Shape>(_ shape: T) -> Shape {
+    if shape is Square {
+        return shape
+    }
+
+    return FlippedShape(shape: shape)
+}
+```
+
+위 함수는 구체적 타입이 아닌 프로토콜 타입으로 반환하기에 구체적 타입에 대한 정보를 알 수 없다. 그 예로 비교 연산자를 사용할 수 없음. `Shape`가 `Equatable` 프로토콜을 채택하고있더라도 문제는 `Equatable`은 내부에 `Self`를 사용하기때문에 위의 `protoFlip(_:)` 함수에서 `Shape` 타입으로의 반환이 불가능하다.
+
+``` swift
+let protoFlippedTriangle = protoFlip(smallTriangle)
+let sameThing = protoFlip(smallTriangle)
+protoFlippedTriangle == sameThing  // Error: Binary operator '==' cannot be applied to two 'any Shape' operands
+```
+
+
+
+### 불투명 타입
+
+불투명 타입은 타입 정체성을 유지하고 기본 타입에 대해 더 강력한 보증을 한다. 아래 `Container` 프로토콜은 내부에 `Item`이라는 연관 타입을 사용한다.
+
+``` swift
+protocol Container {
+    associatedtype Item
+    var count: Int { get }
+    subscript(i: Int) -> Item { get }
+}
+extension Array: Container { }
+```
+
+`associatedtype`을 사용하는 프로토콜은 함수의 반환 타입으로 사용할 수 없다.
+
+``` swift
+// Error: Use of protocol 'Container' as a type must be written 'any Container'
+func makeProtocolContainer<T>(item: T) -> Container {
+    return [item]
+}
+
+// Error: Cannot convert return expression of type '[T]' to return type 'C'
+func makeProtocolContainer<T, C: Container>(item: T) -> C {
+    return [item]
+}
+```
+
+하지만 반환 타입으로 `some Container`를 사용하면 가능하며 여기서 `twelve`의 타입은 `Int`로 유추되고 이는 불투명 타입이 타입 추론이 동작한다는 것을 보여준다.
+
+``` swift
+func makeOpaqueContainer<T>(item: T) -> some Container {
+    return [item]
+}
+let opaqueContainer = makeOpaqueContainer(item: 12)
+let twelve = opaqueContainer[0]
+print(type(of: twelve)) // "Int"
+```
+
+만약 불투명 타입이 연관 타입을 노출하고 있다면 이 연관 타입에 대한 정보도 유지한다. 아래 `x`와 `y`는 같은 `String` 타입을 인자로 넣은 `foo(_:, _:)` 함수를 호출하여 반환 받은 `some Equatable` 타입이기 때문에 같은 타입임을 보장하고 그에 따라 비교가 가능하다. 하지만 `stringResult`와 `intResult`는 서로 다른 타입을 인자로 넣은 함수 호출 결과이기에 같은 타입임을 보장하지않는다. 때문에 비교가 불가능하다.
+
+``` swift
+func foo<T: Equatable>(x: T, y: T) -> some Equatable {
+  let condition = x == y
+  return condition ? 1738 : 679
+}
+
+let x = foo("apples", "bananas")
+let y = foo("apples", "some fruit nobody's ever heard of")
+
+print(x == y) // true
+
+let stringResult = foo(x: "A", y: "B")
+let intResult = foo(x: 1, y: 2)
+print(stringResult == intResult) // Error : Binary operator '==' cannot be applied to operands of type 'some Equatable' (result of 'ContentView.foo(x:y:)') and 'some Equatable' (result of 'ContentView.foo(x:y:)')
+```
 
 
 
