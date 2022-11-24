@@ -24,7 +24,7 @@
 
 > 모든 루트 유형에서 결과 값 유형까지 유형이 지워진 키 경로
 
-[공식문서](https://developer.apple.com/documentation/swift/anykeypath)
+참조: https://developer.apple.com/documentation/swift/anykeypath
 
 - 키 경로 타입의 최상위 클래스
 
@@ -68,7 +68,7 @@
 
 > 구체적 루트 유형에서 결과값 유형까지 부분적으로 유형이 지워진 키 경로
 
-[공식문서](https://developer.apple.com/documentation/swift/partialkeypath)
+참조: https://developer.apple.com/documentation/swift/partialkeypath
 
 - `AnyKeyPath` 클래스 상속
 
@@ -100,7 +100,7 @@
 
 > 특정 루트 유형에서 특정 결과 값 유형까지의 키 경로
 
-[공식문서](https://developer.apple.com/documentation/swift/keypath)
+참조: https://developer.apple.com/documentation/swift/keypath
 
 - `PartialKeyPath` 클래스 상속
 
@@ -155,7 +155,7 @@
 
 > 결과 값에서 읽고 쓰기를 지원하는 키 경로
 
-[공식문서](https://developer.apple.com/documentation/swift/writablekeypath)
+참조: https://developer.apple.com/documentation/swift/writablekeypath
 
 - `KeyPath` 클래스 상속
 
@@ -200,7 +200,7 @@
 
 > 참조 의미 체계를 사용하여 결과 값에서 읽고 쓰는 것을 지원하는 키 경로
 
-[공식문서](https://developer.apple.com/documentation/swift/referencewritablekeypath)
+참조: https://developer.apple.com/documentation/swift/referencewritablekeypath
 
 - `WritableKeyPath` 클래스 상속
 
