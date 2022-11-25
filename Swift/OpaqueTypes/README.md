@@ -155,7 +155,9 @@ print(opaqueJoinedTriangles.draw())
 
 ## 불투명 타입 반환 제약 조건
 
-불투명 반환 타입을 가진 함수가 여러 위치에서 반환하는 경우 모든 반환 값은 동일한 타입을 반환해야 한다. 아래 예제는 함수 내에서 조건에 따라 다른 타입을 반환 하는데 이는 불투명 타입 반환 제약 조건에 부합하지 않음
+불투명 반환 타입을 가진 함수가 여러 위치에서 반환하는 경우 모든 반환 값은 동일한 타입을 반환해야 한다. 
+
+아래 예제는 함수 내에서 조건에 따라 다른 타입을 반환 하는데 이는 불투명 타입 반환 제약 조건에 부합하지 않음
 
 ``` swift
 // Error: Function declares an opaque return type 'some Shape', but the return statements in its body do not have matching underlying types
