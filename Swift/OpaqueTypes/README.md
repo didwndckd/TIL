@@ -247,7 +247,7 @@ let twelve = opaqueContainer[0]
 print(type(of: twelve)) // "Int"
 ```
 
-만약 불투명 타입이 연관 타입을 노출하고 있다면 이 연관 타입에 대한 정보도 유지한다. 아래 `x`와 `y`는 같은 `String` 타입을 인자로 넣은 `foo(_:, _:)` 함수를 호출하여 반환 받은 `some Equatable` 타입이기 때문에 같은 타입임을 보장하고 그에 따라 비교가 가능하다. 하지만 `stringResult`와 `intResult`는 서로 다른 타입을 인자로 넣은 함수 호출 결과이기에 같은 타입임을 보장하지않는다. 때문에 비교가 불가능하다.
+만약 불투명 타입이 연관 타입을 노출하고 있다면 이 연관 타입에 대한 정보도 유지한다. 아래 `x`와 `y`는 같은 `String` 타입을 인자로 넣은 `foo(x:, y:)` 함수를 호출하여 반환 받은 `some Equatable` 타입이기 때문에 같은 타입임을 보장하고 그에 따라 비교가 가능하다. 하지만 `stringResult`와 `intResult`는 서로 다른 타입을 인자로 넣은 함수 호출 결과이기에 같은 타입임을 보장하지않는다. 때문에 비교가 불가능하다.
 
 ``` swift
 func foo<T: Equatable>(x: T, y: T) -> some Equatable {
