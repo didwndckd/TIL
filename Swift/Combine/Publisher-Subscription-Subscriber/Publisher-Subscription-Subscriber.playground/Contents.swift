@@ -1,57 +1,6 @@
 import Foundation
 import Combine
 
-struct SomePublisher<Output, Failure: Error>: Publisher {
-    
-    let data: Output
-    
-    func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
-        Swift.print("Publisher.\(#function)")
-        let subscription = SomeSubscription()
-        subscriber.receive(subscription: subscription)
-    }
-}
-
-struct SomeConnectablePublisher<Output, Failure: Error>: ConnectablePublisher {
-    func connect() -> Cancellable {
-        return AnyCancellable({})
-    }
-    
-    func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
-        Swift.print("Publisher.\(#function)")
-    }
-}
-
-struct SomeSubscription: Subscription {
-    var combineIdentifier: CombineIdentifier = .init()
-    
-    func request(_ demand: Subscribers.Demand) {
-        print("Subscription.\(#function)")
-    }
-    
-    func cancel() {
-        print("cancel")
-    }
-}
-
-struct SomeSubscriber<Input, Failure: Error>: Subscriber {
-    var combineIdentifier: CombineIdentifier = .init()
-    
-    func receive(subscription: Subscription) {
-        print("Subscriber.\(#function)")
-        subscription.request(.unlimited)
-    }
-    
-    func receive(_ input: Input) -> Subscribers.Demand {
-        print("Subscriber.\(#function)")
-        return .unlimited
-    }
-    
-    func receive(completion: Subscribers.Completion<Failure>) {
-        print("Subscriber.\(#function)")
-    }
-}
-
 struct CustomJust<Output, Failure: Error>: Publisher {
     private let data: Output
     
@@ -61,8 +10,12 @@ struct CustomJust<Output, Failure: Error>: Publisher {
 
     func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
         Swift.print("CustomJust 구독 시작 -> \(type(of: subscriber))")
-        let inner = Inner(subscriber: subscriber, data: self.data)
-        subscriber.receive(subscription: inner)
+//        let inner = Inner(subscriber: subscriber, data: self.data)
+//        subscriber.receive(subscription: inner)
+        
+        subscriber.receive(data)
+        subscriber.receive(data)
+        subscriber.receive(completion: .finished)
     }
 }
 
@@ -73,7 +26,12 @@ extension CustomJust {
         private let subscriber: S
         private var demand: Subscribers.Demand = .none
         
+        deinit {
+            Swift.print("Inner deinit")
+        }
+        
         init(subscriber: S, data: CustomJust.Output) {
+            Swift.print("Inner init")
             self.subscriber = subscriber
             self.data = data
         }
@@ -104,6 +62,14 @@ extension CustomJust {
 }
 
 final class CustomJustSubscriber<Input, Failure: Error>: Subscriber {
+    
+    init() {
+        print("CustomJustSubscriber init")
+    }
+    deinit {
+        print("CustomJustSubscriber deinit")
+    }
+    
     func receive(subscription: Subscription) {
         print("CustomJustSubscriber 구독 시작: \(type(of: subscription))")
         subscription.request(.unlimited)
@@ -120,6 +86,11 @@ final class CustomJustSubscriber<Input, Failure: Error>: Subscriber {
 }
 
 let p = CustomJust<String, Never>("abc")
+    .handleEvents(receiveSubscription: { print("p -> receiveSubscription subscription: \(type(of: $0))") },
+                  receiveOutput: { print("p -> receiveOutput output: \($0)") },
+                  receiveCompletion: { print("p -> receiveCompletion completion: \($0)")},
+                  receiveCancel: { print("p -> receiveCancel") },
+                  receiveRequest: { print("p -> receiveRequest demand: \($0)") })
 
 print("===================CustomJustSubscriber===================")
 let s = CustomJustSubscriber<String, Never>()
@@ -147,7 +118,6 @@ let cancelable = p.assign(to: \.data, on: testObj)
 cancelable.cancel()
 
 cancelable.store(in: &store)
-
 
 
 
