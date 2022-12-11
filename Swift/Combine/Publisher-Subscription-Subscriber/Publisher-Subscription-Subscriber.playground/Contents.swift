@@ -10,12 +10,12 @@ struct CustomJust<Output, Failure: Error>: Publisher {
 
     func receive<S>(subscriber: S) where S : Subscriber, Failure == S.Failure, Output == S.Input {
         Swift.print("CustomJust 구독 시작 -> \(type(of: subscriber))")
-//        let inner = CustomJustSubscription(subscriber: subscriber, data: self.data)
-//        subscriber.receive(subscription: inner)
-//
-        subscriber.receive(data)
-        subscriber.receive(data)
-        subscriber.receive(completion: .finished)
+        let inner = CustomJustSubscription(subscriber: subscriber, data: self.data)
+        subscriber.receive(subscription: inner)
+
+//        subscriber.receive(data)
+//        subscriber.receive(data)
+//        subscriber.receive(completion: .finished)
     }
 }
 
@@ -121,3 +121,8 @@ cancelable.cancel()
 cancelable.store(in: &store)
 
 print("===================Just, CustomJustSubscriber=====================")
+Just("just")
+    .subscribe(s)
+
+// Subject 만들어봐야 할듯?
+
