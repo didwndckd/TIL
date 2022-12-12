@@ -86,11 +86,11 @@ final class CustomJustSubscriber<Input, Failure: Error>: Subscriber {
 }
 
 let p = CustomJust<String, Never>("abc")
-    .handleEvents(receiveSubscription: { print("p -> receiveSubscription subscription: \(type(of: $0))") },
-                  receiveOutput: { print("p -> receiveOutput output: \($0)") },
-                  receiveCompletion: { print("p -> receiveCompletion completion: \($0)")},
-                  receiveCancel: { print("p -> receiveCancel") },
-                  receiveRequest: { print("p -> receiveRequest demand: \($0)") })
+//    .handleEvents(receiveSubscription: { print("p -> receiveSubscription subscription: \(type(of: $0))") },
+//                  receiveOutput: { print("p -> receiveOutput output: \($0)") },
+//                  receiveCompletion: { print("p -> receiveCompletion completion: \($0)")},
+//                  receiveCancel: { print("p -> receiveCancel") },
+//                  receiveRequest: { print("p -> receiveRequest demand: \($0)") })
 
 print("===================CustomJustSubscriber===================")
 let s = CustomJustSubscriber<String, Never>()
