@@ -124,5 +124,27 @@ print("===================Just, CustomJustSubscriber=====================")
 Just("just")
     .subscribe(s)
 
-// Subject 만들어봐야 할듯?
+print("===================CustomJust, CustomJustSubscriber, receive=====================")
+p.receive(subscriber: s)
 
+
+final class CusomSubject: Subject {
+    typealias Output = String
+    typealias Failure = Never
+    
+    func send(_ value: String) {
+        
+    }
+    
+    func send(completion: Subscribers.Completion<Never>) {
+        
+    }
+    
+    func send(subscription: Subscription) {
+        
+    }
+    
+    func receive<S>(subscriber: S) where S : Subscriber, Never == S.Failure, String == S.Input {
+        
+    }
+}
