@@ -26,7 +26,7 @@ struct CollectionJust<Output, Failure: Error>: Publisher {
 extension CollectionJust {
     final class InnerSubscription<S: Subscriber>: Combine.Subscription where Output == S.Input, Failure == S.Failure {
         private let subscriber: S
-        private let datas: [Output]
+        private var datas: [Output]
         
         init(subscriber: S, datas: [Output]) {
             self.subscriber = subscriber
@@ -45,23 +45,23 @@ extension CollectionJust {
                 return
             }
             
-            self.excuteData(index: 0)
+            self.excuteData()
         }
         
         func cancel() {
             Swift.print(type(of: self), #function)
+            self.datas = []
         }
         
-        private func excuteData(index: Int) {
-            Swift.print(type(of: self), #function, "index: \(index), datas: \(self.datas)")
+        private func excuteData() {
+            Swift.print(type(of: self), #function, "datas: \(self.datas)")
             
-            guard self.datas.count > index else {
+            guard !self.datas.isEmpty else {
                 self.subscriber.receive(completion: .finished)
                 return
             }
             
-            let data = self.datas[index]
-            let nextIndex = index + 1
+            let data = self.datas.removeFirst()
             let newDemand = self.subscriber.receive(data)
             
             Swift.print(type(of: self), "newDemand: \(newDemand)")
@@ -70,8 +70,8 @@ extension CollectionJust {
 //                return
 //            }
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
-                self.excuteData(index: nextIndex)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: { [weak self] in
+                self?.excuteData()
             })
         }
     }

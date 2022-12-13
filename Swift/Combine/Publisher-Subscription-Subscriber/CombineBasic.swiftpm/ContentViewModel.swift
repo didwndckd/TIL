@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 func printWithSeparator(_ items: Any...) {
-    print("===========================", items, "===========================")
+    print("===========================", items.map { "\($0)" }.joined(separator: " "), "===========================")
 }
 
 final class ContentViewModel: ObservableObject {
@@ -83,7 +83,6 @@ extension ContentViewModel {
     
     private func cancel() {
         printWithSeparator(#function)
-        self.cancelable?.cancel()
         self.cancelable = nil
     }
     
