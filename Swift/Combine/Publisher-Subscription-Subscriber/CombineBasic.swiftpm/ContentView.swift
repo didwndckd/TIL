@@ -12,7 +12,7 @@ struct ContentView: View {
             self.resultView
             
             List {
-                self.createDoubleJustView
+                self.createCollectionJustView
                 self.sinkView
                 self.assignView
             }
@@ -35,13 +35,13 @@ extension ContentView {
     
     @ViewBuilder
     private var resultView: some View {
-        Text(self.viewModel.state.result)
+        Text(self.viewModel.state.resultText)
     }
     
     @ViewBuilder
-    private var createDoubleJustView: some View {
-        Button("createDoubleJust") {
-            self.viewModel.action(.createDoubleJust)
+    private var createCollectionJustView: some View {
+        Button("createCollectionJust") {
+            self.viewModel.action(.createCollectionJust)
         }
     }
     

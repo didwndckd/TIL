@@ -8,15 +8,21 @@
 import Foundation
 import Combine
 
+func printWithSeparator(_ items: Any...) {
+    print("===========================", items, "===========================")
+}
+
 final class ContentViewModel: ObservableObject {
     private var cancelStore = Set<AnyCancellable>()
-    
-    private var publisher = DoubleJust<String, Never>(data: "DoubleJust").eraseToAnyPublisher()
     private var cancelable: AnyCancellable?
+    private var publisher: AnyPublisher<String, Never>
+    
     
     @Published var state = State()
     
     init() {
+        self.publisher = CollectionJust<String, Never>(datas: ["DoubleJust"])
+            .eraseToAnyPublisher()
         self.bind()
     }
 }
@@ -25,10 +31,13 @@ extension ContentViewModel {
     struct State {
         var input: String = ""
         var result: String = ""
+        var resultText: String {
+            return self.result.isEmpty ? "Result": self.result
+        }
     }
     
     enum Action {
-        case createDoubleJust
+        case createCollectionJust
         case cancel
         case sink
         case assign
@@ -36,7 +45,7 @@ extension ContentViewModel {
     
     func action(_ action: Action) {
         switch action {
-        case .createDoubleJust: self.createDoubleJust()
+        case .createCollectionJust: self.createCollectionJust()
         case .cancel: self.cancel()
         case .sink: self.sink()
         case .assign: self.assign()
@@ -54,7 +63,7 @@ extension ContentViewModel {
 
 extension ContentViewModel {
     private func switchPublisher<P: Publisher>(_ publisher: P) where P.Output == String, P.Failure == Never {
-        self.printWithSeparator(#function, publisher)
+        printWithSeparator(#function, publisher)
         self.publisher = publisher
 //            .handleEvents(receiveSubscription: { print("publisher -> receiveSubscription subscription: \(type(of: $0))") },
 //                          receiveOutput: { print("publisher -> receiveOutput output: \($0)") },
@@ -63,26 +72,23 @@ extension ContentViewModel {
 //                          receiveRequest: { print("publisher -> receiveRequest demand: \($0)") })
             .eraseToAnyPublisher()
     }
-    
-    private func printWithSeparator(_ items: Any...) {
-        print("===========================", items, "===========================")
-    }
 }
 
 extension ContentViewModel {
-    private func createDoubleJust() {
-        self.printWithSeparator(#function)
-        self.switchPublisher(DoubleJust<String, Never>(data: "DoubleJust ->" + self.state.input))
+    private func createCollectionJust() {
+        printWithSeparator(#function)
+        let datas = self.state.input.split(separator: " ").map { String($0) }
+        self.switchPublisher(CollectionJust<String, Never>(datas: datas))
     }
     
     private func cancel() {
-        self.printWithSeparator(#function)
+        printWithSeparator(#function)
         self.cancelable?.cancel()
         self.cancelable = nil
     }
     
     private func sink() {
-        self.printWithSeparator(#function)
+        printWithSeparator(#function)
         
         self.cancelable = self.publisher
             .sink(
@@ -95,7 +101,7 @@ extension ContentViewModel {
     }
     
     private func assign() {
-        self.printWithSeparator(#function)
+        printWithSeparator(#function)
         self.cancelable = self.publisher
             .assign(to: \.state.result, on: self)
     }
