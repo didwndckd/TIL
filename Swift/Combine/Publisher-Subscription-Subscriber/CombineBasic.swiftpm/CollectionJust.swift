@@ -27,6 +27,7 @@ extension CollectionJust {
     final class InnerSubscription<S: Subscriber>: Combine.Subscription where Output == S.Input, Failure == S.Failure {
         private let subscriber: S
         private var datas: [Output]
+        private var demand: Subscribers.Demand = .unlimited
         
         init(subscriber: S, datas: [Output]) {
             self.subscriber = subscriber
@@ -40,10 +41,7 @@ extension CollectionJust {
         func request(_ demand: Subscribers.Demand) {
             Swift.print(type(of: self), #function, "demand:", demand)
             
-            guard demand >= self.datas.count else {
-                self.subscriber.receive(completion: .finished)
-                return
-            }
+            self.demand = demand
             
             self.excuteData()
         }
@@ -56,22 +54,17 @@ extension CollectionJust {
         private func excuteData() {
             Swift.print(type(of: self), #function, "datas: \(self.datas)")
             
-            guard !self.datas.isEmpty else {
+            guard !self.datas.isEmpty, self.demand > .none else {
                 self.subscriber.receive(completion: .finished)
                 return
             }
             
             let data = self.datas.removeFirst()
-            let newDemand = self.subscriber.receive(data)
+            self.demand += self.subscriber.receive(data)
+            self.demand -= 1
             
-            Swift.print(type(of: self), "newDemand: \(newDemand)")
-//            guard newDemand > .none, self.datas.count > nextIndex else {
-//                self.subscriber.receive(completion: .finished)
-//                return
-//            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: { [weak self] in
-                self?.excuteData()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: {
+                self.excuteData()
             })
         }
     }

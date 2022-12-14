@@ -148,3 +148,5 @@ final class CusomSubject: Subject {
         
     }
 }
+
+print(Subscribers.Demand.max(10) - 1)

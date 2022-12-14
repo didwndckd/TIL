@@ -13,8 +13,10 @@ struct ContentView: View {
             
             List {
                 self.createCollectionJustView
+                self.createJustView
                 self.sinkView
                 self.assignView
+                self.customSubscriberView
             }
         }
     }
@@ -46,6 +48,13 @@ extension ContentView {
     }
     
     @ViewBuilder
+    private var createJustView: some View {
+        Button("createJust") {
+            self.viewModel.action(.createJust)
+        }
+    }
+    
+    @ViewBuilder
     private var sinkView: some View {
         Button("sink") {
             self.viewModel.action(.sink)
@@ -56,6 +65,27 @@ extension ContentView {
     private var assignView: some View {
         Button("assign") {
             self.viewModel.action(.assign)
+        }
+    }
+    
+    @ViewBuilder
+    private var customSubscriberView: some View {
+        
+        VStack(alignment: .leading) {
+            Text("customSubscriber")
+            HStack {
+                Stepper(label: { Text("\(self.viewModel.state.customSubscriberDemand)") },
+                        onIncrement: { self.viewModel.action(.customSubscriberDemand(1)) },
+                        onDecrement: { self.viewModel.action(.customSubscriberDemand(-1)) },
+                        onEditingChanged: { _ in })
+                
+                Spacer()
+                
+                Button("fire", action: {
+                    self.viewModel.action(.customSubscriber)
+                })
+            }
+            
         }
     }
 }
