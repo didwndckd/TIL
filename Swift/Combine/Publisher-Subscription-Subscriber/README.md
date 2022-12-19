@@ -10,9 +10,7 @@
 
 ## Publisher
 
-- `Publisher`는 하나 이상의 `Subscriber` 인스턴스에 값을 전달 할 수 있다.
-- `Input`, `Output: Error` 두개의 연관 타입(associated type)을 가지기에 `Publisher` 프로토콜을 채택하게되면 두 타입을 정의해 주어야 한다.
-- `receive(subscriber:)` 함수를 구현하여 `Subscriber`를 accept 한다.
+`Publisher`는 하나 이상의 `Subscriber` 인스턴스에 값을 전달 할 수 있는 프로토콜
 
 ``` swift
 public protocol Publisher<Output, Failure> {
@@ -23,7 +21,19 @@ public protocol Publisher<Output, Failure> {
 }
 ```
 
+### 제약 조건
 
+- `Output` : `Subscriber`에게 전달될 데이터 타입
+- `Failure` : `Subscriber`에게 전달될 실패 타입, `Error`를 채택하고 있어야 함
+- `receive(subscriber:)` : `Subscriber`를 전달받아 구독을 수락하는 함수
+
+### 활용
+
+- `Publisher` 를 구독하게되면 `receive(subscriber:)` 함수가 호출되고 내부에서 `Subscriber`와의 연결이 시작됨
+- 애플에서 미리 정의해놓은 `Publisher`들이 있음
+  - `Deferred`, `Empty`, `Fail`, `Future`, `Just`, `Record`등
+- `Publisher`의 확장 기능으로 이벤트 처리 체인을 만들기 위해 구성하는 다양한 연산자들이 정의되어있다.
+  - 대부분 `Publishers`의 확장으로 정의되어있음.
 
 ## Subscriber
 
