@@ -7,4 +7,4 @@
 - [Opaque Types(some)](OpaqueTypes)
 
 ## Combine
-- [Basic(Publisher-Subscription-Subscriber)](Combine/Publisher-Subscription-Subscriber)
+- [Publisher](Combine/Publisher)

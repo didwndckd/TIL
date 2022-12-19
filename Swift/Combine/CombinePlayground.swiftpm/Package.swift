@@ -8,20 +8,20 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "CombineBasic",
+    name: "CombinePlayground",
     platforms: [
         .iOS("15.2")
     ],
     products: [
         .iOSApplication(
-            name: "CombineBasic",
+            name: "CombinePlayground",
             targets: ["AppModule"],
-            bundleIdentifier: "com.didwndckd.CombineBasic",
+            bundleIdentifier: "com.didwndckd.CombinePlayground",
             teamIdentifier: "3S767N4AG9",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .tv),
-            accentColor: .presetColor(.teal),
+            appIcon: .placeholder(icon: .checkmark),
+            accentColor: .presetColor(.mint),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
