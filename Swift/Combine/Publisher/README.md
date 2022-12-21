@@ -17,7 +17,7 @@ public protocol Publisher<Output, Failure> {
 - `Failure` : `Subscriber`에게 전달될 실패 타입, `Error`를 채택하고 있어야 함
 - `receive(subscriber:)` : `Subscriber`를 전달받아 구독을 수락하는 함수
 
-## 활용
+## 추가 설명
 
 - `Publisher` 를 구독하게되면 `receive(subscriber:)` 함수가 호출되고 내부에서 `Subscriber`와의 연결이 시작됨
 - 애플에서 미리 정의해놓은 `Publisher`들이 있음
