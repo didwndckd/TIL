@@ -1,8 +1,8 @@
 //
 //  ContentViewModel.swift
-//  CombineBasic
+//  CombinePlayground
 //
-//  Created by YJC on 2022/12/12.
+//  Created by YJC on 2022/12/22.
 //
 
 import Foundation
@@ -135,3 +135,4 @@ extension ContentViewModel {
         self.publisher.subscribe(subscriber)
     }
 }
+

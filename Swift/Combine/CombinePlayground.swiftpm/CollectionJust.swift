@@ -1,8 +1,8 @@
 //
-//  DoubleJust.swift
-//  CombineBasic
+//  CollectionJust.swift
+//  CombinePlayground
 //
-//  Created by YJC on 2022/12/12.
+//  Created by YJC on 2022/12/22.
 //
 
 import Foundation
@@ -69,3 +69,4 @@ extension CollectionJust {
         }
     }
 }
+

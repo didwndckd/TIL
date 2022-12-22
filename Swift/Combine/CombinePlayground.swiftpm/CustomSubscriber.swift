@@ -1,8 +1,8 @@
 //
 //  CustomSubscriber.swift
-//  CombineBasic
+//  CombinePlayground
 //
-//  Created by Kaflix on 2022/12/14.
+//  Created by YJC on 2022/12/22.
 //
 
 import Foundation
