@@ -33,10 +33,36 @@ Just(1)
         receiveCompletion: { completion in
         print("completion: \(completion)")
     }, receiveValue: { value in
-        print(value)
+        print("value: \(value)")
     })
+    .store(in: &cancelStore)
 
 // 1
+// completion: finished
+```
+
+
+
+### Future
+
+- `Future`는 어떠한 작업을 수행한 다음 값을 비동기적으로 방출할 때 사용
+- 생성자에서 `(Future.Promise) -> Void` 클로져 타입을 받음
+  - `Future.Promise`: `(Result<Output, Failure>) -> Void`
+- 전달한 클로져 내부에서 `Future.Promise` 클로져를 호출하면 값을 방출함
+
+``` swift
+Future<Int, Never>() { promiss in
+    promiss(.success(1))
+}
+.sink(
+    receiveCompletion: { completion in
+        print("completion: \(completion)")
+    }, receiveValue: { value in
+        print("value: \(value)")
+    })
+.store(in: &cancelStore)
+
+// value: 1
 // completion: finished
 ```
 
