@@ -60,7 +60,7 @@ public extension Target {
         
         switch product {
         case .framework, .staticFramework:
-            resources = ["\(Define.modulePath)/\(targetName)/Resources/**"]
+            resources = ["\(targetName)/Resources/**"]
         default:
             resources = nil
         }
