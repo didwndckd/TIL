@@ -2,5 +2,5 @@
 
 ### 목차
 
-- [Mach-O](Mach-O.md)
+- [Mach-O](Mach-O)
 
