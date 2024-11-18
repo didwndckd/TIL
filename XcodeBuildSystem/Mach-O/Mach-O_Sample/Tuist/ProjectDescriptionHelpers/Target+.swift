@@ -72,7 +72,10 @@ public extension Target {
             bundleId: Define.bundleIdentifier + ".\(targetName)",
             sources: ["\(targetName)/Sources/**"],
             resources: resources,
-            dependencies: dependencies
+            dependencies: dependencies,
+            settings: .settings(configurations: [
+                .debug(name: "DEBUG", settings: Define.defaultSettings)
+            ])
         )
     }
     
@@ -86,7 +89,10 @@ public extension Target {
             bundleId: Define.bundleIdentifier + ".\(moduleName)",
             sources: ["\(moduleName)/Sources/**"],
             resources: ["\(moduleName)/Resources/**"],
-            dependencies: dependencies
+            dependencies: dependencies,
+            settings: .settings(configurations: [
+                .debug(name: "DEBUG", settings: Define.defaultSettings)
+            ])
         )
     }
 }

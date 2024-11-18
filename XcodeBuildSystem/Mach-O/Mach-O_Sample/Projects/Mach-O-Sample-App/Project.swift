@@ -19,7 +19,10 @@ let project = Project(
             ),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
-            dependencies: Targets.secondLayerTargets.map { $0.targetDependency }
+            dependencies: Targets.secondLayerTargets.map { $0.targetDependency },
+            settings: .settings(configurations: [
+                .debug(name: "DEBUG", settings: Define.defaultSettings)
+            ])
         ),
     ]
 )
