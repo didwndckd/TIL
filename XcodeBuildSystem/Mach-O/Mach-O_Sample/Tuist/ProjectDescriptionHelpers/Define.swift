@@ -14,8 +14,7 @@ public enum Define {
     public static let projectPath = "Projects"
     public static let modulePath = "Projects/Modules"
     public static let defaultSettings: SettingsDictionary = [
-        :
-//        "OTHER_LDFLAGS": "-all_load",
+        "OTHER_LDFLAGS": "-Objc",
 //        "DEAD_CODE_STRIPPING": "NO",
     ]
 }

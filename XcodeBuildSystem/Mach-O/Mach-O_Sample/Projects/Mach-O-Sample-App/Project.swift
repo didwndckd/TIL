@@ -20,9 +20,19 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             dependencies: Targets.secondLayerTargets.map { $0.targetDependency },
-            settings: .settings(configurations: [
-                .debug(name: "DEBUG", settings: Define.defaultSettings)
-            ])
+            settings: .settings(base: Define.defaultSettings)
         ),
+    ],
+    schemes: [
+        .scheme(
+            name: Define.appName + "_DEBUG",
+            buildAction: .buildAction(targets: [.target(Define.appName)]),
+            runAction: .runAction(configuration: .debug)
+        ),
+        .scheme(
+            name: Define.appName + "_RELEASE",
+            buildAction: .buildAction(targets: [.target(Define.appName)]),
+            runAction: .runAction(configuration: .release)
+        )
     ]
 )

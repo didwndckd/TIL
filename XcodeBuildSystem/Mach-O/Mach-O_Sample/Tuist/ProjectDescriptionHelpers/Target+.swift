@@ -35,14 +35,19 @@ public enum Targets: CaseIterable {
         }
     }
     
-    public var moduleTarget: Target {
+    var dependencies: [TargetDependency] {
         switch self {
+//        case .moduleA:
+//            return [Targets.moduleCommon, .moduleB].map { $0.targetDependency }
         case .moduleA, .moduleB, .moduleC:
-            return .createModule(targetName: moduleName, product: product, dependencies: [Targets.moduleCommon.targetDependency])
+            return [Targets.moduleCommon.targetDependency]
         case .moduleCommon:
-            return .createModule(targetName: moduleName, product: product)
+            return []
         }
-        
+    }
+    
+    public var moduleTarget: Target {
+        return .createModule(targetName: moduleName, product: product, dependencies: dependencies)
     }
     
     public var appTarget: Target {
@@ -73,9 +78,7 @@ public extension Target {
             sources: ["\(targetName)/Sources/**"],
             resources: resources,
             dependencies: dependencies,
-            settings: .settings(configurations: [
-                .debug(name: "DEBUG", settings: Define.defaultSettings)
-            ])
+            settings: .settings(base: Define.defaultSettings)
         )
     }
     
@@ -90,9 +93,7 @@ public extension Target {
             sources: ["\(moduleName)/Sources/**"],
             resources: ["\(moduleName)/Resources/**"],
             dependencies: dependencies,
-            settings: .settings(configurations: [
-                .debug(name: "DEBUG", settings: Define.defaultSettings)
-            ])
+            settings: .settings(base: Define.defaultSettings)
         )
     }
 }
