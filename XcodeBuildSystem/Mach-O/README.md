@@ -20,13 +20,15 @@
 
 ### Case 1.
 
- ![2_Case1](Assets/2_Case1.png)
+![2_Case1](Assets/2_Case1.png)
+
+  빌드된 앱 **excutable file**의 심볼 정보를 출력
 
 ``` sh
 $ nm Mach_O_Sample_App.app/Mach_O_Sample_App| grep "\.o"
 ```
 
- ![3_Case1_nm](Assets/3_Case1_nm.png)
+- 빌드된 앱 **excutable file**에 **object file** 심볼이 포함되어있다.![3_Case1_nm](Assets/3_Case1_nm.png)
 
-- 빌드된 앱 **excutable file**에 목적코드 심볼이 포함되어있다.
+- 최종 앱 **excutable file**의 용량은 250KB 정도 ![4_Case1_capacity](Assets/4_Case1_capacity.png)
 
