@@ -193,12 +193,12 @@ tuist generate 실패
 - 모든 모듈이 자신의 **Object File**만 포함한다.
 - `ModuleCommon`의 **Singleton** 인스턴스를 모두 같은 인스턴스로 취급한다.
 
-| 결과                                                    | 설명                                           |
-| ------------------------------------------------------- | ---------------------------------------------- |
-| <img src=Assets/29_Case8_nm_ModuleA.png width=400>      | `ModuleA`에는 자신의 목적 파일만 포함한다.     |
-| <img src=Assets/30_Case8_nm_ModuleB.png width=400>      | `ModuleB에는 자신의 목적 파일만 포함한다.      |
-| <img src=Assets/31_Case8_nm_ModuleC.png width=400>      | `ModuleC에는 자신의 목적 파일만 포함한다.      |
-| <img src=Assets/32_Case8_nm_ModuleCommon.png width=400> | `ModuleCommon에는 자신의 목적 파일만 포함한다. |
+| 결과                                                    | 설명                                            |
+| ------------------------------------------------------- | ----------------------------------------------- |
+| <img src=Assets/29_Case8_nm_ModuleA.png width=400>      | `ModuleA`에는 자신의 목적 파일만 포함한다.      |
+| <img src=Assets/30_Case8_nm_ModuleB.png width=400>      | `ModuleB`에는 자신의 목적 파일만 포함한다.      |
+| <img src=Assets/31_Case8_nm_ModuleC.png width=400>      | `ModuleC`에는 자신의 목적 파일만 포함한다.      |
+| <img src=Assets/32_Case8_nm_ModuleCommon.png width=400> | `ModuleCommon`에는 자신의 목적 파일만 포함한다. |
 
 
 
