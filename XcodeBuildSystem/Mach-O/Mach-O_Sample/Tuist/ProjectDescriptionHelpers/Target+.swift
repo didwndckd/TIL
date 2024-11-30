@@ -28,9 +28,9 @@ public enum Targets: CaseIterable {
     
     var product: Product {
         switch self {
-        case .moduleA: return .staticLibrary
-        case .moduleB: return .staticLibrary
-        case .moduleC: return .staticLibrary
+        case .moduleA: return .framework
+        case .moduleB: return .framework
+        case .moduleC: return .framework
         case .moduleCommon: return .staticLibrary
         }
     }
@@ -38,7 +38,7 @@ public enum Targets: CaseIterable {
     var dependencies: [TargetDependency] {
         switch self {
 //        case .moduleA:
-//            return [Targets.moduleCommon, .moduleB].map { $0.targetDependency }
+//            return [Targets.moduleCommon, .moduleB, .moduleC].map { $0.targetDependency }
         case .moduleA, .moduleB, .moduleC:
             return [Targets.moduleCommon.targetDependency]
         case .moduleCommon:
