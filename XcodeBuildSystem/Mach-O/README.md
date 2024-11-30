@@ -202,5 +202,10 @@ tuist generate 실패
 
 
 
+## 결론
 
+- **Static Library**의 **Object file**은 종속성을 가지는 모듈이 아니라 **excutable file**에 포함된다. 
+- 여러개의 **Dynamic Framework**가 하나의 **Static Library**에  종속성을 갖게 되면 몇가지 문제점이 있다.
+  - **Dynamic Framework**는 각각의 **excutable file**을 만들기 때문에 종속성을 가지는 **Static Library**가 각각의 **Dynamic Framework**에 포함되어 중복이 발생한다.
+  - 각각의 **Dynamic Framework**에서  **Static Library**의 **Singleton** 인스턴스는 서로 다른 인스턴스로 취급한다.
 
