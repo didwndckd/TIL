@@ -68,7 +68,7 @@
 
 Case1과 달리 `ModuleA`가 `ModuleB`, `ModuleC`에 종속성을 갖기 때문에 ModuleA의 사이즈가 커지며 중복이 발생하고 사이즈가 커질줄 알았다.
 
-`ModuleA`에 **Link Binary With Libraries**에 `ModuleB`, `ModuleC`를 추가하면 libModuleA.a에 해당 라이브러리의 심볼이 포함 되지만 최종 **excutable file**에서는 포함되지 않는다.
+`ModuleA`에 **Link Binary With Libraries**에 `ModuleB`, `ModuleC`를 추가하면 libModuleA.a에 해당 라이브러리의 심볼이 포함 되지만 최종 **excutable file**에서는 중복 포함되지 않는다.
 
 하지만 Case1과 심볼 구성과 **excutable file**의 용량이 정확하게 같았다.
 
