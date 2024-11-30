@@ -28,10 +28,10 @@ public enum Targets: CaseIterable {
     
     var product: Product {
         switch self {
-        case .moduleA: return .framework
-        case .moduleB: return .framework
-        case .moduleC: return .framework
-        case .moduleCommon: return .staticLibrary
+        case .moduleA: return .staticFramework
+        case .moduleB: return .staticFramework
+        case .moduleC: return .staticFramework
+        case .moduleCommon: return .staticFramework
         }
     }
     

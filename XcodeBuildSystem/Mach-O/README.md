@@ -37,9 +37,9 @@
 
   - 빌드된 앱의 파일 구성 확인
 
-  - 빌드된 앱 **excutable file**의 파일 용량 확인
+  - 빌드된 **excutable file**의 파일 용량 확인
 
-  - 빌드된 앱 **excutable file**의 심볼 정보를 출력
+  - 빌드된 **excutable file**의 심볼 정보를 출력
 
     - ``` sh
       $ nm Mach_O_Sample_App.app/Mach_O_Sample_App| grep "\.o"
@@ -155,11 +155,50 @@ tuist generate 실패
 `ModuleA`, `ModuleB`, `ModuleC`는 **Dynamic Framework**로 구성하고 `ModuleCommon`은 **Static Library**로 구성했다.
 
 - tuist generate는 가능
-- 
 
-| 결과 | 설명 |
-| ---- | ---- |
-|      |      |
+- 하지만 몇가지 문제점이 있음
+
+  - **Dynamic Framework**는 각각 **excutable file**이 생성 되는데 해당 모듈이 종속성을 갖는 **Static Library**를 포함 하기 때문에 최종 앱 패키지의 사이즈가 불필요하게 커진다.
+
+  - `ModuleA`, `ModuleB`, `ModuleC`에서 사용하는  `ModuleCommon`의 **Singleton** 인스턴스를 각각 다른 인스턴스로 인식한다.
+
+  - 빌드했을 때 `ModuleCommen`내부의 클래스가 종속되어있는 **Dynamic Framework**에서 중복 정의되고 있음을 경고한다.
+
+    ```
+    objc[37671]: Class _TtC12ModuleCommon20ModuleCommonInstance is implemented in both 
+    /.../ModuleC.framework/ModuleC (0x102bb4218) and /.../ModuleB.framework/ModuleB (0x102ba0218). 
+    One of the two will be used. Which one is undefined.
+    
+    objc[37671]: Class _TtC12ModuleCommon20ModuleCommonInstance is implemented in both 
+    /.../ModuleC.framework/ModuleC (0x102bb4218) and /.../ModuleA.framework/ModuleA (0x102b44218). 
+    One of the two will be used. Which one is undefined.
+    ```
+
+| 결과                                                         | 설명                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| <img src=Assets/23_Case7_nm_ModuleA.png width=400>           | `ModuleA.framework`의 **excutable file**에 `ModuleCommon`의 심볼이 포함되어 있다. |
+| <img src=Assets/24_Case7_nm_ModuleB.png width=400>           | `ModuleB.framework`의 **excutable file**에 `ModuleCommon`의 심볼이 포함되어 있다. |
+| <img src=Assets/25_Case7_nm_ModuleC.png width=400>           | `ModuleC.framework`의 **excutable file**에 `ModuleCommon`의 심볼이 포함되어 있다. |
+| <img src=Assets/26_Case7_app_capacity.png width=400>         | `ModuleCommon`이 빠지면서 앱의 **excutable file** 용량은 줄어듬 |
+| <img src=Assets/27_Case7_app_package_capacity.png width=400> | 하지만 앱 패키지의 용량은 약 678KB로 꽤 많이 늘어남.         |
+
+
+
+### Case 8.
+
+![28_Case8.png](Assets/28_Case8.png)
+
+모든 모듈을 **Dynamic Framework**로 구성 해보았다.
+
+- 모든 모듈이 자신의 **Object File**만 포함한다.
+- `ModuleCommon`의 **Singleton** 인스턴스를 모두 같은 인스턴스로 취급한다.
+
+| 결과                                                    | 설명                                           |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| <img src=Assets/29_Case8_nm_ModuleA.png width=400>      | `ModuleA`에는 자신의 목적 파일만 포함한다.     |
+| <img src=Assets/30_Case8_nm_ModuleB.png width=400>      | `ModuleB에는 자신의 목적 파일만 포함한다.      |
+| <img src=Assets/31_Case8_nm_ModuleC.png width=400>      | `ModuleC에는 자신의 목적 파일만 포함한다.      |
+| <img src=Assets/32_Case8_nm_ModuleCommon.png width=400> | `ModuleCommon에는 자신의 목적 파일만 포함한다. |
 
 
 
