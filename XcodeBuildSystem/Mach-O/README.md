@@ -136,7 +136,7 @@ tuist generate 실패
 
 ![20_Case6](Assets/20_Case6.png)
 
-`ModuleA`, `ModuleB`, `ModuleC`를 **Dynamic Library**로 구성하고 `ModuleCommon`을 **Dynamic Library**로 구성했다.
+`ModuleA`, `ModuleB`, `ModuleC`를 **Dynamic Library**로 구성하고 `ModuleCommon`을 **Static Library**로 구성했다.
 
 tuist generate 실패
 
