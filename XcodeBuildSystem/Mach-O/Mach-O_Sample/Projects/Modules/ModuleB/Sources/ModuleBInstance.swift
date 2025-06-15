@@ -18,5 +18,5 @@ public class ModuleBInstance {
         ModuleCommonInstance().callMyName(caller: "ModuleB")
     }
     
-    public var moduleCommonSharedInstance: AnyObject { ModuleCommonInstance.shared }
+    public var moduleCommonSharedInstance: ModuleCommonInstance { ModuleCommonInstance.shared }
 }

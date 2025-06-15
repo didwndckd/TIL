@@ -12,6 +12,7 @@ public enum Targets: CaseIterable {
     case moduleB
     case moduleC
     case moduleCommon
+    case moduleCommonBridge
     
     public static var secondLayerTargets: [Targets] {
         return [.moduleA, .moduleB, .moduleC]
@@ -23,23 +24,25 @@ public enum Targets: CaseIterable {
         case .moduleB: return "ModuleB"
         case .moduleC: return "ModuleC"
         case .moduleCommon: return "ModuleCommon"
+        case .moduleCommonBridge: return "ModuleCommonBridge"
         }
     }
     
     var product: Product {
         switch self {
-        case .moduleA: return .staticFramework
-        case .moduleB: return .staticFramework
-        case .moduleC: return .staticFramework
-        case .moduleCommon: return .staticFramework
+        case .moduleA: return .staticLibrary
+        case .moduleB: return .staticLibrary
+        case .moduleC: return .staticLibrary
+        case .moduleCommonBridge: return .staticLibrary
+        case .moduleCommon: return .staticLibrary
         }
     }
     
     var dependencies: [TargetDependency] {
         switch self {
-//        case .moduleA:
-//            return [Targets.moduleCommon, .moduleB, .moduleC].map { $0.targetDependency }
         case .moduleA, .moduleB, .moduleC:
+            return [Targets.moduleCommon.targetDependency]
+        case .moduleCommonBridge:
             return [Targets.moduleCommon.targetDependency]
         case .moduleCommon:
             return []
