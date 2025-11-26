@@ -2,7 +2,7 @@
 
 - 모든 비동기 함수는 명시적으로 요청하지 않더라도 Task의 일부로 실행된다.
 
-## 🧵 Swift Concurrency: Tasks & TaskGroups 요약 정리
+## 🧵 Swift Concurrency: Tasks & TaskGroups
 
 ### 1. Tasks와 TaskGroups란?
 
