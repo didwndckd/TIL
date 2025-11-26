@@ -228,8 +228,6 @@ Error received: no3
 
 ### 동시 접근
 
-> playground환경에서는 제대로 동작하지 않습니다.
-
 ``` swift
 let stream = AsyncStream { continuation in
     for i in 1...9 {
