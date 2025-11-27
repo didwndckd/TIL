@@ -748,4 +748,312 @@ await getAverageTemperature()
 
 
 
-## 다음 볼거 How to voluntarily suspend a task
+## 자발적으로 Task를 중단하는 방법(Task.yield)
+
+### 1. 개념: Task.yield()는 “양보” 요청이다
+- 긴 시간 동안 돌아가는 연산(예: 큰 범위를 도는 루프) 안에 `await` 같은 **일시 중단(suspension) 지점이 거의 없으면**, 해당 Task가 CPU를 독점해서 다른 Task가 거의 진행하지 못할 수 있음.
+- 이때 `await Task.yield()`를 호출하면 **현재 Task가 잠깐 실행권을 양보**해서 Swift가 다른 Task를 실행할 기회를 가질 수 있게 된다.
+- 강제가 아니라 **힌트(guidance)** 에 가까운 메커니즘이다.
+
+---
+
+### 2. 기본 구현: 약수(factors)를 구하는 비효율적인 함수
+
+```swift
+func factors(for number: Int) async -> [Int] {
+    var result = [Int]()
+
+    for check in 1...number {
+        if number.isMultiple(of: check) {
+            result.append(check)
+        }
+    }
+
+    return result
+}
+
+// INSIDE MAIN
+let results = await factors(for: 120)
+print("Found \(results.count) factors for 120.")
+```
+
+---
+
+### 3. 주기적으로 양보하기 — 100,000번마다 Task.yield()
+
+- 긴 루프에서 한 Task가 CPU를 독점하지 않도록 **주기적으로 실행권을 양보하기 위해 `Task.yield()`를 사용**할 수 있다.
+- 예시: 약수를 구하는 함수에서 **10만 번마다 한 번씩** `yield()` 호출
+
+```swift
+func factors(for number: Int) async -> [Int] {
+    var result = [Int]()
+
+    for check in 1...number {
+        // 100,000의 배수일 때마다 한 번씩 Task를 양보
+        if check.isMultiple(of: 100_000) {
+            await Task.yield()
+        }
+
+        if number.isMultiple(of: check) {
+            result.append(check)
+        }
+    }
+
+    return result
+}
+
+// INSIDE MAIN
+let factors = await factors(for: 120)
+print("Found \(factors.count) factors for 120.")
+```
+
+---
+
+### 4. 대안: 약수를 찾았을 때만 Task.yield() 호출하기
+
+- 매 고정 주기(예: 100,000번마다)가 아니라 **“약수를 실제로 찾았을 때만” `Task.yield()`를 호출**하는 방식.
+- 이렇게 하면 **의미 있는 시점(실제로 결과가 나올 때)**에만 양보가 일어난다.
+
+```swift
+func factors(for number: Int) async -> [Int] {
+    var result = [Int]()
+
+    for check in 1...number {
+        if number.isMultiple(of: check) {
+            result.append(check)
+
+            // 약수를 찾았을 때만 다른 Task에게 양보
+            await Task.yield()
+        }
+    }
+
+    return result
+}
+
+// INSIDE MAIN
+let factors = await factors(for: 120)
+print("Found \(factors.count) factors for 120.")
+```
+
+---
+
+### **5. Task.yield()에 대한 중요한 포인트**
+
+- Task.yield()를 호출한다고 해서
+
+  **반드시 Task가 멈추는 것은 아니다.**
+
+- 대기 중인 다른 Task들보다 **현재 Task의 우선순위가 더 높다면**,
+
+  바로 다시 자기 일을 이어갈 수 있다.
+
+- 즉, yield()는:
+
+  - **“지금 다른 Task 실행해도 괜찮아”라는 힌트**일 뿐,
+  - “무조건 멈춰라”라는 강제 명령이 아니다.
+
+> 💡 비유하자면, Task.yield()는 가상의 Task.doNothing()을 호출하는 것과 비슷하다. 실제로 아무 일도 하지 않지만, 그 틈에 Swift가 **Task 스케줄링을 조정할 수 있는 기회를 얻게 되는 것.**
+
+---
+
+### **6. 언제 Task.yield()를 고려할까?**
+
+- 긴 루프, 큰 데이터 처리, CPU 바운드 연산 등:
+
+  - await 지점이 거의 없는 **순수 계산 위주의 Task**일 때
+  - UI 반응성 또는 다른 Task의 진행 상황이 중요한 경우
+
+- 요약하면:
+
+  - **“내 Task가 너무 오래 CPU를 잡고 있을 수도 있다”** 싶을 때 → 적당한 위치에 await Task.yield()를 심어두면 좋다.
+
+  
+
+## Task Group 생성과 태스크 추가 방법
+
+### 1. Task Group 개념
+
+- **Task Group**은 여러 개의 `Task`가 **함께 하나의 결과를 만들어내는 컨테이너**이다.
+- 그룹 안의 각 `Task`는 **동일한 타입의 값을 반환**해야 한다.
+  - 필요하다면 `enum` + 연관값(associated value)로 서로 다른 데이터를 감싸서 한 타입으로 만들 수 있다. (조금 번거롭지만 가능)
+- TaskGroup 인스턴스를 직접 생성하지 않고,
+  - **`withTaskGroup(of:_:)`**
+  - 또는 에러를 바깥으로 전달하고 싶다면 **`withThrowingTaskGroup(of:_:)`**를 사용한다.
+
+---
+
+### 2. 기본 예제: 문자열 5개를 모아서 한 문장 만들기
+
+```swift
+func printMessage() async {
+    // TaskGroup이 반환할 타입을 String으로 명시
+    let string = await withTaskGroup(of: String.self) { group in
+        // group 파라미터로 TaskGroup 인스턴스를 전달받음
+        // 각 addTask는 String을 반환하는 child Task를 하나씩 추가
+        group.addTask { "Hello" }
+        group.addTask { "From" }
+        group.addTask { "A" }
+        group.addTask { "Task" }
+        group.addTask { "Group" }
+
+        var collected = [String]()
+
+        // TaskGroup은 AsyncSequence를 준수하므로
+        // for await를 사용해 child Task들의 결과를 순서대로(완료 순서 기준) 읽을 수 있음
+        for await value in group {
+            collected.append(value)
+        }
+
+        // 수집된 문자열들을 공백으로 이어 붙여 하나의 문장으로 반환
+        return collected.joined(separator: " ")
+    }
+
+    // 예: "Hello From A Task Group" 또는 순서가 섞인 문자열이 출력될 수 있음
+    print(string)
+}
+
+// INSIDE MAIN
+await printMessage()
+```
+
+---
+
+### 3. Swift 6.1 이후 변화 & Throwing TaskGroup
+
+#### 3.1 Swift 6.1 부터의 타입 추론
+
+- Swift 6.1 이후:
+  - `withTaskGroup()` 호출 시 `of:` 파라미터를 생략할 수 있다.
+  - **그룹에 처음 추가되는 child task의 반환 타입**을 기준으로 Swift가 타입을 추론한다.
+
+예:
+
+```swift
+await withTaskGroup { group in
+    // 첫 번째 child Task가 String을 반환하므로
+    // 그룹 전체의 타입이 String으로 추론됨
+    group.addTask { "Hello" }
+    // ...
+}
+```
+
+#### 3.2 에러를 던지는 Task가 필요할 때
+
+- `withTaskGroup(of:_:)` 를 사용할 때 생성된 Task는 **그룹 바깥으로 에러를 던질 수 없다.**
+- Task 내부에서 발생한 에러를 **외부에서 처리할 수 있도록 전달**하려면 → **`withThrowingTaskGroup(of:_:)`** 를 사용해야 한다.
+
+---
+
+### 4. 실전 예제: 여러 뉴스 피드를 병렬로 가져와 합치기
+
+```swift
+// 개별 뉴스 기사를 표현하는 모델
+struct NewsStory: Decodable, Identifiable {
+    let id: Int
+    let title: String
+    let strap: String
+    let url: URL
+}
+
+// 뉴스 목록을 보여주는 SwiftUI 뷰
+struct ContentView: View {
+    @State private var stories = [NewsStory]()
+
+    var body: some View {
+        NavigationStack {
+            List(stories) { story in
+                VStack(alignment: .leading) {
+                    Text(story.title)
+                        .font(.headline)
+
+                    Text(story.strap)
+                }
+            }
+            .navigationTitle("Latest News")
+        }
+        // View가 나타날 때 비동기로 뉴스 로딩
+        .task {
+            await loadStories()
+        }
+    }
+
+    // 여러 JSON 피드를 병렬로 가져와 하나의 배열로 합치는 함수
+    func loadStories() async {
+        do {
+            // 에러를 외부로 전파해야 하므로 withThrowingTaskGroup 사용
+            stories = try await withThrowingTaskGroup(of: [NewsStory].self) { group in
+                // 1 ~ 5번까지 뉴스 JSON을 병렬로 가져올 Task를 반복문에서 추가
+                for i in 1...5 {
+                    group.addTask {
+                        let url = URL(string: "https://hws.dev/news-\(i).json")!
+                        // 네트워크 요청은 에러를 던질 수 있으므로 try/await 사용
+                        let (data, _) = try await URLSession.shared.data(from: url)
+                        // 각 Task는 [NewsStory]를 디코딩해서 반환
+                        return try JSONDecoder().decode([NewsStory].self, from: data)
+                    }
+                }
+
+                var allStories = [NewsStory]()
+
+                // 그룹 안의 Task는 어떤 순서로든 완료될 수 있으므로
+                // for try await 로 완료되는 순서대로 결과를 읽어와 하나의 배열로 합침
+                for try await stories in group {
+                    allStories.append(contentsOf: stories)
+                }
+
+                // id 기준 내림차순으로 정렬해
+                // 항상 일관된 순서로 화면에 표시되도록 정제된 배열을 반환
+                return allStories.sorted { $0.id > $1.id }
+            }
+        } catch {
+            // 전체 TaskGroup 중 하나라도 실패하면 여기로 에러가 전파됨
+            print("Failed to load stories")
+        }
+    }
+}
+```
+
+---
+
+### 5. TaskGroup의 완료 규칙과 “기다리는 방법” 3가지
+
+- 공통 규칙:
+  - Throwing/Non-Throwing에 상관없이 **그룹 안의 모든 child task가 완료되어야** `withTaskGroup` / `withThrowingTaskGroup` 이 반환된다.
+
+#### 6.1 모든 Task를 개별적으로 await 하기
+
+- 예: `for await value in group { ... }`, 또는 `for try await value in group { ... }`
+- 장점:
+  - **가장 명시적**이고 읽기 쉽다.
+  - “Task를 만들어놓고 결과를 안 쓰는 건가?” 같은 의문을 줄여준다.
+
+#### 6.2 `waitForAll()` 사용
+
+- `group.waitForAll()` 을 호출하면,
+  - 우리가 명시적으로 `await`하지 않은 Task들까지 **모두 완료될 때까지 기다려 준다.**
+  - 이때 그 Task들의 **반환값은 버려진다.**
+
+#### 6.3 아무 child task도 명시적으로 await 하지 않기 (암묵적 await)
+
+- 우리가 개별 Task를 전혀 `await` 하지 않아도,
+  - Swift는 **그룹이 끝나기 전에 모든 child task가 끝날 때까지 자동으로 기다린다.**
+- 즉, 결과를 사용하지 않더라도 Task들은 끝까지 실행된다.
+
+#### 6.4 실무에서 자주 쓰는 방식
+
+- 세 가지 방법 중 **“각 Task를 명시적으로 await 하는 방식(6.1)”**을 가장 자주 사용하게 된다.
+- 이유:
+  - 코드 읽는 사람이 “이 Task는 왜 만들고 방치하지?” 같은 의문을 갖지 않게 해주고,
+  - 흐름이 가장 분명하다.
+
+---
+
+### 7. 한 줄 정리
+
+- `withTaskGroup` / `withThrowingTaskGroup` =
+  - 여러 비동기 작업을 **한 번에 던져두고**, **완료되는 순서대로 결과를 모아서 하나의 결과로 만드는 도구**
+- 실제 네트워크/파일 I/O, 여러 API 병렬 호출 같은 곳에서 **간단한 루프로 Task를 생성하고 합치는 패턴**을 만들 수 있다.
+
+
+
+# 다음 볼 내용 How to cancel a task group
