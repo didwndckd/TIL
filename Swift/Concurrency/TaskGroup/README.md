@@ -1578,3 +1578,1203 @@ await withTaskGroup(of: Data.self) { group in
 - Task Group을 직접 사용하는 빈도는 낮음
 - 하지만 Task Group 위에 다른 추상화를 만들어 사용하는 경우는 많음
 - 예: 커스텀 병렬 처리 유틸리티, 배치 작업 처리기 등
+
+
+
+## 커맨드라인 도구에서 async 사용하기
+
+### 1. 개요
+
+Swift로 커맨드라인 도구를 작성할 때 async 코드를 사용하는 방법은 두 가지입니다:
+
+1. **main.swift 사용**: 즉시 async 함수를 만들고 사용 가능
+2. **@main 속성 사용**: 앱을 즉시 async 컨텍스트로 실행
+
+⚠️ **중요**: 프로그램이 종료되기 전에 작업이 완료될 때까지 기다려야 합니다. 그렇지 않으면 작업이 완료되지 않을 수 있습니다.
+
+---
+
+### 2. 방법 1: main.swift 사용
+
+main.swift 파일을 사용하는 경우, await와 같은 비동기 코드를 바로 사용할 수 있습니다:
+
+```swift
+let url = URL(string: "https://hws.dev/users.csv")!
+
+for try await line in url.lines {
+    print("Received user: \(line)")
+}
+```
+
+**특징:**
+
+- 별도의 설정 없이 바로 async/await 사용 가능
+- 파일명이 반드시 `main.swift`여야 함
+- 가장 간단한 방법
+
+---
+
+### 3. 방법 2: @main 속성 사용
+
+main.swift를 사용하지 않고 `@main` 속성을 선호하는 경우:
+
+1. 일반적으로 사용하는 static `main()` 메서드를 만듦
+2. `async`를 추가
+3. 선택적으로 `throws`도 추가 (에러를 직접 처리하지 않을 경우)
+
+```swift
+@main
+struct UserFetcher {
+    static func main() async throws {
+        let url = URL(string: "https://hws.dev/users.csv")!
+
+        for try await line in url.lines {
+            print("Received user: \(line)")
+        }
+    }
+}
+```
+
+**동작 방식:**
+
+- Swift가 자동으로 새 Task를 생성하여 `main()` 메서드를 실행
+- Task가 완료되면 프로그램이 종료됨
+
+**주의사항:**
+
+- `@main` 속성을 사용할 때는 프로젝트에 `main.swift` 파일을 포함하지 않아야 함
+- 동기 `main()` 메서드를 사용하는 것과 동일한 규칙 적용
+
+---
+
+### 4. 방법 비교
+
+| 특징                | main.swift      | @main + async main() |
+| ------------------- | --------------- | -------------------- |
+| **파일명**          | main.swift 필수 | 자유롭게 지정 가능   |
+| **구조**            | 스크립트 스타일 | 구조화된 타입        |
+| **async 사용**      | 직접 사용       | static 메서드 내부   |
+| **에러 처리**       | do-catch 필요   | throws 선언 가능     |
+| **코드 구조화**     | 어려움          | 타입으로 구조화 가능 |
+| **추가 속성/메서드** | 불가능          | 가능                 |
+
+---
+
+### 5. 실전 예제: 여러 URL에서 데이터 가져오기
+
+#### main.swift 방식
+
+```swift
+// main.swift
+let urls = [
+    URL(string: "https://hws.dev/users.csv")!,
+    URL(string: "https://hws.dev/posts.csv")!,
+    URL(string: "https://hws.dev/comments.csv")!
+]
+
+await withTaskGroup(of: Void.self) { group in
+    for url in urls {
+        group.addTask {
+            for try await line in url.lines {
+                print("[\(url.lastPathComponent)] \(line)")
+            }
+        }
+    }
+}
+
+print("All downloads completed!")
+```
+
+#### @main 방식
+
+```swift
+// DataFetcher.swift
+@main
+struct DataFetcher {
+    static let urls = [
+        URL(string: "https://hws.dev/users.csv")!,
+        URL(string: "https://hws.dev/posts.csv")!,
+        URL(string: "https://hws.dev/comments.csv")!
+    ]
+
+    static func main() async throws {
+        await withTaskGroup(of: Void.self) { group in
+            for url in urls {
+                group.addTask {
+                    try? await fetchData(from: url)
+                }
+            }
+        }
+
+        print("All downloads completed!")
+    }
+
+    static func fetchData(from url: URL) async throws {
+        for try await line in url.lines {
+            print("[\(url.lastPathComponent)] \(line)")
+        }
+    }
+}
+```
+
+---
+
+### 6. 선택 가이드
+
+#### ✅ main.swift를 사용해야 할 때
+
+- 간단한 스크립트 작성
+- 빠른 프로토타이핑
+- 최소한의 구조로 충분한 경우
+- 단일 파일 프로젝트
+
+#### ✅ @main을 사용해야 할 때
+
+- 구조화된 커맨드라인 도구
+- 여러 메서드와 속성이 필요한 경우
+- 테스트 가능한 코드 작성
+- 프로젝트가 커질 가능성이 있는 경우
+- 다른 Swift 파일과 함께 사용하는 경우
+
+---
+
+### 7. 핵심 정리
+
+**공통 규칙:**
+
+- async 컨텍스트에서 모든 작업이 완료될 때까지 기다려야 함
+- 프로그램이 일찍 종료되면 async 작업이 중단될 수 있음
+
+**main.swift:**
+
+- 파일명 고정
+- 스크립트처럼 바로 코드 실행
+- 간단한 도구에 적합
+
+**@main:**
+
+- 파일명 자유
+- 타입 기반 구조화
+- 복잡한 도구에 적합
+- `main.swift` 파일이 있으면 안 됨
+
+
+
+## Task-Local Values 생성과 사용
+
+### 1. Task-Local Values란?
+
+Swift는 **task-local values**를 사용하여 Task에 메타데이터를 첨부할 수 있습니다. 이는 Task 내부의 모든 코드가 읽을 수 있는 작은 정보 조각입니다.
+
+예를 들어, `Task.isCancelled`를 읽어 현재 Task가 취소되었는지 확인할 수 있지만, 이것은 진짜 static 속성이 아닙니다 – 모든 Task 간에 공유되는 것이 아니라 **현재 Task에만 범위가 지정**됩니다. 이것이 task-local values의 힘입니다: Task 내부에 static과 같은 속성을 만들 수 있는 능력.
+
+**⚠️ 중요**: 대부분의 사람들은 task-local values를 사용할 필요가 없습니다. 이 기능은 매우 특정한 소수의 상황에서만 유용하며, 복잡하다고 느껴진다면 크게 걱정하지 않아도 됩니다.
+
+**개념:**
+
+- Task-local values는 구식 멀티스레딩 환경의 **thread-local values**와 유사
+- Task에 메타데이터를 첨부하고, Task 내부에서 실행되는 모든 코드가 필요에 따라 해당 데이터를 읽을 수 있음
+- Swift의 구현은 데이터를 Task에 직접 주입하는 대신 **데이터를 사용할 수 있는 컨텍스트를 생성**하도록 신중하게 범위가 지정됨
+
+---
+
+### 2. Task-Local Values 사용 3단계
+
+#### Step 1: Task-local values로 만들 속성을 가진 타입 생성
+
+```swift
+enum User {
+    @TaskLocal static var id = "Anonymous"
+}
+```
+
+- enum, struct, class, actor 모두 가능
+- 하지만 **enum 권장** (인스턴스를 만들 의도가 없음을 명확히 함)
+
+#### Step 2: `@TaskLocal` 매크로로 각 task-local value 표시
+
+- 속성은 **모든 타입** 가능 (옵셔널 포함)
+- 반드시 **static**으로 표시해야 함
+
+#### Step 3: `withValue()`로 새 task-local scope 시작
+
+```swift
+YourType.$yourProperty.withValue(someValue) {
+    // 이 scope 내에서 YourType.yourProperty는 someValue를 반환
+}
+```
+
+**핵심 특징:**
+
+- Task-local scope 내에서 `YourType.yourProperty`를 읽으면 **task-local value**를 받음
+- 모든 프로그램에서 공유되는 단일 값을 가진 일반 static 속성이 아님
+- **어떤 Task가 읽는지에 따라 다른 값을 반환**할 수 있음
+
+---
+
+### 3. 간단한 예제: Task마다 다른 사용자 ID
+
+```swift
+enum User {
+    @TaskLocal static var id = "Anonymous"
+}
+
+@main
+struct App {
+    static func main() async throws {
+        let first = Task {
+            try await User.$id.withValue("Piper") {
+                print("Start of task: \(User.id)")
+                try await Task.sleep(for: .seconds(1))
+                print("End of task: \(User.id)")
+            }
+        }
+
+        let second = Task {
+            try await User.$id.withValue("Alex") {
+                print("Start of task: \(User.id)")
+                try await Task.sleep(for: .seconds(1))
+                print("End of task: \(User.id)")
+            }
+        }
+
+        print("Outside of tasks: \(User.id)")
+        try await first.value
+        try await second.value
+    }
+}
+```
+
+**출력:**
+
+```
+Outside of tasks: Anonymous
+Start of task: Piper
+Start of task: Alex
+End of task: Piper
+End of task: Alex
+```
+
+**핵심 포인트:**
+
+- 두 Task는 독립적으로 실행되므로 Piper와 Alex의 순서가 바뀔 수 있음
+- 각 Task는 겹치는 시간에도 자신만의 `User.id` 값을 가짐
+- Task 외부의 코드는 계속 원래 값(Anonymous)을 사용
+
+---
+
+### 4. Scoping과 Nesting
+
+Swift는 설정한 task-local value를 잊어버리는 것을 불가능하게 만듭니다. **`withValue()` 내부의 작업에만 존재**하기 때문입니다.
+
+**Scoping의 장점:**
+
+1. **중첩(Nesting) 가능**: 필요에 따라 여러 task-local을 중첩할 수 있음
+2. **Shadowing 가능**: 하나의 scope를 시작하고, 작업을 수행한 후, 같은 속성에 대해 중첩된 다른 scope를 시작하여 일시적으로 다른 값을 가질 수 있음
+
+```swift
+try await User.$id.withValue("Piper") {
+    print(User.id)  // "Piper"
+
+    try await User.$id.withValue("Alex") {
+        print(User.id)  // "Alex" - 일시적으로 shadowing
+    }
+
+    print(User.id)  // "Piper" - 다시 원래 값으로
+}
+```
+
+---
+
+### 5. 실전 예제: Task별 로깅 레벨
+
+Task-local values는 **Task 내에서 값을 반복적으로 전달해야 하는 경우**에 유용합니다 – Task 내에서 공유되어야 하지만 싱글톤처럼 전체 프로그램에서 공유되지 않아야 하는 값들입니다.
+
+**실제 사용 사례:**
+
+- 트레이싱(Tracing)
+- 모킹(Mocking)
+- 진행 상황 모니터링(Progress monitoring)
+
+#### 로깅 시스템 구현
+
+5가지 로그 레벨을 가진 Logger를 만들어봅시다: debug (가장 낮음) → info → warn → error → fatal (가장 높음)
+
+**필요한 구성 요소:**
+
+1. 5가지 로깅 레벨을 설명하는 enum
+2. 싱글톤인 Logger struct
+3. Logger 내부의 현재 로그 레벨을 저장하는 task-local 속성
+
+```swift
+// 5가지 로그 레벨, Comparable로 표시하여 < 및 > 사용 가능
+enum LogLevel: Comparable {
+    case debug, info, warn, error, fatal
+}
+
+struct Logger {
+    // 개별 Task의 로그 레벨
+    @TaskLocal static var logLevel = LogLevel.info
+
+    // 싱글톤으로 만들기
+    private init() { }
+    static let shared = Logger()
+
+    // 로그 레벨을 충족하거나 초과하는 경우에만 메시지 출력
+    func write(_ message: String, level: LogLevel) {
+        if level >= Logger.logLevel {
+            print(message)
+        }
+    }
+}
+
+@main
+struct App {
+    // URL에서 데이터를 반환하고 로그 메시지 작성
+    static func fetch(url urlString: String) async throws -> String? {
+        Logger.shared.write("Preparing request: \(urlString)", level: .debug)
+
+        if let url = URL(string: urlString) {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            Logger.shared.write("Received \(data.count) bytes", level: .info)
+            return String(decoding: data, as: UTF8.self)
+        } else {
+            Logger.shared.write("URL \(urlString) is invalid", level: .error)
+            return nil
+        }
+    }
+
+    // 다른 로그 레벨로 fire-and-forget task 시작
+    static func main() async throws {
+        let first = Task {
+            try await Logger.$logLevel.withValue(.debug) {
+                try await fetch(url: "https://hws.dev/news-1.json")
+            }
+        }
+
+        let second = Task {
+            try await Logger.$logLevel.withValue(.error) {
+                try await fetch(url: "")
+            }
+        }
+
+        _ = try await first.value
+        _ = try await second.value
+    }
+}
+```
+
+**출력:**
+
+```
+Preparing request: https://hws.dev/news-1.json
+URL  is invalid
+Received 8075 bytes
+```
+
+**핵심 포인트:**
+
+- `fetch()` 메서드는 task-local value가 사용되는지조차 알 필요가 없음
+- 단순히 Logger 싱글톤을 호출하고, Logger가 task-local value를 참조
+- 각 Task는 자신만의 로그 레벨을 가짐
+
+---
+
+### 6. Task-Local Values 사용 시 주의사항
+
+#### ✅ 중요한 팁
+
+1. **withValue() scope 외부에서 접근 가능**
+   - withValue() scope 외부에서 task-local value에 접근해도 괜찮음
+   - 단순히 지정한 기본값을 받게 됨
+
+2. **상속 규칙**
+   - 일반 Task는 부모 Task의 task-local values를 **상속**함
+   - Detached Task는 부모가 없으므로 **상속하지 않음**
+
+3. **읽기 전용**
+   - Task-local values는 **읽기 전용**
+   - 위에 표시된 대로 `withValue()`를 호출해야만 수정 가능
+
+4. **과도한 사용 주의 ⚠️**
+   - Swift Evolution 제안서 인용:
+     > "please be careful with the use of task-locals and don't use them in places where plain-old parameter passing would have done the job."
+
+   - **더 간단히 말하면**: task-local이 답이라면, 잘못된 질문을 하고 있을 가능성이 높습니다
+   - **일반 매개변수 전달로 충분하다면 그것을 사용하세요**
+
+---
+
+### 7. 언제 Task-Local Values를 사용해야 할까?
+
+#### ✅ 적합한 경우
+
+1. **트레이싱/로깅**
+   - 각 Task마다 다른 로그 레벨
+   - 분산 트레이싱 ID
+
+2. **테스트 환경**
+   - 모킹 데이터
+   - 테스트별 설정
+
+3. **진행 상황 모니터링**
+   - Task별 진행률 추적
+
+4. **컨텍스트 정보**
+   - 사용자 ID
+   - 요청 ID
+   - 세션 정보
+
+#### ❌ 부적합한 경우 (대안 사용)
+
+| 상황                         | Task-Local 대신 사용할 것 |
+| ---------------------------- | ------------------------- |
+| 함수 간 값 전달              | 일반 매개변수             |
+| 전역 설정                    | 싱글톤 또는 전역 변수     |
+| Task 간 공유 상태            | Actor 또는 @Sendable      |
+| 단순한 값 전달               | 구조체 속성               |
+
+---
+
+### 8. Task-Local Values vs 다른 패턴 비교
+
+| 특징          | Task-Local Values        | 매개변수 전달          | 싱글톤               | Thread-Local (구식) |
+| ------------- | ------------------------ | ---------------------- | -------------------- | ------------------- |
+| **범위**      | 현재 Task와 자식 Task    | 명시적 전달            | 전역                 | 현재 스레드         |
+| **상속**      | 자식 Task에 자동 상속    | 수동 전달              | 모든 곳에서 동일     | 스레드별로 다름     |
+| **수정**      | withValue()로만 가능     | 언제든지 가능          | 언제든지 가능        | 언제든지 가능       |
+| **명시성**    | 암묵적 (scope 내)        | 명시적 (파라미터)      | 전역적으로 명시적    | 암묵적              |
+| **타입 안정** | ✅ 컴파일 타임 체크       | ✅ 컴파일 타임 체크     | ✅ 컴파일 타임 체크   | ⚠️ 런타임 체크       |
+| **사용 난이도** | 복잡                     | 간단                   | 간단                 | 복잡                |
+
+---
+
+### 9. 핵심 정리
+
+**Task-Local Values란:**
+
+- Task에 메타데이터를 첨부하는 방법
+- Task 내부의 모든 코드가 읽을 수 있음
+- 각 Task는 자신만의 값을 가질 수 있음
+
+**사용 방법:**
+
+1. `@TaskLocal` 매크로로 static 속성 선언
+2. `withValue()` 로 scope 생성
+3. Scope 내에서 속성 읽기
+
+**주의사항:**
+
+- 대부분의 경우 **일반 매개변수 전달**이 더 나음
+- 매우 특정한 상황(트레이싱, 로깅, 모킹)에서만 유용
+- 과도하게 사용하지 말 것
+
+**기억할 것:**
+
+- Detached Task는 task-local values를 상속하지 않음
+- 읽기 전용 (withValue()로만 수정 가능)
+- Task-local이 답이라면, 아마도 잘못된 질문을 하고 있을 것
+
+
+
+## SwiftUI의 task() modifier로 Task 실행하기
+
+### 1. task() modifier란?
+
+SwiftUI는 **`task()` modifier**를 제공하여 뷰가 나타나는 즉시 새 Task를 시작하고, 뷰가 사라질 때 자동으로 Task를 취소합니다.
+
+**동작 원리:**
+
+- `onAppear()`에서 Task를 시작하고 `onDisappear()`에서 취소하는 것과 유사
+- **추가 기능**: 식별자를 추적하여 식별자가 변경되면 Task를 자동으로 재시작
+
+**⚠️ 중요**: 모든 SwiftUI 뷰는 자동으로 main actor에서 실행되므로, 뷰가 시작하는 Task도 다른 곳으로 이동할 때까지 자동으로 main actor에서 실행됩니다.
+
+---
+
+### 2. 기본 사용법: 뷰의 초기 데이터 로딩
+
+가장 간단한 시나리오이자 가장 많이 사용할 방법은 `task()`를 사용하여 **뷰의 초기 데이터를 로드**하는 것입니다. 이 데이터는 로컬 스토리지에서 로드하거나 원격 URL에서 가져와 디코딩할 수 있습니다.
+
+```swift
+struct Message: Decodable, Identifiable {
+    let id: Int
+    let user: String
+    let text: String
+}
+
+struct ContentView: View {
+    @State private var messages = [Message]()
+
+    var body: some View {
+        NavigationStack {
+            List(messages) { message in
+                VStack(alignment: .leading) {
+                    Text(message.user)
+                        .font(.headline)
+
+                    Text(message.text)
+                }
+            }
+            .navigationTitle("Inbox")
+            .task {
+                await fetchData()
+            }
+        }
+    }
+
+    func fetchData() async {
+        do {
+            let url = URL(string: "https://hws.dev/inbox.json")!
+            let (data, _) = try await URLSession.shared.data(from: url)
+            messages = try JSONDecoder().decode([Message].self, from: data)
+        } catch {
+            messages = [
+                Message(id: 0, user: "Failed to load inbox.", text: "Please try again later.")
+            ]
+        }
+    }
+}
+```
+
+**핵심 포인트:**
+
+- 뷰가 나타나면 `fetchData()` 자동 실행
+- 뷰가 사라지면 Task 자동 취소
+- SwiftUI 뷰의 데이터를 로드하기에 완벽한 위치
+
+**⚠️ 중요**: `task()` modifier는 SwiftUI 뷰의 데이터를 로드하기에 좋은 장소입니다. SwiftUI 뷰는 앱 수명 동안 여러 번 재생성될 수 있으므로, 가능하면 이러한 작업을 이니셜라이저에 넣지 않아야 합니다.
+
+---
+
+### 3. 고급 사용법: 식별자로 Task 재시작
+
+`task()`의 더 고급 사용법은 **Equatable 식별 값**을 첨부하는 것입니다. 이 값이 변경되면 SwiftUI는 자동으로 이전 Task를 취소하고 새 값으로 새 Task를 생성합니다.
+
+**Task가 실행되는 시점:**
+
+1. **뷰가 처음 나타날 때** - 초기 데이터 로딩
+2. **식별자가 변경될 때** - 자동으로 이전 Task 취소 후 새 Task 시작
+3. **뷰가 사라졌다가 다시 나타날 때** - Task가 다시 실행됨 (예: NavigationStack에서 뒤로 갔다가 다시 돌아오는 경우)
+
+**사용 사례:**
+
+- 공유 앱 상태 (예: 사용자 로그인 여부)
+- 로컬 상태 (예: 데이터에 적용할 필터 종류)
+
+#### 예제: Inbox와 Sent Box 전환
+
+```swift
+struct Message: Decodable, Identifiable {
+    let id: Int
+    let user: String
+    let text: String
+}
+
+// 두 가지 메시지 박스를 처리할 수 있는 뷰
+struct ContentView: View {
+    @State private var messages = [Message]()
+    @State private var selectedBox = "Inbox"
+    let messageBoxes = ["Inbox", "Sent"]
+
+    var body: some View {
+        NavigationStack {
+            List(messages) { message in
+                VStack(alignment: .leading) {
+                    Text(message.user)
+                        .font(.headline)
+
+                    Text(message.text)
+                }
+            }
+            .navigationTitle(selectedBox)
+
+            // selectedBox가 변경될 때마다 fetchData() task를 재생성
+            .task(id: selectedBox) {
+                await fetchData()
+            }
+            .toolbar {
+                // 두 메시지 박스 간 전환
+                Picker("Select a message box", selection: $selectedBox) {
+                    ForEach(messageBoxes, id: \.self, content: Text.init)
+                }
+                .pickerStyle(.segmented)
+            }
+        }
+    }
+
+    // 이전과 거의 동일하지만 이제 항상 inbox를 로드하는 대신 selectedBox JSON 파일을 로드
+    func fetchData() async {
+        do {
+            let url = URL(string: "https://hws.dev/\(selectedBox.lowercased()).json")!
+            let (data, _) = try await URLSession.shared.data(from: url)
+            messages = try JSONDecoder().decode([Message].self, from: data)
+        } catch {
+            messages = [
+                Message(id: 0, user: "Failed to load message box.", text: "Please try again later.")
+            ]
+        }
+    }
+}
+```
+
+**동작 방식:**
+
+1. `selectedBox`가 "Inbox"에서 "Sent"로 변경
+2. SwiftUI가 현재 실행 중인 Task를 자동으로 취소
+3. 새로운 `selectedBox` 값으로 새 Task 시작
+4. 새 데이터를 자동으로 가져옴
+
+**💡 팁**: 이 예제는 공유 URLSession을 사용하므로 응답을 캐시하고 두 inbox를 한 번만 로드합니다. 항상 파일을 가져오려면 자체 세션 구성을 만들고 캐싱을 비활성화하세요.
+
+---
+
+### 4. AsyncSequence와 함께 사용: 연속적인 값 스트리밍
+
+`task()`의 특히 흥미로운 사용 사례는 **연속적으로 값을 생성하는 AsyncSequence 컬렉션**과 함께 사용하는 것입니다.
+
+**사용 사례:**
+
+- 새로운 콘텐츠를 보내는 동안 열린 연결을 유지하는 서버
+- 파일 감시자(URLWatcher)
+- 로컬 값 생성기
+
+#### 예제: 랜덤 숫자 생성기 스트리밍
+
+```swift
+// 간단한 랜덤 숫자 생성기 시퀀스
+struct NumberGenerator: AsyncSequence, AsyncIteratorProtocol {
+    let range: ClosedRange<Int>
+    let delay: Double = 1
+
+    mutating func next() async -> Int? {
+        // Task가 취소되면 숫자 생성 중지
+        while Task.isCancelled == false {
+            try? await Task.sleep(for: .seconds(delay))
+            print("Generating number")
+            return Int.random(in: range)
+        }
+
+        return nil
+    }
+
+    func makeAsyncIterator() -> NumberGenerator {
+        self
+    }
+}
+
+// DetailView를 요청할 때만 표시하기 위해 존재
+struct ContentView: View {
+    var body: some View {
+        NavigationStack {
+            NavigationLink("Start Generating Numbers") {
+                DetailView()
+            }
+        }
+    }
+}
+
+// 생성된 모든 랜덤 숫자를 생성하고 표시
+struct DetailView: View {
+    @State private var numbers = [String]()
+    let generator = NumberGenerator(range: 1...1000)
+
+    var body: some View {
+        List(numbers, id: \.self, rowContent: Text.init)
+            .task {
+                await generateNumbers()
+            }
+    }
+
+    func generateNumbers() async {
+        for await number in generator {
+            numbers.insert("\(numbers.count + 1). \(number)", at: 0)
+        }
+    }
+}
+```
+
+**핵심 포인트:**
+
+- `generateNumbers()` 메서드는 실제로 종료하는 방법이 없음
+- `generator`가 값 반환을 중지하면 자동으로 종료됨
+- Task가 취소되면 generator가 값 반환을 중지
+- DetailView가 dismiss되면 Task가 취소됨
+- **우리가 특별히 할 일이 없음** – 모두 자동!
+
+**동작 흐름:**
+
+1. DetailView가 나타남 → task 시작
+2. 1초마다 랜덤 숫자 생성 및 표시
+3. DetailView가 사라짐 → task 자동 취소
+4. generator가 값 반환 중지
+5. `generateNumbers()` 자동 종료
+
+---
+
+### 5. Task 우선순위 지정
+
+`task()` modifier는 Task의 우선순위를 세밀하게 제어하고 싶을 때 **priority 파라미터**를 받습니다.
+
+```swift
+.task(priority: .low) {
+    await loadBackgroundData()
+}
+
+.task(priority: .high) {
+    await loadCriticalData()
+}
+
+.task(priority: .userInitiated) {
+    await loadUserRequestedData()
+}
+```
+
+**사용 가능한 우선순위:**
+
+| 우선순위              | 사용 사례                                    |
+| --------------------- | -------------------------------------------- |
+| `.low`                | 백그라운드 데이터 로딩, 프리페칭             |
+| `.medium` (기본값)    | 일반적인 데이터 로딩                         |
+| `.high`               | 중요한 데이터, 사용자가 기다리는 작업        |
+| `.userInitiated`      | 사용자가 명시적으로 요청한 작업              |
+| `.utility`            | 진행률이 표시되는 장기 실행 작업             |
+| `.background`         | 사용자가 인식하지 못하는 백그라운드 작업     |
+
+---
+
+### 6. task() vs onAppear/onDisappear 비교
+
+| 특징                    | task()                            | onAppear + onDisappear      |
+| ----------------------- | --------------------------------- | --------------------------- |
+| **Task 시작**           | 자동                              | 수동 (Task { } 필요)        |
+| **Task 취소**           | 자동                              | 수동 (cancel() 호출 필요)   |
+| **식별자 기반 재시작**  | ✅ `task(id:)` 지원                | ❌ 수동 구현 필요            |
+| **코드 간결성**         | 매우 간결                         | 상대적으로 장황             |
+| **취소 처리**           | 자동 처리                         | 명시적 처리 필요            |
+| **사용 난이도**         | 쉬움                              | 중간                        |
+
+#### onAppear/onDisappear 방식 (권장하지 않음)
+
+```swift
+struct ContentView: View {
+    @State private var task: Task<Void, Never>?
+
+    var body: some View {
+        Text("Hello")
+            .onAppear {
+                task = Task {
+                    await loadData()
+                }
+            }
+            .onDisappear {
+                task?.cancel()
+            }
+    }
+}
+```
+
+#### task() 방식 (권장)
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        Text("Hello")
+            .task {
+                await loadData()
+            }
+    }
+}
+```
+
+---
+
+### 7. 실전 사용 패턴
+
+#### 패턴 1: 초기 데이터 로딩
+
+```swift
+.task {
+    await viewModel.loadInitialData()
+}
+```
+
+#### 패턴 2: 식별자 기반 데이터 갱신
+
+```swift
+.task(id: userId) {
+    await viewModel.loadUserData(id: userId)
+}
+```
+
+#### 패턴 3: 실시간 데이터 스트리밍
+
+```swift
+.task {
+    for await update in liveDataStream {
+        handleUpdate(update)
+    }
+}
+```
+
+#### 패턴 4: 우선순위가 있는 데이터 로딩
+
+```swift
+.task(priority: .high) {
+    await loadCriticalData()
+}
+.task(priority: .low) {
+    await prefetchData()
+}
+```
+
+#### 패턴 5: 여러 Task 조합
+
+```swift
+.task {
+    async let profile = fetchProfile()
+    async let posts = fetchPosts()
+    async let followers = fetchFollowers()
+
+    await (profile, posts, followers)
+}
+```
+
+---
+
+### 8. 주의사항 및 모범 사례
+
+#### ✅ 모범 사례
+
+1. **뷰의 이니셜라이저가 아닌 task()에서 데이터 로드**
+   - SwiftUI 뷰는 여러 번 재생성될 수 있음
+   - task()는 뷰가 실제로 나타날 때만 실행됨
+
+2. **식별자 사용으로 자동 갱신**
+   - 수동으로 Task를 취소하고 재시작하는 대신 `task(id:)` 사용
+
+3. **AsyncSequence와 함께 사용**
+   - 자동 취소로 리소스 누수 방지
+
+4. **적절한 우선순위 설정**
+   - 사용자 경험을 개선하기 위해 중요한 작업에는 높은 우선순위 설정
+
+#### ⚠️ 주의사항
+
+1. **Main Actor에서 실행됨**
+   - 모든 SwiftUI 뷰는 자동으로 main actor에서 실행됨
+   - 뷰가 시작하는 Task도 다른 곳으로 이동할 때까지 자동으로 main actor에서 실행됨
+
+2. **뷰 재생성 시 Task 재시작**
+   - 뷰가 재생성되면 task()도 다시 실행될 수 있음
+   - 필요한 경우 식별자를 사용하여 불필요한 재시작 방지
+
+3. **여러 task() 사용 시 순서 보장 없음**
+   - 여러 개의 task() modifier는 독립적으로 실행됨
+
+---
+
+### 9. 핵심 정리
+
+**task() modifier란:**
+
+- SwiftUI 뷰에서 async 작업을 실행하는 가장 좋은 방법
+- 자동 시작/취소로 리소스 관리 간소화
+- 식별자 기반 재시작으로 반응형 UI 구현
+
+**기본 사용법:**
+
+```swift
+.task {
+    await loadData()
+}
+```
+
+**식별자와 함께:**
+
+```swift
+.task(id: selectedFilter) {
+    await loadFilteredData()
+}
+```
+
+**우선순위와 함께:**
+
+```swift
+.task(priority: .high) {
+    await loadCriticalData()
+}
+```
+
+**언제 사용할까:**
+
+- 뷰의 초기 데이터 로딩 (가장 일반적)
+- 식별자가 변경될 때 데이터 갱신
+- AsyncSequence에서 값 스트리밍
+- 우선순위가 필요한 비동기 작업
+
+**왜 task()를 사용해야 할까:**
+
+- ✅ 자동 취소로 메모리 누수 방지
+- ✅ 코드 간결성
+- ✅ SwiftUI 생명주기와 완벽한 통합
+- ✅ 식별자 기반 자동 갱신
+
+
+
+## 많은 Task를 생성하는 것이 효율적인가?
+
+### 1. Thread Explosion vs Task
+
+이전에 **thread explosion(스레드 폭발)** 개념에 대해 이야기했습니다. 이는 CPU 코어보다 훨씬 많은 스레드를 생성할 때 시스템이 이를 효과적으로 관리하는 데 어려움을 겪는 현상입니다.
+
+**하지만 Swift의 Task는 스레드와 매우 다르게 구현됩니다:**
+
+- Task는 스레드보다 훨씬 가벼움
+- 많은 수로 사용해도 성능 문제를 일으킬 가능성이 현저히 낮음
+- Swift 팀 개발자에 따르면: **10,000개 이상의 Task를 생성하지 않는 한 영향을 걱정할 필요가 없음**
+
+---
+
+### 2. Task Group에서의 Task 생성
+
+많은 Task를 생성하는 것이 반드시 최선의 아이디어는 아닐 수 있지만, 어렵지 않게 많은 Task를 생성할 수 있습니다.
+
+**예시:**
+
+```swift
+await withTaskGroup(of: Int.self) { group in
+    // 배열의 크기에 따라 수백~수천 개의 Task가 생성될 수 있음
+    for item in hugeArray {  // 배열에 5000개 요소가 있다면?
+        group.addTask {
+            await process(item)
+        }
+    }
+}
+```
+
+- Task Group에서 루프 내부에 `addTask()`를 호출하면 수백 또는 수천 개의 Task가 생성될 수 있음
+- **이것도 괜찮습니다!**
+
+---
+
+### 3. 10,000개 이상의 Task도 괜찮다
+
+10,000개 이상의 Task를 생성해도 다음 조건이 충족되면 문제가 될 가능성이 낮습니다:
+
+1. **의도적으로 그렇게 하고 있다는 것을 알고 있을 때**
+2. **대안을 평가한 후 내린 아키텍처 결정일 때**
+
+**핵심 포인트:**
+
+- 무작정 많은 Task를 생성하는 것을 두려워할 필요 없음
+- Swift의 Task 시스템은 이를 효율적으로 처리하도록 설계됨
+
+---
+
+### 4. 성능 체크가 필요한 경우
+
+**⚠️ 다음 경우에는 성능을 확인해야 합니다:**
+
+- **거대한 배열의 요소를 변환하기 위해 Task를 생성할 때**
+- 예: 100,000개 요소가 있는 배열을 처리
+
+```swift
+// 성능 체크가 필요한 예시
+let results = await withTaskGroup(of: ProcessedData.self) { group in
+    for item in massiveArray {  // 100,000개 요소
+        group.addTask {
+            return processItem(item)
+        }
+    }
+
+    var collected = [ProcessedData]()
+    for await result in group {
+        collected.append(result)
+    }
+    return collected
+}
+```
+
+**권장사항:**
+
+- **Instruments를 사용하여 성능 측정**
+- CPU 사용률, 메모리 사용량, 실행 시간 확인
+- 필요시 배치 처리(batching) 고려
+
+---
+
+### 5. 대안: 배치 처리(Batching)
+
+거대한 배열을 처리할 때 모든 요소에 대해 개별 Task를 생성하는 대신, **배치로 묶어서 처리**할 수 있습니다.
+
+#### 개별 Task 생성 (10,000개 Task)
+
+```swift
+await withTaskGroup(of: Int.self) { group in
+    for item in hugeArray {  // 10,000개
+        group.addTask {
+            await process(item)
+        }
+    }
+}
+```
+
+#### 배치 처리 (100개 Task)
+
+```swift
+await withTaskGroup(of: [Int].self) { group in
+    let batchSize = 100
+    let batches = stride(from: 0, to: hugeArray.count, by: batchSize).map {
+        Array(hugeArray[$0..<min($0 + batchSize, hugeArray.count)])
+    }
+
+    for batch in batches {  // 100개 배치 = 100개 Task
+        group.addTask {
+            var results = [Int]()
+            for item in batch {
+                results.append(await process(item))
+            }
+            return results
+        }
+    }
+
+    var allResults = [Int]()
+    for await batchResults in group {
+        allResults.append(contentsOf: batchResults)
+    }
+    return allResults
+}
+```
+
+**배치 처리의 장점:**
+
+- Task 생성 오버헤드 감소
+- 메모리 사용량 예측 가능
+- 더 나은 성능 특성 (특정 상황에서)
+
+---
+
+### 6. 성능 최적화 가이드
+
+| 배열 크기           | 권장 접근 방식                     | 이유                                    |
+| ------------------- | ---------------------------------- | --------------------------------------- |
+| < 100개             | 개별 Task 생성                     | 오버헤드 무시 가능                      |
+| 100 ~ 1,000개       | 개별 Task 생성 (일반적으로 괜찮음) | Swift Task 시스템이 효율적으로 처리     |
+| 1,000 ~ 10,000개    | 개별 Task 또는 배치 처리           | 상황에 따라 선택, 필요시 성능 측정      |
+| 10,000개 이상       | 배치 처리 고려                     | Instruments로 성능 측정 후 결정         |
+
+---
+
+### 7. Instruments로 성능 측정하기
+
+**측정해야 할 지표:**
+
+1. **CPU 사용률**
+   - Task가 CPU를 효율적으로 사용하는지 확인
+
+2. **메모리 사용량**
+   - Task 생성으로 인한 메모리 증가 확인
+
+3. **실행 시간**
+   - 개별 Task vs 배치 처리의 실제 성능 차이
+
+4. **Task 생성/파괴 오버헤드**
+   - Task Lifecycle 추적
+
+**Instruments 사용 팁:**
+
+```bash
+# Time Profiler로 CPU 사용 분석
+# Allocations로 메모리 사용 분석
+# System Trace로 Task 스케줄링 확인
+```
+
+---
+
+### 8. 실전 예제: 이미지 배치 처리
+
+#### 문제 상황: 10,000개의 이미지 리사이징
+
+```swift
+// ❌ 비효율적일 수 있음: 10,000개의 Task 생성
+await withTaskGroup(of: UIImage.self) { group in
+    for url in imageURLs {  // 10,000개
+        group.addTask {
+            return await resizeImage(from: url)
+        }
+    }
+}
+```
+
+#### 해결: 배치 처리
+
+```swift
+// ✅ 효율적: 100개의 Task로 배치 처리
+await withTaskGroup(of: [UIImage].self) { group in
+    let batchSize = 100
+
+    for batch in imageURLs.chunked(into: batchSize) {
+        group.addTask {
+            var images = [UIImage]()
+            for url in batch {
+                images.append(await resizeImage(from: url))
+            }
+            return images
+        }
+    }
+
+    var allImages = [UIImage]()
+    for await batchImages in group {
+        allImages.append(contentsOf: batchImages)
+    }
+    return allImages
+}
+
+// 배열을 청크로 나누는 헬퍼 extension
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
+```
+
+---
+
+### 9. 핵심 정리
+
+**Task 생성에 대한 염려:**
+
+- ❌ 스레드처럼 걱정할 필요 없음
+- ✅ Swift의 Task는 가볍고 효율적
+- ✅ 10,000개 이하는 일반적으로 문제없음
+
+**언제 성능을 체크해야 할까:**
+
+- 거대한 배열(10,000개 이상)을 처리할 때
+- 각 Task가 매우 가벼운 작업을 수행할 때
+- 메모리나 성능 이슈가 의심될 때
+
+**모범 사례:**
+
+1. **기본적으로 자유롭게 Task 생성**
+   - 대부분의 경우 문제없음
+
+2. **필요시 Instruments로 측정**
+   - 실제 데이터로 성능 확인
+
+3. **배치 처리 고려**
+   - 매우 큰 데이터셋의 경우
+
+4. **의도적인 아키텍처 결정**
+   - 왜 많은 Task를 생성하는지 이해하고 있어야 함
+
+**기억할 것:**
+
+> "Unless you're creating over 10,000 tasks, it's not worth worrying about the impact of so many tasks."
+>
+> – Swift 팀 개발자
+
+→ 10,000개 이상의 Task를 생성하지 않는 한, 많은 Task의 영향을 걱정할 가치가 없습니다.
