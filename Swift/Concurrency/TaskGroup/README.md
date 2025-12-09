@@ -1046,6 +1046,132 @@ await withTaskGroup(of: Data.self) { group in
 - Task Group: 배열을 루프로 돌면서 각 URL을 병렬로 fetch
 - async let/Task: URL 개수를 미리 알아야 하므로 하드코딩 필요
 
+**✅ Task를 동적으로 생성하면 요청 순서를 유지할 수 있다**
+
+Task 자체는 배열을 순회하며 동적으로 생성할 수 있습니다. 이 방식의 **장점**은 **요청 순서를 보장**할 수 있다는 점입니다:
+
+```swift
+let data = [1, 2, 3, 4, 5]
+
+func createTask(for index: Int) -> Task<Int, any Error> {
+    return Task {
+        let delay = data.randomElement()!
+        print("Task(\(index)) 시작 -> 딜레이: \(delay)")
+        // 랜덤하게 sleep, 병렬 처리 시 언제 끝날지 모르는 상황을 재현
+        try await Task.sleep(for: .seconds(delay))
+        return index
+    }
+}
+
+Task {
+    let start = Date()
+
+    let tasks = data.map { createTask(for: $0) }
+    var result: [Int] = []
+
+    // 모든 테스크는 반드시 await을 하여 끝내야 한다. 그러지 않으면 고아 테스크가 생겨 성능 이슈로 이어짐.
+    for task in tasks {
+        result.append(try await task.value)
+    }
+
+    print("총 걸린 시간: \(Date().timeIntervalSince(start))")
+    print("결과: \(result)")
+}
+
+/*
+출력:
+Task(1) 시작 -> 딜레이: 3
+Task(2) 시작 -> 딜레이: 5
+Task(4) 시작 -> 딜레이: 3
+Task(3) 시작 -> 딜레이: 4
+Task(5) 시작 -> 딜레이: 1
+총 걸린 시간: 5.297232031822205
+결과: [1, 2, 3, 4, 5]
+*/
+```
+
+**핵심 특징:**
+
+1. **병렬 실행**: 모든 Task가 동시에 시작됨 (Task(1)~(5) 모두 즉시 실행)
+2. **요청 순서 보장**: 결과는 항상 `[1, 2, 3, 4, 5]` 순서로 수집됨
+3. **총 실행 시간**: 가장 긴 작업 시간만큼 소요 (위 예시: 5초)
+4. **고아 Task 방지**: 배열의 순서대로 모든 Task를 명시적으로 await
+
+**Task Group과의 비교:**
+
+```swift
+// Task Group: 완료 순서대로 결과 처리 (순서 보장 안 됨)
+await withTaskGroup(of: Int.self) { group in
+    for index in data {
+        group.addTask {
+            try await Task.sleep(for: .seconds(data.randomElement()!))
+            return index
+        }
+    }
+
+    var result: [Int] = []
+    for await value in group {
+        result.append(value)
+    }
+    print(result)  // 예: [5, 1, 4, 3, 2] - 완료 순서대로
+
+    // 순서를 맞추려면 정렬 필요 → O(n log n) 시간복잡도
+    result.sort()
+    print(result)  // [1, 2, 3, 4, 5]
+}
+```
+
+**💡 Task Group에서도 순서를 O(n)으로 보장하는 방법**
+
+정렬 대신, **인덱스와 함께 반환**하여 미리 할당된 배열의 올바른 위치에 저장하면 시간복잡도를 **O(n)**으로 유지할 수 있습니다:
+
+```swift
+// Task Group: 인덱스를 함께 반환하여 순서 보장 (O(n))
+await withTaskGroup(of: (index: Int, value: Int).self) { group in
+    for (index, _) in data.enumerated() {
+        group.addTask {
+            let delay = data.randomElement()!
+            try await Task.sleep(for: .seconds(delay))
+            return (index: index, value: index + 1)  // 인덱스와 값을 함께 반환
+        }
+    }
+
+    // 미리 결과 배열을 요청 개수만큼 할당
+    var result = Array(repeating: 0, count: data.count)
+
+    for await (index, value) in group {
+        result[index] = value  // O(1) - 올바른 위치에 직접 저장
+    }
+
+    print(result)  // [1, 2, 3, 4, 5] - 정렬 없이 순서 보장
+}
+```
+
+**시간복잡도 비교:**
+
+| 방식                              | 시간복잡도  | 설명                                      |
+| --------------------------------- | ----------- | ----------------------------------------- |
+| Task 배열 (순서대로 await)        | **O(n)**    | 배열 순서대로 await하므로 자동 정렬       |
+| TaskGroup + 정렬                  | **O(n log n)** | 완료 순서로 받은 후 정렬 필요             |
+| TaskGroup + 인덱스 기반 배열 저장 | **O(n)**    | 미리 할당된 배열에 인덱스로 직접 저장     |
+
+**언제 어떤 방식을 선택할까?**
+
+| 상황                              | 선택                       | 이유                                               |
+| --------------------------------- | -------------------------- | -------------------------------------------------- |
+| 순서 보장 + 간단한 구현           | Task 배열                  | 요청 순서대로 자동 정렬, 코드 간결                 |
+| 순서 보장 + 취소 기능 필요        | TaskGroup + 인덱스         | O(n) 시간복잡도 + `cancelAll()` 사용 가능          |
+| 순서 보장 + 대용량 데이터         | TaskGroup + 인덱스         | 정렬 비용(O(n log n)) 없이 O(n)으로 처리           |
+| 가장 빠른 결과만 필요             | Task Group                 | `group.next()` 로 첫 번째 완료된 것만 사용         |
+| 완료되는 대로 즉시 UI 업데이트    | Task Group                 | 완료 순서대로 즉시 표시 (응답성 향상)              |
+| 결과 순서가 중요하지 않은 경우    | Task Group                 | 완료 순서대로 처리                                 |
+| 작업 그룹 전체 취소가 필요한 경우 | Task Group                 | `cancelAll()` 로 그룹 전체 취소 가능               |
+
+→ **결론**:
+- **Task 배열**: 간단한 순서 보장이 필요할 때, 코드 가독성이 중요할 때
+- **TaskGroup + 인덱스**: 순서 보장 + 취소 기능 + O(n) 성능이 모두 필요할 때 (대용량 데이터에 유리)
+- **TaskGroup (일반)**: 완료 순서대로 처리하여 빠른 응답성이 필요할 때
+
 ---
 
 #### 차이점 2: 결과 처리 순서
