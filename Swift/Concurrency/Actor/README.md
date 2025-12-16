@@ -194,3 +194,75 @@ let actor = await Actor(name: "Meryl")
 ```
 
 > 두 `print()` 호출이 서로 다른 스레드에서 실행될 수 있다.
+
+## Executor
+
+**Executor**는 actor의 코드가 실행되는 **실행 컨텍스트**이다.
+
+### 개념
+
+- 각 actor 인스턴스는 자체 **serial executor**를 가짐
+- Serial executor는 작업을 **한 번에 하나씩** 순차적으로 실행
+- `DispatchQueue`와 유사하지만, 우선순위 기반 스케줄링 지원 (FIFO가 아님)
+
+### 기본 동작
+
+```swift
+actor Counter {
+    var count = 0
+
+    // 이 메서드는 Counter의 executor에서 실행됨
+    func increment() {
+        count += 1
+    }
+}
+```
+
+- 일반 actor: Swift 런타임이 제공하는 기본 executor 사용
+- `@MainActor`: 메인 스레드의 executor 사용
+- Custom executor: `SerialExecutor` 프로토콜 구현으로 직접 정의 가능 (SE-0392)
+
+## Actor Hop
+
+**Actor hop**은 실행 컨텍스트가 한 actor에서 다른 actor로 전환되는 것을 의미한다.
+
+### 발생 시점
+
+```swift
+actor ActorA {
+    func doWork() async {
+        // ActorA의 executor에서 실행 중
+
+        let b = ActorB()
+        await b.process()  // Actor hop 발생! → ActorB의 executor로 전환
+
+        // 다시 ActorA의 executor로 복귀
+        print("Back to A")
+    }
+}
+
+actor ActorB {
+    func process() {
+        // ActorB의 executor에서 실행
+        print("Processing in B")
+    }
+}
+```
+
+### 특징
+
+- `await` 키워드가 있는 곳에서 hop이 발생할 수 있음
+- Hop은 **suspension point** (일시 중단 지점)
+- Hop 전후로 actor의 상태가 변경되었을 수 있음 → **재진입(reentrancy)** 주의
+
+### 성능 고려사항
+
+- Actor hop에는 컨텍스트 스위칭 비용이 발생
+- 동일 actor 내에서는 hop 없이 직접 호출 가능
+- 빈번한 hop은 성능에 영향을 줄 수 있음
+
+## 참조 문서
+
+- [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
+- [SE-0327: Actor Initializers](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0327-actor-initializers.md) - Actor 초기화 관련
+- [SE-0392: Custom Actor Executors](https://forums.swift.org/t/accepted-se-0392-custom-actor-executors/64817) - Custom Executor 제안서
