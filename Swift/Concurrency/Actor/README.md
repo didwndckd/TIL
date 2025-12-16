@@ -262,6 +262,81 @@ actor ActorB {
 - 빈번한 hop은 성능에 영향을 줄 수 있음
 - 자세한 내용은 하단의 [Actor Hop 성능 문제와 해결책](#actor-hop-성능-문제와-해결책) 참조
 
+## Actor 재진입 (Reentrancy)
+
+Actor-isolated 함수는 **재진입 가능(reentrant)** 하다. 이전 작업이 완료되기 전에 새로운 작업이 시작될 수 있다는 의미다.
+
+### 핵심 개념
+
+- `await` 키워드는 **잠재적 일시 중단 지점(suspension point)**
+- 일시 중단된 동안 actor는 **다른 작업을 시작**할 수 있음
+- 재개 후 **상태가 변경되었을 수 있음**
+
+### 예제: 재진입으로 인한 예상치 못한 결과
+
+```swift
+actor Player {
+    var name = "Anonymous"
+    var score = 0
+
+    func addToScore() {
+        Task {
+            score += 1  // 1. 점수 증가
+            try? await Task.sleep(for: .seconds(1))  // 2. 일시 중단 → 다른 작업 실행 가능
+            print("Score is now \(score)")  // 3. 재개 시 score 값이 변경되어 있을 수 있음
+        }
+    }
+}
+
+let player = Player()
+await player.addToScore()  // score = 1, 출력 시점에는 3
+await player.addToScore()  // score = 2, 출력 시점에는 3
+await player.addToScore()  // score = 3, 출력 시점에는 3
+
+try? await Task.sleep(for: .seconds(1.1))
+// 출력: "Score is now 3" 세 번 (모두 3을 출력)
+```
+
+### 실행 흐름 (Interleaving)
+
+```
+시간 →
+Task 1: [score += 1] → [sleep...] → [print(3)]
+Task 2:      [score += 1] → [sleep...] → [print(3)]
+Task 3:           [score += 1] → [sleep...] → [print(3)]
+```
+
+1. Task 1이 `score += 1` 실행 → score = 1
+2. Task 1이 sleep으로 일시 중단, actor가 Task 2 시작
+3. Task 2가 `score += 1` 실행 → score = 2
+4. Task 2가 sleep으로 일시 중단, actor가 Task 3 시작
+5. Task 3가 `score += 1` 실행 → score = 3
+6. 모든 Task가 깨어나서 print → 모두 "3" 출력
+
+### 중요 규칙
+
+- **두 작업이 병렬로 실행되지 않음**: 동시에 실행되는 건 아님
+- 여러 작업이 진행 중일 수 있지만, **한 번에 하나만 실행**
+- 동기 코드는 중단점 없이 끝까지 실행됨
+
+### 왜 재진입을 허용하는가?
+
+- **성능**: Actor가 대기 중인 작업을 진행할 수 있음
+- **데드락 방지**: 두 작업이 서로를 기다리며 멈추는 상황 방지
+
+### 주의사항
+
+```swift
+// ⚠️ 잘못된 접근: Actor 내부에서 수동 락 사용
+actor BadExample {
+    var lock = NSLock()  // ❌ Actor 설계 의도에 반함
+}
+
+// ✅ 올바른 접근: 재진입 방지가 필요하면 별도의 serial queue 사용
+```
+
+**핵심**: 재진입 방지가 필요하다면 actor 대신 **별도의 serial dispatch queue**를 고려하라.
+
 ## isolated 파라미터
 
 `isolated` 키워드를 사용하면 **외부 함수를 특정 actor에 격리**시킬 수 있다. 이를 통해 actor 내부처럼 `await` 없이 프로퍼티에 직접 접근 가능하다.
