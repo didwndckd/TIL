@@ -261,6 +261,69 @@ actor ActorB {
 - 동일 actor 내에서는 hop 없이 직접 호출 가능
 - 빈번한 hop은 성능에 영향을 줄 수 있음
 
+## isolated 파라미터
+
+`isolated` 키워드를 사용하면 **외부 함수를 특정 actor에 격리**시킬 수 있다. 이를 통해 actor 내부처럼 `await` 없이 프로퍼티에 직접 접근 가능하다.
+
+### 사용법
+
+```swift
+actor DataStore {
+    var username = "Anonymous"
+    var friends = [String]()
+    var highScores = [Int]()
+    var favorites = Set<Int>()
+
+    init() {
+        // 데이터 로드
+    }
+
+    func save() {
+        // 데이터 저장
+    }
+}
+
+// isolated 키워드로 함수를 actor에 격리
+func debugLog(dataStore: isolated DataStore) {
+    // await 없이 직접 접근 가능!
+    print("Username: \(dataStore.username)")
+    print("Friends: \(dataStore.friends)")
+    print("High scores: \(dataStore.highScores)")
+    print("Favorites: \(dataStore.favorites)")
+
+    // 쓰기도 가능
+    dataStore.username = "NewName"
+}
+
+let data = DataStore()
+// 함수 자체가 actor에서 실행되므로 await 필요
+await debugLog(dataStore: data)
+```
+
+### 특징
+
+- 함수 전체가 해당 actor의 executor에서 실행됨
+- Actor의 안전성은 그대로 유지됨 (한 번에 하나의 스레드만 접근)
+- `async`로 선언하지 않아도 호출 시 `await` 필요
+- 함수 전체가 하나의 suspension point가 됨 (개별 접근이 아닌)
+- **두 개의 isolated 파라미터는 불가** → 어떤 actor에서 실행할지 모호해짐
+
+### 일반 함수 vs isolated 함수
+
+```swift
+// 일반 함수: 각 접근마다 await 필요
+func normalLog(dataStore: DataStore) async {
+    print(await dataStore.username)  // await 필요
+    print(await dataStore.friends)   // await 필요
+}
+
+// isolated 함수: await 없이 직접 접근
+func isolatedLog(dataStore: isolated DataStore) {
+    print(dataStore.username)  // await 불필요
+    print(dataStore.friends)   // await 불필요
+}
+```
+
 ## 참조 문서
 
 - [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
