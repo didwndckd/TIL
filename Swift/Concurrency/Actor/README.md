@@ -260,103 +260,7 @@ actor ActorB {
 - Actor hop에는 컨텍스트 스위칭 비용이 발생
 - 동일 actor 내에서는 hop 없이 직접 호출 가능
 - 빈번한 hop은 성능에 영향을 줄 수 있음
-
-### Cooperative Thread Pool
-
-Swift는 **cooperative thread pool**이라는 스레드 그룹을 관리한다.
-
-- CPU 코어 수만큼 스레드 생성 → thread explosion 방지
-- Actor는 어떤 스레드에서 실행되는지 신경 쓰지 않음
-- 시스템 자원 균형을 위해 자동으로 스레드 간 이동
-
-### Main Actor와 Cooperative Pool 간 Hop
-
-**문제**: Main actor는 cooperative thread pool에 포함되지 않음
-
-- Cooperative pool 내 hop: 빠름 (자동 처리)
-- Main actor ↔ Cooperative pool hop: **context switch 발생** (성능 비용)
-
-**문제가 되는 패턴**
-
-```swift
-actor NumberGenerator {
-    var lastNumber = 1
-
-    func getNext() -> Int {
-        defer { lastNumber += 1 }
-        return lastNumber
-    }
-
-    // @MainActor이므로 main actor에서 실행
-    @MainActor func run() async {
-        for _ in 1...100 {
-            // getNext()는 cooperative pool에서 실행
-            // 매 반복마다 main actor ↔ cooperative pool hop 발생!
-            let nextNumber = await getNext()
-            print("Loading \(nextNumber)")
-        }
-    }
-}
-```
-
-**실제 앱에서의 예시**
-
-```swift
-// 데이터베이스 actor - cooperative pool에서 실행
-actor Database {
-    func loadUser(id: Int) -> User {
-        User(id: id)
-    }
-}
-
-// UI 업데이트를 위해 @MainActor - main actor에서 실행
-@Observable @MainActor
-class DataModel {
-    var users = [User]()
-    var database = Database()
-
-    // 비효율적: 매 반복마다 actor hop 발생
-    func loadUsers() async {
-        for i in 1...100 {
-            // main actor → cooperative pool → main actor (매번 반복)
-            let user = await database.loadUser(id: i)
-            users.append(user)
-        }
-    }
-}
-```
-
-### 해결책: 배치 처리
-
-**한 번의 hop으로 여러 작업을 처리**하면 context switch 횟수를 줄일 수 있다.
-
-```swift
-actor Database {
-    // 여러 사용자를 한 번에 로드
-    func loadUsers(ids: [Int]) -> [User] {
-        ids.map(User.init)
-    }
-}
-
-@Observable @MainActor
-class DataModel {
-    var users = [User]()
-    var database = Database()
-
-    // 효율적: 단 한 번의 hop
-    func loadUsers() async {
-        let ids = Array(1...100)
-
-        // main actor → cooperative pool (1번)
-        let newUsers = await database.loadUsers(ids: ids)
-
-        // cooperative pool → main actor (1번)
-        users.append(contentsOf: newUsers)
-    }
-}
-```
-
-> 배치 크기가 2만 되어도 context switch 횟수가 절반으로 줄어든다.
+- 자세한 내용은 하단의 [Actor Hop 성능 문제와 해결책](#actor-hop-성능-문제와-해결책) 참조
 
 ## isolated 파라미터
 
@@ -753,6 +657,65 @@ extension DataStore2: DataStoring {
 ### 왜 이런 구분이 있는가?
 
 외부 라이브러리(Apple 타입 등)에 `@MainActor` 프로토콜 준수를 추가할 때, 해당 타입 전체를 `@MainActor`로 만들면 기존 동작이 깨질 수 있다. 따라서 **extension으로 준수를 추가하면 메서드만** `@MainActor`가 된다.
+
+---
+
+# 문제 해결
+
+## Actor Hop 성능 문제와 해결책
+
+### Cooperative Thread Pool
+
+Swift의 동시성 모델은 **cooperative thread pool**을 사용한다:
+- 시스템은 CPU 코어 수만큼의 스레드를 유지
+- 일반 actor들은 이 pool에서 실행
+- **Main Actor는 별도의 main thread**에서 실행
+
+### Main Actor와 Cooperative Pool 간 Hop
+
+Main Actor와 일반 actor 간 전환은 **스레드 간 컨텍스트 스위칭**을 발생시킨다:
+
+```swift
+actor DataProcessor {
+    // Cooperative thread pool에서 실행됨
+    func process() async {
+        for item in items {
+            // 매번 main thread로 hop - 비용 발생!
+            await updateUI(item)
+        }
+    }
+}
+
+@MainActor
+func updateUI(_ item: Item) {
+    // Main thread에서 실행됨
+}
+```
+
+#### 문제가 되는 패턴
+
+```swift
+// ❌ 비효율적: 매 iteration마다 main thread hop
+for item in items {
+    await MainActor.run {
+        label.text = item.description
+    }
+}
+```
+
+### 해결책: 배치 처리
+
+```swift
+// ✅ 효율적: 한 번의 hop으로 모든 UI 업데이트
+let results = items.map { $0.description }
+await MainActor.run {
+    for (index, result) in results.enumerated() {
+        labels[index].text = result
+    }
+}
+```
+
+**핵심**: 가능하면 actor 경계를 넘는 호출을 **배치 처리**하여 hop 횟수를 줄인다.
 
 ## 참조 문서
 
