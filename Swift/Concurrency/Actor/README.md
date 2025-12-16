@@ -54,6 +54,53 @@ print(await user.score)  // 외부 접근: await 필요
 - Actor 인스턴스 생성 비용은 class와 동일
 - 보호된 상태 접근 시에만 task 일시 중단이 발생할 수 있음
 
+## Actor vs Class vs Struct 비교
+
+| 특성 | Actor | Class | Struct |
+|------|-------|-------|--------|
+| **타입** | 참조 타입 | 참조 타입 | 값 타입 |
+| **상속** | ❌ | ✅ | ❌ |
+| **Actor 프로토콜** | 자동 준수 | ❌ | ❌ |
+| **AnyObject 프로토콜** | 자동 준수 | 자동 준수 | ❌ |
+| **Deinitializer** | ✅ | ✅ | ❌ |
+| **외부 직접 접근** | ❌ (await 필요) | ✅ | ✅ |
+| **동시 메서드 실행** | ❌ (한 번에 하나) | ✅ | ✅ |
+
+### 언제 Actor를 사용하는가?
+
+**적합한 경우:**
+- Serial queue를 대체할 때 (순차적 작업 필요)
+- 데이터베이스 접근 관리
+- 공유 상태의 thread-safe 접근이 필요할 때
+
+**부적합한 경우:**
+- SwiftUI 데이터 모델 → `@Observable` 또는 `ObservableObject` class 사용
+- 상속이 필요한 경우 → class 사용
+- 복사 의미론이 필요한 경우 → struct 사용
+
+### SwiftUI에서의 사용
+
+```swift
+// ❌ 잘못된 사용: SwiftUI 데이터 모델에 actor 사용
+actor BadViewModel {
+    var items: [Item] = []  // 모든 접근에 await 필요 → 불편
+}
+
+// ✅ 올바른 사용: @Observable class + @MainActor
+@MainActor
+@Observable
+class GoodViewModel {
+    var items: [Item] = []  // UI 업데이트에 적합
+}
+
+// ✅ 비동기 작업이 필요하면 별도의 sibling actor 생성
+actor DataService {
+    func fetchItems() async -> [Item] {
+        // 백그라운드에서 데이터 로드
+    }
+}
+```
+
 ## 사용 예시
 
 ### 기본 사용법
