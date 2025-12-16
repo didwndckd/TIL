@@ -563,6 +563,100 @@ Task { @MainActor in
 - suspension point에서 Swift는 실행을 필요한 곳으로 자유롭게 이동시킴
 - 함수가 특정 actor에서 실행되길 원하면 **함수 정의에 명시**해야 함
 
+## Global Actor Inference
+
+Global actor inference는 특정 규칙에 따라 `@MainActor`가 **자동으로 추론**되는 기능이다.
+
+> **Swift 6 언어 모드에서는 비활성화됨**. Swift 5.5 ~ 5.10에서만 적용.
+
+### 5가지 추론 규칙
+
+#### 1. 클래스 상속
+
+`@MainActor` 클래스를 상속하면 서브클래스도 자동으로 `@MainActor`.
+
+```swift
+@MainActor
+class Parent { }
+
+// Child도 자동으로 @MainActor
+class Child: Parent { }
+```
+
+#### 2. 메서드 오버라이드
+
+`@MainActor` 메서드를 오버라이드하면 해당 메서드도 자동으로 `@MainActor`.
+
+```swift
+class Parent {
+    @MainActor func update() { }
+}
+
+class Child: Parent {
+    // 자동으로 @MainActor
+    override func update() { }
+}
+```
+
+#### 3. Property Wrapper
+
+`@MainActor`를 wrapped value에 적용하는 property wrapper 사용 시 해당 타입 전체가 `@MainActor`.
+
+```swift
+// SwiftUI의 @StateObject, @ObservedObject가 이에 해당
+struct ContentView: View {
+    @StateObject var viewModel = ViewModel()  // View 전체가 @MainActor
+}
+```
+
+#### 4. 프로토콜의 @MainActor 메서드
+
+프로토콜의 `@MainActor` 메서드를 구현할 때, **준수와 구현을 동시에** 하면 자동 추론.
+
+```swift
+protocol DataStoring {
+    @MainActor func save()
+}
+
+// 준수와 구현을 동시에 → 자동 @MainActor
+extension DataStore1: DataStoring {
+    func save() { }  // 자동으로 @MainActor
+}
+
+// 준수와 구현을 분리 → 명시 필요
+struct DataStore2: DataStoring { }
+
+extension DataStore2 {
+    @MainActor func save() { }  // 명시적으로 @MainActor 필요
+}
+```
+
+#### 5. @MainActor 프로토콜 준수
+
+`@MainActor` 프로토콜을 **타입 선언과 동시에** 준수하면 타입 전체가 `@MainActor`.
+
+```swift
+@MainActor protocol DataStoring {
+    func save()
+}
+
+// 타입 선언과 동시에 준수 → 타입 전체가 @MainActor
+struct DataStore1: DataStoring {
+    func save() { }  // 타입 전체가 @MainActor
+}
+
+// 별도 extension에서 준수 → 메서드만 @MainActor
+struct DataStore2 { }  // 이 타입은 @MainActor 아님
+
+extension DataStore2: DataStoring {
+    func save() { }  // 이 메서드만 @MainActor
+}
+```
+
+### 왜 이런 구분이 있는가?
+
+외부 라이브러리(Apple 타입 등)에 `@MainActor` 프로토콜 준수를 추가할 때, 해당 타입 전체를 `@MainActor`로 만들면 기존 동작이 깨질 수 있다. 따라서 **extension으로 준수를 추가하면 메서드만** `@MainActor`가 된다.
+
 ## 참조 문서
 
 - [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
