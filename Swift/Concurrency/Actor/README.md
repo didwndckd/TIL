@@ -261,6 +261,103 @@ actor ActorB {
 - 동일 actor 내에서는 hop 없이 직접 호출 가능
 - 빈번한 hop은 성능에 영향을 줄 수 있음
 
+### Cooperative Thread Pool
+
+Swift는 **cooperative thread pool**이라는 스레드 그룹을 관리한다.
+
+- CPU 코어 수만큼 스레드 생성 → thread explosion 방지
+- Actor는 어떤 스레드에서 실행되는지 신경 쓰지 않음
+- 시스템 자원 균형을 위해 자동으로 스레드 간 이동
+
+### Main Actor와 Cooperative Pool 간 Hop
+
+**문제**: Main actor는 cooperative thread pool에 포함되지 않음
+
+- Cooperative pool 내 hop: 빠름 (자동 처리)
+- Main actor ↔ Cooperative pool hop: **context switch 발생** (성능 비용)
+
+**문제가 되는 패턴**
+
+```swift
+actor NumberGenerator {
+    var lastNumber = 1
+
+    func getNext() -> Int {
+        defer { lastNumber += 1 }
+        return lastNumber
+    }
+
+    // @MainActor이므로 main actor에서 실행
+    @MainActor func run() async {
+        for _ in 1...100 {
+            // getNext()는 cooperative pool에서 실행
+            // 매 반복마다 main actor ↔ cooperative pool hop 발생!
+            let nextNumber = await getNext()
+            print("Loading \(nextNumber)")
+        }
+    }
+}
+```
+
+**실제 앱에서의 예시**
+
+```swift
+// 데이터베이스 actor - cooperative pool에서 실행
+actor Database {
+    func loadUser(id: Int) -> User {
+        User(id: id)
+    }
+}
+
+// UI 업데이트를 위해 @MainActor - main actor에서 실행
+@Observable @MainActor
+class DataModel {
+    var users = [User]()
+    var database = Database()
+
+    // 비효율적: 매 반복마다 actor hop 발생
+    func loadUsers() async {
+        for i in 1...100 {
+            // main actor → cooperative pool → main actor (매번 반복)
+            let user = await database.loadUser(id: i)
+            users.append(user)
+        }
+    }
+}
+```
+
+### 해결책: 배치 처리
+
+**한 번의 hop으로 여러 작업을 처리**하면 context switch 횟수를 줄일 수 있다.
+
+```swift
+actor Database {
+    // 여러 사용자를 한 번에 로드
+    func loadUsers(ids: [Int]) -> [User] {
+        ids.map(User.init)
+    }
+}
+
+@Observable @MainActor
+class DataModel {
+    var users = [User]()
+    var database = Database()
+
+    // 효율적: 단 한 번의 hop
+    func loadUsers() async {
+        let ids = Array(1...100)
+
+        // main actor → cooperative pool (1번)
+        let newUsers = await database.loadUsers(ids: ids)
+
+        // cooperative pool → main actor (1번)
+        users.append(contentsOf: newUsers)
+    }
+}
+```
+
+> 배치 크기가 2만 되어도 context switch 횟수가 절반으로 줄어든다.
+
 ## isolated 파라미터
 
 `isolated` 키워드를 사용하면 **외부 함수를 특정 actor에 격리**시킬 수 있다. 이를 통해 actor 내부처럼 `await` 없이 프로퍼티에 직접 접근 가능하다.
@@ -567,7 +664,7 @@ Task { @MainActor in
 
 Global actor inference는 특정 규칙에 따라 `@MainActor`가 **자동으로 추론**되는 기능이다.
 
-> **Swift 6 언어 모드에서는 비활성화됨**. Swift 5.5 ~ 5.10에서만 적용.
+> 💡**Swift 6 언어 모드에서는 비활성화됨**. Swift 5.5 ~ 5.10에서만 적용.
 
 ### 5가지 추론 규칙
 
