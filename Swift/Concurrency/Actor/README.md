@@ -839,6 +839,57 @@ await MainActor.run {
 
 **핵심**: 가능하면 actor 경계를 넘는 호출을 **배치 처리**하여 hop 횟수를 줄인다.
 
+## SwiftUI 데이터 모델에 Actor 사용 금지
+
+> ⚠️ **중요**: SwiftUI 데이터 모델에 actor를 사용하지 마라.
+
+### 왜 Actor가 SwiftUI에 부적합한가?
+
+SwiftUI는 **main actor에서 UI를 업데이트**한다. `@Observable` 또는 `ObservableObject`를 사용하면 모든 작업이 main actor에서 수행되어야 한다.
+
+Custom actor를 사용하면:
+1. **데이터 쓰기**: main actor가 아닌 custom actor에서 발생 → UI 업데이트 위치 불일치
+2. **데이터 읽기**: `TextField` 바인딩 시 main actor와 custom actor를 동시에 사용해야 함 → 불가능
+
+```swift
+// ❌ SwiftUI 데이터 모델에 actor 사용
+actor BadViewModel {
+    var text: String = ""   // TextField 바인딩 불가능!
+}
+
+// SwiftUI View에서:
+// TextField("입력", text: $viewModel.text)  // ❌ 컴파일 에러
+```
+
+### 올바른 패턴: @MainActor class + Sibling Actor
+
+```swift
+// ✅ UI 데이터 모델: @Observable class + @MainActor
+@MainActor
+@Observable
+class ViewModel {
+    var items: [Item] = []
+    var isLoading = false
+
+    private let dataService = DataService()
+
+    func loadItems() async {
+        isLoading = true
+        items = await dataService.fetchItems()  // sibling actor 호출
+        isLoading = false
+    }
+}
+
+// ✅ 비동기 작업: 별도의 sibling actor (main actor 아님)
+actor DataService {
+    func fetchItems() async -> [Item] {
+        // 백그라운드에서 안전하게 데이터 로드
+    }
+}
+```
+
+**핵심**: UI 데이터는 `@MainActor` class로, 백그라운드 작업은 별도의 **sibling actor**로 분리한다.
+
 ## 참조 문서
 
 - [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
