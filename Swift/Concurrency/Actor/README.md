@@ -391,6 +391,118 @@ print(user.fullName)  // await 불필요
 - `Codable`, `Equatable` 등 동기 프로토콜 준수 시에는 도움이 안 됨
 - 격리된 상태가 필요한 프로토콜 메서드는 여전히 문제가 될 수 있음
 
+## @MainActor
+
+`@MainActor`는 **메인 스레드에서 실행되는 global actor**이다. UI 업데이트가 항상 메인 스레드에서 실행되도록 보장한다.
+
+### 타입에 적용
+
+```swift
+// @Observable 클래스에 적용
+@Observable @MainActor
+class AccountViewModel {
+    // 모든 프로퍼티와 메서드가 메인 스레드에서 실행됨
+    var username = "Anonymous"
+    var isAuthenticated = false
+}
+
+// ObservableObject에 적용
+@MainActor
+class LegacyViewModel: ObservableObject {
+    @Published var username = "Anonymous"
+    @Published var isAuthenticated = false
+}
+```
+
+### SwiftUI와의 관계
+
+- **Xcode 16+**: `View`를 준수하는 모든 struct가 자동으로 main actor에서 실행
+- 그러나 observable 클래스에는 여전히 `@MainActor` 명시 권장
+- 특정 메서드를 main actor에서 제외하려면 `nonisolated` 사용
+
+> Observable 객체에는 일반 `actor`가 아닌 `@MainActor`를 사용해야 함. UI 업데이트는 반드시 main actor에서 실행되어야 하기 때문.
+
+### MainActor.run()
+
+어디서든 메인 스레드에서 코드를 실행할 수 있다.
+
+```swift
+func couldBeAnywhere() async {
+    // 메인 스레드에서 실행
+    await MainActor.run {
+        print("This is on the main actor.")
+    }
+}
+
+// 값 반환도 가능
+func fetchAndUpdate() async {
+    let result = await MainActor.run {
+        // UI 업데이트 로직
+        return 42
+    }
+    print(result)
+}
+```
+
+### Task에서 @MainActor 사용
+
+동기 컨텍스트에서 main actor로 작업을 보낼 때 유용하다.
+
+```swift
+func couldBeAnywhere() {
+    // 방법 1: MainActor.run() 사용
+    Task {
+        await MainActor.run {
+            print("This is on the main actor.")
+        }
+    }
+
+    // 방법 2: Task 클로저에 @MainActor 적용
+    Task { @MainActor in
+        print("This is on the main actor.")
+    }
+
+    // 다른 작업 계속 실행
+}
+```
+
+### 실행 순서 주의
+
+```swift
+@MainActor @Observable
+class ViewModel {
+    func runTest() async {
+        print("1")
+
+        await MainActor.run {
+            print("2")
+
+            // Task는 다음 run loop까지 대기
+            Task { @MainActor in
+                print("3")
+            }
+
+            print("4")
+        }
+
+        print("5")
+    }
+}
+
+let model = ViewModel()
+await model.runTest()
+// 출력: 1, 2, 4, 5, 3
+```
+
+- `MainActor.run()`: 이미 main actor면 **즉시 실행**
+- `Task { @MainActor in }`: 항상 **다음 run loop까지 대기**
+
+### 주의사항
+
+- `@MainActor` 클래스의 메서드라도 내부에서 백그라운드 작업이 실행될 수 있음
+- 예: Face ID의 `evaluatePolicy()` 완료 핸들러는 백그라운드 스레드에서 호출됨
+- 완전한 보호가 아니므로 필요시 명시적으로 `MainActor.run()` 사용
+
 ## 참조 문서
 
 - [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
