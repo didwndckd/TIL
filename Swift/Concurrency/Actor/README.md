@@ -500,8 +500,68 @@ await model.runTest()
 ### 주의사항
 
 - `@MainActor` 클래스의 메서드라도 내부에서 백그라운드 작업이 실행될 수 있음
+  - 어디까지나 `Swift Concurrency`내에서 보장, `DispatchQueue` 사용시 적용 안됨
+
 - 예: Face ID의 `evaluatePolicy()` 완료 핸들러는 백그라운드 스레드에서 호출됨
 - 완전한 보호가 아니므로 필요시 명시적으로 `MainActor.run()` 사용
+
+## 코드가 실행되는 Actor 결정
+
+async 함수가 어떤 actor에서 실행될지는 **호출하는 쪽이 아닌 함수 자체가 결정**한다.
+
+### 흔한 오해
+
+```swift
+Task { @MainActor in
+    // 이 클로저의 동기 코드는 main actor에서 실행됨
+    await downloadData()  // 하지만 이 함수는 어디서 실행될까?
+}
+```
+
+`downloadData()`가 main actor에서 실행될 것이라고 생각할 수 있지만, 실제로는 **함수 정의에 따라 달라진다**.
+
+### 함수 정의에 따른 실행 위치
+
+```swift
+// 경우 1: actor 지정 없음 → Swift가 자유롭게 선택 (대부분 백그라운드)
+func downloadData() async {
+    // main actor에서 실행되지 않을 가능성 높음
+}
+
+// 경우 2: @MainActor 명시 → 항상 main actor에서 실행
+@MainActor
+func downloadData() async {
+    // 반드시 main actor에서 실행
+}
+
+// 경우 3: @MainActor 타입의 메서드 → 항상 main actor에서 실행
+@MainActor
+class DataFetcher {
+    func downloadData() async {
+        // 반드시 main actor에서 실행
+    }
+}
+```
+
+### @MainActor in의 실제 의미
+
+```swift
+Task { @MainActor in
+    print("1 - main actor")       // main actor에서 실행
+    await downloadData()           // downloadData() 정의에 따라 다름
+    print("2 - main actor")       // main actor에서 실행
+}
+```
+
+`@MainActor in`은 **클로저 본문의 동기 코드**만 main actor에서 실행하도록 보장한다. `await`로 호출하는 async 함수는 해당 함수의 정의에 따라 실행 위치가 결정된다.
+
+### 핵심 규칙
+
+> **async 함수는 호출 방식과 무관하게 자신이 실행될 위치를 스스로 결정한다.**
+
+- `await`는 potential suspension point (잠재적 일시 중단 지점)
+- suspension point에서 Swift는 실행을 필요한 곳으로 자유롭게 이동시킴
+- 함수가 특정 actor에서 실행되길 원하면 **함수 정의에 명시**해야 함
 
 ## 참조 문서
 
