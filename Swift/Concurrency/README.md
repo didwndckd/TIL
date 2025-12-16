@@ -1,9 +1,9 @@
 # Concurrency
 
-- [Actor](./Actor/)
+- [async/await](./async_await/)
+- [Sendable](./Sendable/)
 - [AsyncSequence](./AsyncSequence/)
 - [AsyncStream](./AsyncStream/)
-- [Sendable](./Sendable/)
 - [Task](./Task/)
 - [TaskGroup](./TaskGroup/)
-- [async/await](./async_await/)
+- [Actor](./Actor/)
