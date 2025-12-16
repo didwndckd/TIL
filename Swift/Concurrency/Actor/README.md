@@ -324,6 +324,73 @@ func isolatedLog(dataStore: isolated DataStore) {
 }
 ```
 
+## nonisolated
+
+`nonisolated` 키워드를 사용하면 actor의 메서드나 연산 프로퍼티를 **격리에서 제외**할 수 있다. 이를 통해 외부에서 `await` 없이 호출 가능하다.
+
+### 사용법
+
+```swift
+import CryptoKit
+import Foundation
+
+actor User {
+    // 상수 프로퍼티 - 기본적으로 외부 접근 허용
+    let username: String
+    let password: String
+
+    // 가변 프로퍼티 - 격리됨
+    var isOnline = false
+
+    init(username: String, password: String) {
+        self.username = username
+        self.password = password
+    }
+
+    // nonisolated 메서드 - 외부에서 await 없이 호출 가능
+    nonisolated func passwordHash() -> String {
+        // 상수 프로퍼티(password)만 접근 가능
+        let passwordData = Data(password.utf8)
+        let hash = SHA256.hash(data: passwordData)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
+    }
+}
+
+let user = User(username: "twostraws", password: "s3kr1t")
+// await 없이 직접 호출!
+print(user.passwordHash())
+```
+
+### 규칙
+
+- `nonisolated` 메서드/연산 프로퍼티는 **다른 nonisolated 멤버만 접근 가능**
+- 상수(`let`) 프로퍼티는 기본적으로 nonisolated처럼 동작
+- **저장 프로퍼티에는 nonisolated 사용 불가** (연산 프로퍼티만 가능)
+- 격리된 상태에 접근하려면 `await` 사용 필요
+
+### 연산 프로퍼티에 적용
+
+```swift
+actor User {
+    let firstName: String
+    let lastName: String
+
+    // nonisolated 연산 프로퍼티
+    nonisolated var fullName: String {
+        // 상수 프로퍼티만 접근
+        "\(firstName) \(lastName)"
+    }
+}
+
+let user = User(firstName: "Paul", lastName: "Hudson")
+print(user.fullName)  // await 불필요
+```
+
+### 주의사항
+
+- `Codable`, `Equatable` 등 동기 프로토콜 준수 시에는 도움이 안 됨
+- 격리된 상태가 필요한 프로토콜 메서드는 여전히 문제가 될 수 있음
+
 ## 참조 문서
 
 - [SE-0306: Actors](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0306-actors.md) - Actor 기본 제안서
