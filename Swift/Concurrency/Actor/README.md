@@ -162,3 +162,35 @@ await first.transfer(amount: 500, to: second)
 ```
 
 Actor를 사용하면 한 번에 하나의 요청만 처리되므로 Data Race가 원천 차단된다.
+
+## Actor 초기화
+
+Actor는 자체 executor에서 실행되지만, **초기화 중에는 executor가 아직 준비되지 않은 상태**이다.
+
+### async 이니셜라이저의 특징
+
+- 모든 프로퍼티가 초기화되면 자동으로 actor의 executor로 전환됨
+- 초기화 전후로 **다른 스레드에서 실행될 수 있음** (암시적 actor hop 발생)
+
+```swift
+actor Actor {
+    var name: String
+
+    // async 이니셜라이저
+    init(name: String) async {
+        // 이 시점: actor executor 준비 안 됨 (임의의 스레드)
+        print(name)
+
+        // 프로퍼티 초기화 완료
+        self.name = name
+
+        // 이 시점: actor executor로 전환됨 (다른 스레드일 수 있음)
+        print(name)
+    }
+}
+
+// async init 호출 - await 필요
+let actor = await Actor(name: "Meryl")
+```
+
+> 두 `print()` 호출이 서로 다른 스레드에서 실행될 수 있다.
