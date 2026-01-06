@@ -17,11 +17,9 @@ struct ContentView: View {
     @State private var usesFixedSize = false
     
     var body: some View {
-        ScrollView {
-            Color.red
-                    .frame(minWidth: nil, idealWidth: nil, maxWidth: nil, minHeight: nil, idealHeight: 400, maxHeight: 400)
-
-        }
+        Text("Hello, World!")
+            .frame(width: 250)
+            .frame(minHeight: 400)
     }
 }
 

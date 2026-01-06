@@ -351,7 +351,6 @@ ScrollView {
 - `idealHeight`를 지정해야 frame이 Color의 10pt ideal을 무시하고 400pt 사용
 - `maxHeight`만으로는 ideal height를 변경할 수 없음
 
----
 
 ## Multiple frames
 
@@ -386,3 +385,19 @@ SwiftUI는 **fixed frame**과 **flexible frame**을 분리한다:
 .frame(minWidth: 100, maxWidth: 300)  // flexible frame
 .frame(width: 200)                      // fixed frame
 ```
+
+### 실용적 예제: Fixed Width + Flexible Height
+
+macOS 앱에서 고정 너비와 최소 높이를 동시에 적용하는 경우:
+
+```swift
+Text("Hello, World!")
+    .frame(width: 250)      // 1. 고정 너비 250pt의 새 뷰로 감싸기
+    .frame(minHeight: 400)  // 2. 최소 높이 400pt의 새 뷰로 다시 감싸기
+```
+
+**중요한 원칙**:
+- Text의 bounds는 텍스트의 자연스러운 너비/높이를 넘어 확장되지 않음
+- Text 자체를 유연하게 만드는 것이 아님
+- 첫 번째 frame이 250pt 너비의 **새 뷰**로 Text를 감싸고
+- 두 번째 frame이 최소 400pt 높이의 **또 다른 새 뷰**로 다시 감쌈
