@@ -230,5 +230,62 @@ HStack {
 
 ---
 
-Layout neutrality
+## Layout neutrality(레이아웃 중립성)
+
+뷰가 6가지 크기 차원 중 일부에 대해 특별한 선호 없이 다른 뷰에 맞춰 적응하는 특성
+
+```swift
+// Color는 완전히 layout neutral
+// 사용 가능한 모든 공간을 채움
+struct ContentView: View {
+    var body: some View {
+        Color.red  // 전체 화면을 빨간색으로 채움
+    }
+}
+
+// background로 사용 시: 자식(Text)의 크기에 맞춤
+Text("Hello, World!")
+    .background(.red)  // Text 크기만큼만 빨간색
+```
+
+- Color가 background로 사용될 때: 자식의 ideal/maximum size를 상속
+- minimum size는 상속하지 않음 (Text 자체가 minimum에 대해 layout neutral)
+- 결과: Text를 꼭 맞게 감싸되, 필요시 더 작게 압축 가능
+
+| 뷰 | Layout Neutral 차원 |
+|---|---|
+| Text | minimum width, minimum height |
+| Color | 모든 6가지 차원 (사용 맥락에 따라 적응) |
+| background(.red) | minimum width, minimum height (자식으로부터 ideal/max 상속) |
+
+### idealWidth/idealHeight와 Layout Neutral 조합
+
+```swift
+struct ContentView: View {
+    var body: some View {
+        Text("Hello, World!")
+            .frame(idealWidth: 300, idealHeight: 200)
+            .background(.red)
+    }
+}
+```
+
+**레이아웃 순서** (바깥에서 안쪽으로):
+
+1. `background(.red)`: 전체 화면 공간을 가짐. Color.red는 완전히 layout neutral → 사용 가능한 모든 공간 채움 가능
+2. `background` → `frame()`에 전체 화면 크기 제안. frame은 min/max width/height에 대해 layout neutral
+3. `frame()` → `Text`에 전체 화면 크기 제안. Text는 min width/height에 대해 layout neutral, ideal/max에는 관심 있음
+4. `Text`가 frame에 응답: 자신이 관심 있는 4가지 값 반환. **하지만** frame이 자체 ideal width/height(300x200)를 지정했으므로 Text의 ideal은 무시됨. frame의 max width/height는 layout neutral이라 Text의 max를 상속
+5. `frame` → `background`에 최종 크기 반환: ideal size 300x200 + max size는 Text의 값(예: 95x20)
+6. 결과: **95x20 영역만 빨간색으로 채워짐** (max size가 제한)
+
+### 핵심 포인트
+
+- 6가지 크기 값(min/ideal/max × width/height)이 **조합**되어 동작
+- `idealWidth/idealHeight`만 지정 시: frame의 ideal은 설정되지만 **max는 자식으로부터 상속**
+- 최종 크기는 min ≤ actual ≤ max 범위 내에서 결정
+- 각 modifier가 어떤 값에 대해 layout neutral인지 파악하는 것이 중요
+
+---
+
 Multiple frames

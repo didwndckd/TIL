@@ -7,15 +7,17 @@
 
 import SwiftUI
 
+struct CustomFont: ViewModifier {
+    func body(content: Content) -> some View {
+        content.font(.largeTitle)
+    }
+}
+
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        Text("Hello, World!")
+            .frame(idealWidth: 300, idealHeight: 200)
+            .background(.red)
     }
 }
 
