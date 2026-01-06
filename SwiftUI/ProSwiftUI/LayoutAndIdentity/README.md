@@ -286,6 +286,34 @@ struct ContentView: View {
 - 최종 크기는 min ≤ actual ≤ max 범위 내에서 결정
 - 각 modifier가 어떤 값에 대해 layout neutral인지 파악하는 것이 중요
 
+### nil을 사용한 동적 Layout Neutrality
+
+6가지 크기 값은 모두 **optional**이며, `nil`을 전달하면 해당 차원에 대해 layout neutral이 된다:
+
+```swift
+struct ContentView: View {
+    @State private var usesFixedSize = false
+
+    var body: some View {
+        VStack {
+            Text("Hello, World!")
+                .frame(width: usesFixedSize ? 300 : nil)  // nil = layout neutral
+                .background(.red)
+
+            Toggle("Fixed sizes", isOn: $usesFixedSize.animation())
+        }
+    }
+}
+```
+
+**런타임 동작:**
+- `usesFixedSize == true`: frame이 Text에 300pt 너비 제안
+- `usesFixedSize == false`: frame이 VStack에서 받은 크기를 그대로 전달 (사실상 아무 역할 없음)
+
+### 모든 차원이 Layout Neutral인 경우
+
+`nil`로 모든 차원을 layout neutral로 만들 수 있지만, 모든 뷰는 최소한 **nominal ideal size**를 가진다. 이는 레이아웃이 무한히 확장되는 것을 방지한다.
+
 ---
 
 Multiple frames
