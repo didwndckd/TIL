@@ -401,3 +401,19 @@ Text("Hello, World!")
 - Text 자체를 유연하게 만드는 것이 아님
 - 첫 번째 frame이 250pt 너비의 **새 뷰**로 Text를 감싸고
 - 두 번째 frame이 최소 400pt 높이의 **또 다른 새 뷰**로 다시 감쌈
+
+### 모순처럼 보이는 frame 조합
+
+```swift
+Text("Hello, World!")
+    .frame(width: 250)
+    .frame(minWidth: 400)
+```
+
+모순적인 지시처럼 보이지만, SwiftUI 관점에서 분석하면:
+
+1. Text의 ideal width/height = 텍스트 콘텐츠 크기
+2. 첫 번째 frame: 250pt 너비의 새 뷰로 감싸기
+3. 두 번째 frame: 최소 400pt 너비의 새 뷰로 다시 감싸기
+
+**결과**: 400pt 너비의 외부 frame 안에 250pt 너비의 내부 frame이 **중앙 정렬**되어 배치됨. Text는 여전히 자신의 자연스러운 크기 유지.
