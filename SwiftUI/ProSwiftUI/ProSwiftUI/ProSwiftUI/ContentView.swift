@@ -18,8 +18,11 @@ struct ContentView: View {
     
     var body: some View {
         Text("Hello, World!")
+            .background(.blue)
             .frame(width: 250)
+            .background(.red)
             .frame(minWidth: 400)
+            .background(.yellow)
     }
 }
 
