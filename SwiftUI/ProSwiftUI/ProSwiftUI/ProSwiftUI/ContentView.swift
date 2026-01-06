@@ -19,7 +19,7 @@ struct ContentView: View {
     var body: some View {
         Text("Hello, World!")
             .frame(width: 250)
-            .frame(minHeight: 400)
+            .frame(minWidth: 400)
     }
 }
 

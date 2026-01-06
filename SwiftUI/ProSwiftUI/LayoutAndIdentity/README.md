@@ -417,3 +417,18 @@ Text("Hello, World!")
 3. 두 번째 frame: 최소 400pt 너비의 새 뷰로 다시 감싸기
 
 **결과**: 400pt 너비의 외부 frame 안에 250pt 너비의 내부 frame이 **중앙 정렬**되어 배치됨. Text는 여전히 자신의 자연스러운 크기 유지.
+
+### background로 레이아웃 시각화
+
+각 단계에 background를 추가하면 정확히 무슨 일이 일어나는지 볼 수 있다:
+
+```swift
+Text("Hello, World!")
+    .background(.blue)      // Text 크기만큼 파란색
+    .frame(width: 250)
+    .background(.red)       // 250pt 너비의 빨간색
+    .frame(minWidth: 400)
+    .background(.yellow)    // 400pt 너비의 노란색
+```
+
+**시각적 결과**: 노란색(400pt) 안에 빨간색(250pt) 안에 파란색(Text 크기)
