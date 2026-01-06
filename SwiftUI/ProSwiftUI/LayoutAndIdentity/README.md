@@ -8,7 +8,7 @@ SwiftUI 레이아웃의 3단계 프로세스:
 2. 자식이 자신의 크기를 결정하고, 부모는 이를 존중
 3. 부모가 자신의 좌표 공간에 자식을 배치
 
-### 부모 뷰의 정의
+### 부모 뷰란?
 
 ```swift
 VStack {
@@ -91,6 +91,144 @@ Text("Hello, world!")
 
 ---
 
-Fixing view sizes
+## Fixing view sizes
+
+뷰의 최종 크기 결정에 사용되는 6가지 값:
+
+| 속성 | 설명 |
+|------|------|
+| Minimum width/height | 뷰가 수용하는 최소 공간. 이보다 작은 값은 무시되어 뷰가 제안된 공간 밖으로 "leak" |
+| Maximum width/height | 뷰가 수용하는 최대 공간. 이보다 큰 값은 무시되어 부모가 남은 공간에 뷰를 배치 |
+| Ideal width/height | 뷰가 원하는 선호 공간 (UIKit의 intrinsic content size와 유사). min~max 범위 내에서 다른 값 제공 가능 |
+
+### Text의 크기 결정
+
+```swift
+// Text의 ideal size: 한 줄에 모든 문자를 표시하는 크기
+Text("Hello, world!")
+    .frame(width: 300, height: 100)
+
+// 너비가 부족하면 자동 줄바꿈
+Text("Hello, world!")
+    .frame(width: 30, height: 100)  // 여러 줄로 wrap
+```
+
+- Text의 ideal width/height: 한 줄에 모든 문자를 표시하는 크기
+- Text의 minimum size: 없음 (제한된 너비에서 자동 줄바꿈)
+- "자식이 자신의 크기를 결정" 규칙 위반처럼 보이지만, Text는 minimum size가 없어 좁은 공간 수용 가능
+
+### fixedSize()
+
+뷰의 ideal size를 minimum/maximum size로 승격시키는 modifier:
+
+```swift
+// fixedSize()가 ideal size를 고정 크기로 변환
+// frame(30, 100)이 제안해도 Text는 원래 크기 유지
+Text("Hello, world!")
+    .fixedSize()
+    .frame(width: 30, height: 100)
+```
+
+실행 순서:
+1. frame이 30x100 공간을 fixedSize() 자식에게 제안
+2. fixedSize()가 Text에게 동일 크기 제안
+3. Text가 "ideal size는 95x20, 더 작은 공간도 수용 가능" 응답
+4. fixedSize()가 ideal size를 fixed size로 변환하여 반환
+5. frame이 자신보다 큰 자식을 배치 (선택의 여지 없음)
+
+```swift
+// 파라미터 없이: 양축 고정
+.fixedSize()
+
+// 특정 축만 고정
+.fixedSize(horizontal: true, vertical: false)   // 가로만 고정 (한 줄 유지)
+.fixedSize(horizontal: false, vertical: true)   // 세로만 고정 (가로 압축 허용, 높이는 필요한 만큼)
+```
+
+### Image의 크기
+
+```swift
+// Image의 ideal size = 이미지 데이터의 원본 크기
+// frame을 적용해도 이미지는 원본 크기로 overflow
+Image("singapore")
+    .frame(width: 300, height: 100)
+
+// clipped()로 overflow 확인
+Image("singapore")
+    .frame(width: 300, height: 100)
+    .clipped()  // 300x100 영역만 표시
+
+// resizable()은 새로운 뷰를 생성하지 않음
+// ideal size는 그대로 유지
+Image("singapore")
+    .resizable()
+    .fixedSize()  // 다시 원본 크기로
+    .frame(width: 300, height: 100)
+```
+
+- `resizable()`: 새 뷰 생성 없이 유연한 width/height 설정
+- 기본 ideal size는 유지됨
+- frame에 명시적으로 지정하지 않은 값은 이미지의 값을 상속
+
+### 큰 이미지로 인한 레이아웃 문제
+
+```swift
+// 문제: 2000x1000 이미지가 VStack 너비를 화면 밖으로 확장
+// Text도 화면 밖으로 밀려남
+VStack(alignment: .leading) {
+    Image("wide-image")
+    Text("Hello, World! This is a layout test.")
+}
+
+// 해결: 완전히 유연한 frame으로 감싸기 -> Text는 그대로 아래에 밀려있는데??
+VStack(alignment: .leading) {
+    Image("wide-image")
+        .frame(minWidth: 0, maxWidth: .infinity)  // minWidth: 0 필수
+    Text("Hello, World! This is a layout test.")
+}
+```
+
+- `minWidth` 생략 시: 이미지의 minimum width(원본 크기) 상속
+- `minWidth: 0, maxWidth: .infinity` 지정해도 ideal size는 유지됨
+- `fixedSize()` 적용 시 다시 원본 크기로 복원
+
+### 두 뷰의 높이 동일하게 맞추기
+
+```swift
+// 문제: 서로 다른 컨텐츠 크기로 인해 높이가 다름
+HStack {
+    Text("Forecast")
+        .padding()
+        .background(.yellow)
+    Text("The rain in Spain falls mainly on the Spaniards")
+        .padding()
+        .background(.cyan)
+}
+
+// 해결: maxHeight: .infinity + HStack에 fixedSize(vertical: true)
+HStack {
+    Text("Forecast")
+        .padding()
+        .frame(maxHeight: .infinity)  // 무한대 높이 허용
+        .background(.yellow)
+    Text("The rain in Spain falls mainly on the Spaniards")
+        .padding()
+        .frame(maxHeight: .infinity)  // 무한대 높이 허용
+        .background(.cyan)
+}
+.fixedSize(horizontal: false, vertical: true)  // HStack의 ideal height로 고정
+```
+
+동작 원리:
+1. 각 Text의 ideal height → background가 상속 → HStack의 ideal height = 자식들 중 최대값
+2. `maxHeight: .infinity`로 Text들이 무한대까지 확장 가능
+3. HStack에 `fixedSize(vertical: true)` 적용 → HStack의 ideal height(= 가장 긴 텍스트 높이)로 고정
+4. 모든 자식이 동일한 높이로 확장
+
+- 개별 Text에 `fixedSize()` 적용과 다름: 컨테이너의 ideal size를 상한으로 자식들이 확장
+- Apple 문서: fixedSize()는 "부모가 제안한 뷰 크기에 대한 counter proposal 생성"
+
+---
+
 Layout neutrality
 Multiple frames
