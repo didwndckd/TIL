@@ -413,3 +413,4 @@ Text("Hello, World!")
     .frame(minWidth: 400)
     .background(.yellow)    // 400pt
 // 시각적 결과: 노란색(400pt) > 빨간색(250pt) > 파란색(Text)
+```
