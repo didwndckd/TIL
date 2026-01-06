@@ -353,4 +353,36 @@ ScrollView {
 
 ---
 
-Multiple frames
+## Multiple frames
+
+여러 SwiftUI modifier를 쌓아 흥미로운 효과를 만들 수 있다.
+
+### 여러 frame과 background 쌓기
+
+```swift
+Text("Hello, World!")
+    .frame(width: 200, height: 200)
+    .background(.blue)
+    .frame(width: 300, height: 300)
+    .background(.red)
+    .foregroundColor(.white)
+// 결과: 빨간 300x300 박스 안에 파란 200x200 박스, 중앙에 텍스트
+```
+
+### Fixed Frame vs Flexible Frame
+
+`frame()` modifier를 연속으로 두 번 적용하는 것이 일반적인 이유:
+
+SwiftUI는 **fixed frame**과 **flexible frame**을 분리한다:
+- 하나의 뷰는 고정된 width/height를 가지거나
+- 유연한 차원(min/ideal/max)을 가질 수 있지만
+- **둘 다 동시에 가질 수는 없다**
+
+```swift
+// ❌ 하나의 frame에서 fixed와 flexible 동시 사용 불가
+.frame(width: 200, minWidth: 100, maxWidth: 300)  // 의미 없음
+
+// ✅ 두 개의 frame으로 분리
+.frame(minWidth: 100, maxWidth: 300)  // flexible frame
+.frame(width: 200)                      // fixed frame
+```
