@@ -14,10 +14,14 @@ struct CustomFont: ViewModifier {
 }
 
 struct ContentView: View {
+    @State private var usesFixedSize = false
+    
     var body: some View {
-        Text("Hello, World!")
-            .frame(idealWidth: 300, idealHeight: 200)
-            .background(.red)
+        ScrollView {
+            Color.red
+                    .frame(minWidth: nil, idealWidth: nil, maxWidth: nil, minHeight: nil, idealHeight: 400, maxHeight: 400)
+
+        }
     }
 }
 

@@ -314,6 +314,43 @@ struct ContentView: View {
 
 `nil`로 모든 차원을 layout neutral로 만들 수 있지만, 모든 뷰는 최소한 **nominal ideal size**를 가진다. 이는 레이아웃이 무한히 확장되는 것을 방지한다.
 
+### ScrollView 내부의 Layout Neutral 뷰
+
+```swift
+// Color.red는 무한히 확장될 수 없음 → nominal 10pt 높이로 제한
+ScrollView {
+    Color.red  // 10pt 높이의 얇은 빨간 줄만 표시됨
+}
+```
+
+ScrollView는 자식에게 **무한한 공간**을 제안할 수 있다. 하지만 Color.red가 무한히 확장되면 의미 없는 레이아웃이 되므로, **nominal ideal size(10pt)** 가 적용된다.
+
+```swift
+// ❌ maxHeight만 지정: ideal height가 여전히 10pt
+ScrollView {
+    Color.red
+        .frame(maxHeight: 400)  // 여전히 10pt 높이
+}
+
+// ❌ background로 확인: frame도 10pt
+ScrollView {
+    Color.red
+        .frame(maxHeight: 400)
+        .background(.blue)  // 파란색 안 보임 - frame도 10pt
+}
+
+// ✅ idealHeight 지정: 400pt로 확장
+ScrollView {
+    Color.red
+        .frame(idealHeight: 400, maxHeight: 400)  // 400pt 높이로 확장
+}
+```
+
+**핵심**:
+- Color의 내부 max height는 무한대지만, frame의 400pt로 제한됨
+- `idealHeight`를 지정해야 frame이 Color의 10pt ideal을 무시하고 400pt 사용
+- `maxHeight`만으로는 ideal height를 변경할 수 없음
+
 ---
 
 Multiple frames
