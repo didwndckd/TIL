@@ -924,3 +924,396 @@ var body: some View {
 - Tree diffing 없이 타입 기반으로 뷰 전환
 - `some View`는 타입을 숨기지 않고 명시만 생략
 - modifier → `ModifiedContent`, 여러 뷰 → `TupleView`로 변환되어 긴 타입 생성
+
+### @ViewBuilder와 구조적 Identity의 작동 원리
+
+View 프로토콜에는 다음 코드가 포함되어 있다:
+
+```swift
+@ViewBuilder var body: Self.Body { get }
+```
+
+- `body` 프로퍼티에 `@ViewBuilder`가 **자동 적용**됨
+- Result builder가 레이아웃을 `TupleView`, `ModifiedContent`, `_ConditionalContent` 등으로 변환
+- VStack 내용물도 조건문과 루프를 포함해 **컴파일 타임에 타입이 확정**됨
+- 이로 인해 모든 뷰가 **명확한 structural identity**를 가짐
+
+### Identity와 뷰의 수명
+
+**핵심 원칙**: 뷰의 identity가 변경되면 뷰가 **소멸**된다
+
+| 상황 | 결과 |
+|------|------|
+| Identity 유지 | 뷰와 상태 보존 |
+| Identity 변경 (structural 또는 explicit) | 뷰 소멸, 상태 초기화 |
+
+**성능 및 상태 영향**:
+- 플랫폼 뷰(UIView/NSView) 폐기 → **성능 저하**
+- 뷰에 저장된 **모든 데이터 소멸** (@State 등)
+
+### 조건문과 Identity 문제
+
+`_ConditionalContent`는 true/false 콘텐츠에 대해 **제네릭**이다:
+
+```swift
+// 내부적으로
+_ConditionalContent<TrueContent, FalseContent>
+```
+
+**if 조건으로 뷰 전환 시 발생하는 문제**:
+
+```swift
+if showDetailView {
+    DetailView()  // TrueContent
+} else {
+    SummaryView() // FalseContent
+}
+```
+
+조건이 바뀔 때마다:
+1. 현재 뷰의 플랫폼 뷰가 **폐기**됨
+2. 현재 뷰의 **상태가 소멸**됨
+3. 새 뷰가 **처음부터 생성**됨
+
+이는 SwiftUI가 `if` 조건의 각 분기를 **서로 다른 identity**로 취급하기 때문이다.
+
+### Identity 문제 실제 예시
+
+```swift
+struct ExampleView: View {
+    @State private var counter = 0
+
+    var body: some View {
+        Button("Tap Count: \(counter)") {
+            counter += 1
+        }
+    }
+}
+
+struct ContentView: View {
+    @State private var scaleUp = false
+
+    var body: some View {
+        VStack {
+            if scaleUp {
+                ExampleView()
+                    .scaleEffect(2)
+            } else {
+                ExampleView()
+            }
+
+            Toggle("Scale Up", isOn: $scaleUp.animation())
+        }
+        .padding()
+    }
+}
+```
+
+**동일한 `ExampleView`를 조건에 따라 다르게 렌더링**:
+- `scaleUp = true`: 200% 확대
+- `scaleUp = false`: 기본 크기
+
+**실행 시 발생하는 문제**:
+
+| 현상 | 원인 |
+|------|------|
+| 크기 변경이 **페이드 전환**으로 보임 | 애니메이션이 아닌 **뷰 교체** 발생 |
+| 탭 카운트가 **0으로 초기화** | @State가 뷰와 함께 **소멸** |
+
+**문제의 근본 원인**:
+
+```
+_ConditionalContent 전환 발생
+    ↓
+SwiftUI가 원래 ExampleView를 "소멸"로 판단
+    ↓
+플랫폼 렌더링(UIView/NSView) 폐기
+    ↓
+모든 저장 데이터(@State) 제거
+    ↓
+새로운 ExampleView 생성 (처음부터)
+```
+
+**결과적으로**:
+- 데이터 손실
+- 부드러운 애니메이션 대신 전환 효과
+- SwiftUI가 불필요한 추가 작업 수행
+- SwiftUI 관점에서 이들은 **두 개의 별개 뷰**
+
+### Modifier 제거해도 문제 지속
+
+뷰 modifier를 제거하고 생성 방식만 다르게 해도 **동일한 문제 발생**:
+
+```swift
+struct ExampleView: View {
+    @State private var counter = 0
+    let scale: Double
+
+    var body: some View {
+        Button("Tap Count: \(counter)") {
+            counter += 1
+        }
+        .scaleEffect(scale)
+    }
+}
+
+struct ContentView: View {
+    @State private var scaleUp = false
+
+    var body: some View {
+        VStack {
+            if scaleUp {
+                ExampleView(scale: 2)
+            } else {
+                ExampleView(scale: 1)
+            }
+
+            Toggle("Scale Up", isOn: $scaleUp.animation())
+        }
+        .padding()
+    }
+}
+```
+
+**변경된 점**:
+- `scaleEffect`를 `ExampleView` 내부로 이동
+- `scale` 파라미터로 값만 전달
+
+**여전히 발생하는 문제**:
+- 페이드 전환 (애니메이션 아님)
+- @State 초기화
+
+**핵심**: 문제는 modifier가 아니라 **`if` 분기 자체**에 있다. `_ConditionalContent`의 TrueContent와 FalseContent는 항상 **별개의 identity**를 갖는다.
+
+### `.id()` modifier로도 해결 안 됨
+
+동일한 explicit identity를 부여해도 **문제가 지속**된다:
+
+```swift
+var body: some View {
+    VStack {
+        if scaleUp {
+            ExampleView(scale: 2)
+                .id("Example")
+        } else {
+            ExampleView(scale: 1)
+                .id("Example")
+        }
+
+        Toggle("Scale Up", isOn: $scaleUp.animation())
+    }
+    .padding()
+}
+```
+
+**여전히 발생하는 문제**:
+- 페이드 전환
+- @State 초기화
+
+**이유**: `.id()` modifier는 **structural identity 내부에서** 적용된다. `_ConditionalContent`의 TrueContent와 FalseContent는 이미 **서로 다른 structural identity**를 가지므로, 각각에 같은 `.id("Example")`을 붙여도 SwiftUI는 이들을 **별개의 뷰**로 취급한다.
+
+```
+_ConditionalContent<
+    ModifiedContent<ExampleView, _IdentifiedModifier<String>>,  // TrueContent
+    ModifiedContent<ExampleView, _IdentifiedModifier<String>>   // FalseContent
+>
+```
+
+**핵심**: Explicit identity는 structural identity를 **대체하지 않고** 그 위에 추가될 뿐이다. `if` 분기 자체가 이미 다른 타입을 만들기 때문에 `.id()`만으로는 해결되지 않는다.
+
+### 부분적 해결: 별도 computed property로 분리
+
+`@ViewBuilder` 없이 **명시적 return**을 사용하는 computed property로 분리:
+
+```swift
+struct ContentView: View {
+    @State private var scaleUp = false
+
+    var exampleView: some View {
+        if scaleUp {
+            return ExampleView(scale: 2)
+                .id("Example")
+        } else {
+            return ExampleView(scale: 1)
+                .id("Example")
+        }
+    }
+
+    var body: some View {
+        VStack {
+            exampleView
+
+            Toggle("Scale Up", isOn: $scaleUp.animation())
+        }
+        .padding()
+    }
+}
+```
+
+**작동 원리**:
+
+| `@ViewBuilder` (body) | 명시적 return (exampleView) |
+|----------------------|---------------------------|
+| `_ConditionalContent<A, B>` 생성 | 단일 타입 반환 |
+| 각 분기가 다른 structural identity | **동일한 타입**으로 취급 |
+
+**결과**:
+
+| 항목 | 상태 |
+|------|------|
+| 애니메이션 | ✅ 부드러운 스케일 전환 |
+| @State 유지 | ❌ 여전히 초기화됨 |
+
+**참고**: 이 방식에서는 `.id()`를 제거해도 애니메이션이 잘 작동한다. `@ViewBuilder`가 없으면 `_ConditionalContent`가 생성되지 않아 **동일한 structural identity**를 유지하기 때문이다.
+
+**한계**: 애니메이션은 개선되지만 **뷰 자체는 여전히 재생성**된다. @State 보존은 **완전한 해결책이 아니다**.
+
+### 권장 해결책: 삼항 연산자 사용
+
+SwiftUI가 원하는 방식은 **삼항 조건 연산자**를 사용하는 것:
+
+```swift
+struct ContentView: View {
+    @State private var scaleUp = false
+
+    var body: some View {
+        VStack {
+            ExampleView(scale: scaleUp ? 2 : 1)
+
+            Toggle("Scale Up", isOn: $scaleUp.animation())
+        }
+        .padding()
+    }
+}
+```
+
+**결과**:
+
+| 항목 | 상태 |
+|------|------|
+| 애니메이션 | ✅ 부드러운 스케일 전환 |
+| @State 유지 | ❌ 여전히 초기화됨 |
+
+**작동 원리**:
+- `scaleUp` 값에 관계없이 VStack의 첫 번째 자식은 항상 `ExampleView`
+- **동일한 structural identity** 유지
+- `if` 분기가 없으므로 `_ConditionalContent` 생성 안 됨
+
+**핵심**: 삼항 연산자를 사용하면 structural identity가 모든 작업을 처리한다. Boolean 값이 변경되어도 SwiftUI는 뷰를 **살아있는 상태로 유지**한다.
+
+### Modifier와 Identity 문제
+
+조건에 따라 modifier를 적용하는 경우에도 동일한 문제 발생:
+
+```swift
+struct ContentView: View {
+    @State private var isNewMessage = false
+
+    var body: some View {
+        if isNewMessage {
+            Text("Message title here").bold()
+        } else {
+            Text("Message title here")
+        }
+    }
+}
+```
+
+**문제**: `if` 분기로 인해 `_ConditionalContent` 생성 → 상태 손실
+
+**해결책 1: Boolean 파라미터 (iOS 16+)**
+
+iOS 16부터 `bold()`가 Boolean 파라미터 지원:
+
+```swift
+Text("Message title here").bold(isNewMessage)
+```
+
+**해결책 2: fontWeight() 사용 (iOS 15 이하)**
+
+```swift
+// 명시적 weight 지정
+Text("Message title here").fontWeight(isNewMessage ? .bold : .regular)
+
+// 또는 nil로 기본값 사용
+Text("Message title here").fontWeight(isNewMessage ? .bold : nil)
+```
+
+### hidden() modifier의 한계
+
+일부 modifier는 파라미터를 **받지 않는다**. 대표적인 예가 `hidden()`:
+
+```swift
+struct ContentView: View {
+    @State private var shouldHide = false
+
+    var body: some View {
+        VStack {
+            if shouldHide {
+                ExampleView(scale: 1)
+                    .hidden()
+            } else {
+                ExampleView(scale: 1)
+            }
+
+            Button("Toggle") {
+                withAnimation {
+                    shouldHide.toggle()
+                }
+            }
+        }
+    }
+}
+```
+
+**문제점**:
+- `hidden()`은 조건 파라미터를 받지 않음
+- `if` 분기 사용이 불가피 → 상태 손실 문제 재발생
+
+**`hidden()`의 동작**:
+- 뷰를 **무조건** 숨김
+- 레이아웃에서 **공간은 유지**
+
+### 커스텀 hidden() modifier 구현
+
+**잘못된 접근: @ViewBuilder 사용**
+
+```swift
+extension View {
+    @ViewBuilder func hidden(_ hidden: Bool) -> some View {
+        if hidden {
+            self.hidden()
+        } else {
+            self
+        }
+    }
+}
+```
+
+**문제**: `@ViewBuilder`를 사용하면 `_ConditionalContent` 생성 → identity 문제 재발생
+
+**핵심**: 문제는 `ExampleView`가 아니라 **`@ViewBuilder`** 자체다.
+
+**올바른 접근: 삼항 연산자 사용**
+
+```swift
+extension View {
+    func hidden(_ hidden: Bool) -> some View {
+        self.opacity(hidden ? 0 : 1)
+    }
+}
+```
+
+**결과**:
+- `hidden` 값에 관계없이 **동일한 identity 유지**
+- 뷰가 항상 **살아있는 상태로 유지**됨
+
+### Identity 관리의 이점
+
+| 이점 | 설명 |
+|------|------|
+| **성능 향상** | 뷰 재생성 비용 절감 |
+| **상태 보존** | @State 등 프로그램 상태 유지 |
+| **애니메이션 개선** | 페이드 전환 대신 부드러운 애니메이션 |
+
+**결론**: 약간의 추가 작업이 필요하더라도 **identity를 올바르게 사용**하면 성능, 상태 보존, 애니메이션 모두 개선된다.
