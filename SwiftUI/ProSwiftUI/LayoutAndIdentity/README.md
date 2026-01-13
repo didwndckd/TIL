@@ -1331,3 +1331,55 @@ struct ContentView: View {
 | 간단한 구현 | 복잡한 뷰(List 등)에서 성능 비용 |
 
 **결론**: Identity 폐기는 **의도적인 뷰 교체**가 필요할 때 유용하지만, 성능 비용을 고려해야 한다.
+
+---
+
+## Optional Views, Gestures 등
+
+SwiftUI에서 Optional은 핵심적인 역할을 한다.
+
+### Optional Background
+
+**일반적인 background**:
+```swift
+Text("Hello")
+    .background(Color.blue)
+    .onTapGesture {
+        print(type(of: self.body))
+    }
+// 타입: _BackgroundStyleModifier<Color>
+```
+
+**Optional background**:
+```swift
+.background(Bool.random() ? Color.blue : nil)
+// 타입: _BackgroundModifier<Optional<Color>>
+```
+
+배경이 `Color?`가 되어 조건에 따라 **있을 수도, 없을 수도** 있다.
+
+### Optional의 조건부 프로토콜 준수
+
+SwiftUI는 `Optional`을 확장하여 **조건부 프로토콜 준수**를 구현한다:
+
+```swift
+extension Optional : Commands where Wrapped : Commands
+extension Optional : Gesture where Wrapped : Gesture
+extension Optional : View where Wrapped : View
+```
+
+**의미**: `Optional`이 감싸는 타입이 해당 프로토콜을 준수하면, `Optional` 자체도 그 프로토콜을 준수한다.
+
+### 활용 사례
+
+| 활용 | 설명 |
+|------|------|
+| 조건부 background/overlay | 상태에 따라 배경/오버레이 적용 여부 결정 |
+| 조건부 gesture | 상태가 true면 제스처 적용, false면 `nil`로 제거 |
+
+**예시: 조건부 제스처**
+```swift
+.gesture(isEnabled ? someTapGesture : nil)
+```
+
+이를 통해 **프로그램 상태에 따라** background, overlay, gesture 등을 유연하게 적용하거나 제거할 수 있다.
