@@ -414,3 +414,394 @@ Text("Hello, World!")
     .background(.yellow)    // 400pt
 // 시각적 결과: 노란색(400pt) > 빨간색(250pt) > 파란색(Text)
 ```
+
+---
+
+## Inside TupleView
+
+SwiftUI가 여러 뷰를 어떻게 처리하는지 이해하기.
+
+### TupleView란?
+
+```swift
+VStack {
+    Text("Hello")
+    Text("World")
+}
+.onTapGesture {
+    print(type(of: self.body))
+}
+// 출력: ModifiedContent<VStack<TupleView<(Text, Text)>>, AddGestureModifier<_EndedGesture<TapGesture>>>
+```
+
+**핵심**: `TupleView<(Text, Text)>` - SwiftUI가 여러 뷰를 인코딩하는 방식
+
+- `TupleView`는 underscored가 아닌 **public API**
+- 다른 뷰들을 튜플로 감싸는 특수한 뷰 타입
+
+### 10개 뷰 제한의 원인
+
+Xcode의 Open Quickly(Shift+Cmd+O)에서 `TupleView`를 검색하면:
+
+```swift
+public static func buildBlock<C0, C1, C2, C3, C4, C5, C6, C7, C8, C9>(
+    _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4,
+    _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8, _ c9: C9
+) -> TupleView<(C0, C1, C2, C3, C4, C5, C6, C7, C8, C9)>
+where C0: View, C1: View, C2: View, C3: View, C4: View,
+      C5: View, C6: View, C7: View, C8: View, C9: View
+```
+
+- 10개 뷰를 받는 generic result builder 메서드
+- 9개, 8개 등의 버전도 존재하지만 **11개 버전은 없음**
+- 소프트웨어 제한이 아닌 **실용적 선택** (SwiftUI 팀이 적절한 선에서 끊음)
+
+### 10개 제한 우회하기
+
+**방법 1: ViewBuilder 확장**
+
+```swift
+extension ViewBuilder {
+    public static func buildBlock<C0, C1, C2, C3, C4, C5, C6, C7, C8, C9, C10>(
+        _ c0: C0, _ c1: C1, _ c2: C2, _ c3: C3, _ c4: C4,
+        _ c5: C5, _ c6: C6, _ c7: C7, _ c8: C8, _ c9: C9, _ c10: C10
+    ) -> TupleView<(C0, C1, C2, C3, C4, C5, C6, C7, C8, C9, C10)>
+    where C0: View, C1: View, C2: View, C3: View, C4: View,
+          C5: View, C6: View, C7: View, C8: View, C9: View, C10: View {
+        TupleView((c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10))
+    }
+}
+```
+
+**방법 2: TupleView 직접 생성**
+
+```swift
+TupleView((
+    Text("1"),
+    Text("2"),
+    Text("3"),
+    // ... 원하는 만큼 추가 가능
+    Text("15")
+))
+```
+
+> **Tip**: 이중 괄호 - 첫 번째는 initializer 호출, 두 번째는 튜플 생성. 각 뷰는 쉼표로 구분.
+
+### SwiftUI 내부 구현 확인
+
+SwiftUI의 swiftinterface 파일에서 실제 구현 확인 가능:
+
+```bash
+xed /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/SwiftUI.framework/Modules/SwiftUI.swiftmodule/x86_64-apple-ios-simulator.swiftinterface
+```
+
+`extension SwiftUI.ViewBuilder {` 검색 시:
+
+```swift
+extension SwiftUI.ViewBuilder {
+    @_alwaysEmitIntoClient public static func buildBlock<C0, C1>(
+        _ c0: C0, _ c1: C1
+    ) -> SwiftUI.TupleView<(C0, C1)> where C0: SwiftUI.View, C1: SwiftUI.View {
+        return .init((c0, c1))
+    }
+}
+```
+
+- 우리가 작성한 코드와 동일한 방식
+- `.init(())`는 반환 타입을 알기에 가능한 축약형
+
+### 중첩된 TupleView
+
+SwiftUI는 TupleView의 구조에 상관없이 동작:
+
+- TupleView 안에 TupleView 안에 TupleView가 있어도 **단일 컬렉션으로 평탄화**
+- 런타임 reflection으로 타입 메타데이터를 검사해 자식 수 파악
+
+### Partial Block Result Builders
+
+Swift의 partial block result builder로 10개 제한 영구 해제:
+
+```swift
+extension ViewBuilder {
+    static func buildPartialBlock<Content>(
+        first content: Content
+    ) -> Content where Content: View {
+        content
+    }
+
+    static func buildPartialBlock<C0, C1>(
+        accumulated: C0, next: C1
+    ) -> TupleView<(C0, C1)> where C0: View, C1: View {
+        TupleView((accumulated, next))
+    }
+}
+```
+
+**동작 원리**:
+1. 첫 번째 뷰: `buildPartialBlock(first:)`로 처리
+2. 이후 뷰들: `buildPartialBlock(accumulated:next:)`로 누적
+3. 결과: 중첩된 `TupleView<(TupleView<(...)>, NextView)>` 구조
+
+- 여러 TupleView가 중첩되지만 SwiftUI는 신경 쓰지 않음
+- 기본 SwiftUI와 동일한 평탄 구조를 원하면 C0~C9까지 처리하는 `buildPartialBlock()` 추가 필요
+
+---
+
+## Result Builder 이해하기
+
+SwiftUI의 선언적 문법을 가능하게 하는 Swift의 핵심 기능.
+
+### Result Builder란?
+
+```swift
+// 일반적인 Swift 코드
+let views = [Text("Hello"), Text("World")]
+
+// Result Builder를 사용한 SwiftUI 코드
+VStack {
+    Text("Hello")
+    Text("World")
+}
+```
+
+- **SE-0289**에서 도입된 Swift 기능
+- 여러 표현식을 하나의 결과로 결합하는 DSL(Domain Specific Language) 생성
+- `@ViewBuilder`, `@SceneBuilder`, `@CommandsBuilder` 등이 result builder
+
+### @resultBuilder 기본 구조
+
+```swift
+@resultBuilder
+struct SimpleBuilder {
+    // 필수: 여러 컴포넌트를 하나로 결합
+    static func buildBlock(_ components: String...) -> String {
+        components.joined(separator: "\n")
+    }
+}
+
+// 사용
+@SimpleBuilder
+func makeGreeting() -> String {
+    "Hello"
+    "World"
+    "!"
+}
+// 결과: "Hello\nWorld\n!"
+```
+
+### ViewBuilder의 핵심 메서드들
+
+```swift
+@resultBuilder
+struct ViewBuilder {
+    // 1. 단일 뷰 처리
+    static func buildBlock<Content>(_ content: Content) -> Content
+        where Content: View
+
+    // 2. 여러 뷰를 TupleView로 결합
+    static func buildBlock<C0, C1>(_ c0: C0, _ c1: C1) -> TupleView<(C0, C1)>
+        where C0: View, C1: View
+
+    // 3. 조건부 뷰 (if-else)
+    static func buildEither<TrueContent, FalseContent>(
+        first component: TrueContent
+    ) -> _ConditionalContent<TrueContent, FalseContent>
+
+    static func buildEither<TrueContent, FalseContent>(
+        second component: FalseContent
+    ) -> _ConditionalContent<TrueContent, FalseContent>
+
+    // 4. 옵셔널 뷰 (if without else)
+    static func buildOptional<Content>(_ component: Content?) -> Content?
+        where Content: View
+
+    // 5. 빈 뷰
+    static func buildBlock() -> EmptyView
+}
+```
+
+### 조건문이 변환되는 방식
+
+```swift
+// 작성한 코드
+VStack {
+    if isLoggedIn {
+        Text("Welcome")
+    } else {
+        Text("Please log in")
+    }
+}
+
+// 컴파일러가 변환한 코드
+VStack {
+    ViewBuilder.buildEither(
+        first: Text("Welcome"),    // isLoggedIn == true
+        second: Text("Please log in")  // isLoggedIn == false
+    )
+}
+```
+
+**결과 타입**: `_ConditionalContent<Text, Text>`
+
+- 두 분기의 타입이 달라도 됨 (`_ConditionalContent<Text, Image>`)
+- 런타임에 조건에 따라 적절한 뷰 표시
+
+### 반복문 처리: buildArray
+
+```swift
+// 작성한 코드
+VStack {
+    ForEach(items) { item in
+        Text(item.name)
+    }
+}
+
+// ForEach는 특별한 뷰 타입
+// 내부적으로 buildArray 사용 가능
+static func buildArray(_ components: [Content]) -> TupleView<[Content]>
+```
+
+### buildExpression: 타입 변환
+
+```swift
+@resultBuilder
+struct AttributedStringBuilder {
+    static func buildBlock(_ components: AttributedString...) -> AttributedString {
+        components.reduce(AttributedString(), +)
+    }
+
+    // String을 자동으로 AttributedString으로 변환
+    static func buildExpression(_ expression: String) -> AttributedString {
+        AttributedString(expression)
+    }
+
+    static func buildExpression(_ expression: AttributedString) -> AttributedString {
+        expression
+    }
+}
+
+// 사용: String과 AttributedString 혼용 가능
+@AttributedStringBuilder
+func makeText() -> AttributedString {
+    "Plain text"           // String → AttributedString 자동 변환
+    AttributedString("Styled")
+}
+```
+
+### buildPartialBlock: 유연한 결합 (Swift 5.7+)
+
+기존 `buildBlock`의 한계:
+- 파라미터 수만큼 오버로드 필요 (2개용, 3개용, ... 10개용)
+
+`buildPartialBlock`의 장점:
+- 두 개의 메서드로 무제한 뷰 지원
+
+```swift
+extension ViewBuilder {
+    // 첫 번째 요소 처리
+    static func buildPartialBlock<Content>(
+        first content: Content
+    ) -> Content where Content: View {
+        content
+    }
+
+    // 누적: 이전 결과 + 다음 요소
+    static func buildPartialBlock<Accumulated, Next>(
+        accumulated: Accumulated,
+        next: Next
+    ) -> TupleView<(Accumulated, Next)>
+    where Accumulated: View, Next: View {
+        TupleView((accumulated, next))
+    }
+}
+```
+
+**변환 과정** (뷰 4개 예시):
+
+```swift
+// 원본
+VStack {
+    Text("A")
+    Text("B")
+    Text("C")
+    Text("D")
+}
+
+// 변환 단계
+let step1 = buildPartialBlock(first: Text("A"))           // Text
+let step2 = buildPartialBlock(accumulated: step1, next: Text("B"))  // TupleView<(Text, Text)>
+let step3 = buildPartialBlock(accumulated: step2, next: Text("C"))  // TupleView<(TupleView<...>, Text)>
+let step4 = buildPartialBlock(accumulated: step3, next: Text("D"))  // TupleView<(TupleView<...>, Text)>
+```
+
+### Result Builder 메서드 우선순위
+
+컴파일러가 메서드를 선택하는 순서:
+
+1. `buildPartialBlock(first:)` / `buildPartialBlock(accumulated:next:)` (있으면 우선)
+2. `buildBlock(_:_:...)` (없으면 fallback)
+3. `buildExpression(_:)` (각 표현식 변환 시)
+4. `buildOptional(_:)` / `buildEither(first:)` / `buildEither(second:)` (조건문)
+5. `buildArray(_:)` (for-in 루프)
+6. `buildFinalResult(_:)` (최종 결과 변환)
+
+### 커스텀 Result Builder 예제
+
+```swift
+@resultBuilder
+struct HTMLBuilder {
+    static func buildBlock(_ components: String...) -> String {
+        components.joined()
+    }
+
+    static func buildOptional(_ component: String?) -> String {
+        component ?? ""
+    }
+
+    static func buildEither(first component: String) -> String {
+        component
+    }
+
+    static func buildEither(second component: String) -> String {
+        component
+    }
+
+    static func buildArray(_ components: [String]) -> String {
+        components.joined()
+    }
+}
+
+func div(@HTMLBuilder content: () -> String) -> String {
+    "<div>\(content())</div>"
+}
+
+func p(_ text: String) -> String {
+    "<p>\(text)</p>"
+}
+
+// 사용
+let html = div {
+    p("Hello")
+    if showSubtitle {
+        p("Subtitle")
+    }
+    for item in items {
+        p(item)
+    }
+}
+```
+
+### 핵심 정리
+
+| 메서드 | 용도 |
+|--------|------|
+| `buildBlock` | 여러 표현식을 하나로 결합 |
+| `buildPartialBlock` | 점진적 결합 (무제한 요소) |
+| `buildExpression` | 개별 표현식 타입 변환 |
+| `buildOptional` | `if` (else 없음) 처리 |
+| `buildEither` | `if-else` / `switch` 처리 |
+| `buildArray` | `for-in` 루프 처리 |
+| `buildFinalResult` | 최종 결과 변환 |
+
+- SwiftUI의 선언적 문법은 모두 result builder가 컴파일 타임에 변환한 결과
+- 각 뷰의 정확한 타입이 컴파일 타임에 결정됨 → 런타임 오버헤드 없음
