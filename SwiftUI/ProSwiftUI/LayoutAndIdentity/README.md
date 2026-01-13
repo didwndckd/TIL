@@ -805,3 +805,122 @@ let html = div {
 
 - SwiftUI의 선언적 문법은 모두 result builder가 컴파일 타임에 변환한 결과
 - 각 뷰의 정확한 타입이 컴파일 타임에 결정됨 → 런타임 오버헤드 없음
+
+---
+
+## Understanding Identity
+
+SwiftUI의 모든 뷰는 고유하게 식별 가능해야 한다. SwiftUI는 항상 어떤 뷰가 어디에 있는지 정확히 알아야 한다.
+
+### 두 가지 Identity 형태
+
+| 종류 | 설명 | 사용 시점 |
+|------|------|----------|
+| **Explicit Identity** | 개발자가 직접 뷰의 identity 지정 | 동적 데이터(배열 순회), 특정 뷰 참조(스크롤 위치) |
+| **Structural Identity** | SwiftUI가 코드 위치 기반으로 암묵적 생성 | 대부분의 정적 뷰 |
+
+### Tree Diffing에 대한 오해
+
+**흔한 오해**: "SwiftUI는 뷰 계층 변경 시 tree diffing으로 변경사항을 파악한다"
+
+**실제 동작**: Tree diffing은 **발생하지 않는다**
+
+- 컴파일러가 모든 서브뷰, modifier, 조건문, 루프를 **타입에 직접 인코딩**
+- Identity 덕분에 런타임 비교 불필요
+
+### 조건문의 타입 인코딩
+
+```swift
+VStack {
+    if Bool.random() {
+        Text("Hello")
+    } else {
+        Text("Goodbye")
+    }
+}
+.onTapGesture {
+    print(type(of: self.body))
+}
+// 출력: ModifiedContent<VStack<_ConditionalContent<Text, Text>>, AddGestureModifier<...>>
+```
+
+**타입 분석**:
+- 최상위: `ModifiedContent` (VStack + AddGestureModifier)
+- VStack 내부: `_ConditionalContent<Text, Text>`
+
+**핵심**: `_ConditionalContent`는 **if문이 타입 시스템에 인코딩된 것**
+
+- `_ConditionalContent`는 underscored (private API)
+- `buildEither`가 생성 (`ViewBuilder`의 메서드)
+- 조건 변경 시 view diffing 없이 TrueContent ↔ FalseContent 전환
+
+### Switch문의 이진 트리 변환
+
+```swift
+enum ViewState {
+    case a, b, c, d, e, f
+}
+
+@ViewBuilder var state: some View {
+    switch loadState {
+    case .a: Text("a")
+    case .b: Image(systemName: "plus")
+    case .c: Circle()
+    case .d: Rectangle()
+    case .e: Capsule()
+    case .f: RoundedRectangle(cornerRadius: 25)
+    }
+}
+
+// 타입:
+// _ConditionalContent<
+//     _ConditionalContent<
+//         _ConditionalContent<Text, Image>,
+//         _ConditionalContent<Circle, Rectangle>
+//     >,
+//     _ConditionalContent<Capsule, RoundedRectangle>
+// >
+```
+
+**이진 트리 탐색**:
+- `.a` (Text): true → true → true
+- `.b` (Image): true → true → false
+- `.c` (Circle): true → false → true
+- `.d` (Rectangle): true → false → false
+- `.e` (Capsule): false → true
+- `.f` (RoundedRectangle): false → false
+
+### 로직의 타입 변환이 미치는 영향
+
+1. **정적 표현**: SwiftUI는 복잡한 뷰 레이아웃을 **컴파일 타임**에 표현해야 함
+2. **실제 타입**: 복잡한 뷰 레이아웃이 body의 **실제 underlying 타입**이 됨
+
+### some View의 역할
+
+```swift
+var body: some View {
+    // 복잡한 뷰 계층...
+}
+```
+
+**Opaque Return Type (`some View`)의 의미**:
+- 반환 타입을 명시적으로 작성하지 않아도 됨
+- 단, Swift에게 타입 정보를 **숨기는 것이 아님**
+
+**`View` vs `some View`**:
+
+| 반환 타입 | 의미 | SwiftUI 호환성 |
+|----------|------|---------------|
+| `View` (프로토콜) | 타입 정보를 숨김 | ❌ 사용 불가 |
+| `some View` (opaque) | 구체적 타입 존재, 명시만 생략 | ✅ 필수 |
+
+- SwiftUI는 **타입과 위치 기반**으로 모든 뷰를 식별
+- 타입 정보가 숨겨지면 효율적인 레이아웃 업데이트 불가능
+
+### 핵심 정리
+
+- 모든 뷰는 identity를 가짐 (explicit 또는 structural)
+- 조건문/switch문은 `_ConditionalContent`로 타입에 인코딩
+- Tree diffing 없이 타입 기반으로 뷰 전환
+- `some View`는 타입을 숨기지 않고 명시만 생략
+- modifier → `ModifiedContent`, 여러 뷰 → `TupleView`로 변환되어 긴 타입 생성
