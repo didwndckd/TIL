@@ -1214,3 +1214,120 @@ extension View {
 | **애니메이션 개선** | 페이드 전환 대신 부드러운 애니메이션 |
 
 **결론**: 약간의 추가 작업이 필요하더라도 **identity를 올바르게 사용**하면 성능, 상태 보존, 애니메이션 모두 개선된다.
+
+---
+
+### 12. 의도적으로 Identity 폐기하기
+
+때로는 SwiftUI에게 두 뷰 인스턴스가 **다르다**고 명시적으로 알려야 할 때가 있다.
+
+#### 12.1 문제 상황: List 애니메이션
+
+```swift
+struct ContentView: View {
+    @State private var items = Array(1...20)
+
+    var body: some View {
+        VStack(spacing: 0) {
+            List(items, id: \.self) {
+                Text("Item \($0)")
+            }
+
+            Button("Shuffle") {
+                withAnimation {
+                    items.shuffle()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(5)
+        }
+    }
+}
+```
+
+**문제**: `withAnimation()`으로 리스트를 섞으면 모든 행이 슬라이드하는 기본 애니메이션이 적용되어 **시각적으로 어지럽다**.
+
+#### 12.2 해결책: `.id(UUID())`로 Identity 폐기
+
+```swift
+List(items, id: \.self) {
+    Text("Item \($0)")
+}
+.id(UUID())
+```
+
+**작동 원리**:
+- 뷰가 평가될 때마다 **새로운 UUID** 생성
+- SwiftUI는 같은 structural 위치지만 **다른 explicit identity**로 인식
+- 기존 리스트 제거 → 새 리스트 삽입 (페이드 전환)
+
+#### 12.3 커스텀 애니메이션 적용
+
+Identity를 폐기하면 **애니메이션을 완전히 제어**할 수 있다:
+
+**애니메이션 속도 조절**:
+```swift
+Button("Shuffle") {
+    withAnimation(.easeInOut(duration: 1)) {
+        items.shuffle()
+    }
+}
+```
+
+**커스텀 전환 효과**:
+```swift
+List(items, id: \.self) {
+    Text("Item \($0)")
+}
+.id(UUID())
+.transition(.asymmetric(
+    insertion: .move(edge: .trailing),
+    removal: .move(edge: .leading)
+))
+```
+
+#### 12.4 활용 예시: 랜덤 아이콘 생성기
+
+```swift
+struct ContentView: View {
+    let colors: [Color] = [.blue, .cyan, .gray, .green, .indigo, .mint, .orange, .pink, .purple, .red]
+    let symbols = ["run", "archery", "basketball", "bowling", "dance", "golf", "hiking", "jumprope", "rugby", "tennis", "volleyball", "yoga"]
+    @State private var id = UUID()
+
+    var body: some View {
+        VStack {
+            ZStack {
+                Circle()
+                    .fill(colors.randomElement()!)
+                    .padding()
+
+                Image(systemName: "figure.\(symbols.randomElement()!)")
+                    .font(.system(size: 144))
+                    .foregroundColor(.white)
+            }
+            .transition(.slide)
+            .id(id)
+
+            Button("Change") {
+                withAnimation(.easeInOut(duration: 1)) {
+                    id = UUID()
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .padding(.bottom)
+        }
+    }
+}
+```
+
+**효과**: `id` 값만 변경하면 새로운 랜덤 색상/심볼이 **애니메이션과 함께** 표시된다.
+
+#### 12.5 주의사항
+
+| 장점 | 단점 |
+|------|------|
+| 애니메이션 완전 제어 | 저장 데이터(@State 등) 소멸 |
+| 커스텀 전환 효과 적용 | 플랫폼 뷰(UIView/NSView) 재생성 |
+| 간단한 구현 | 복잡한 뷰(List 등)에서 성능 비용 |
+
+**결론**: Identity 폐기는 **의도적인 뷰 교체**가 필요할 때 유용하지만, 성능 비용을 고려해야 한다.
