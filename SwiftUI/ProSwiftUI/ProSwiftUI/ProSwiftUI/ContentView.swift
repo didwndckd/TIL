@@ -13,16 +13,37 @@ struct CustomFont: ViewModifier {
     }
 }
 
-struct ContentView: View {
-    @State private var usesFixedSize = false
+@resultBuilder
+struct S {
+    static func buildBlock(_ components: Int...) -> Int {
+        components.reduce(0, +)
+    }
+    static func buildEither(first component: Int) -> Int {
+        component
+    }
     
+}
+
+@resultBuilder
+struct IntArrayBuilder {
+  static func buildBlock(_ parts: Int...) -> [Int] { parts }
+  static func buildEither(first: [Int]) -> [Int] { first }
+  static func buildEither(second: [Int]) -> [Int] { second }
+  static func buildIf(_ part: [Int]?) -> [Int] { part ?? [] }
+  static func buildExpression(_ value: Int) -> [Int] { [value] }
+}
+
+func makeInts(@IntArrayBuilder _ content: () -> [Int]) -> [Int] {
+  content()
+}
+
+struct ContentView: View {
     var body: some View {
-        Text("Hello, World!")
-            .background(.blue)
-            .frame(width: 250)
-            .background(.red)
-            .frame(minWidth: 400)
-            .background(.yellow)
+        Text("Hello")
+            .background(Bool.random() ? Color.blue : nil)
+            .onTapGesture {
+                print(type(of: self.body))
+            }
     }
 }
 
