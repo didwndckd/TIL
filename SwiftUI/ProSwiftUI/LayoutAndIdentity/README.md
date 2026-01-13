@@ -1060,16 +1060,16 @@ _ConditionalContent<
 
 Explicit identity는 structural identity를 **대체하지 않고** 그 위에 추가될 뿐이다.
 
-#### 7.3 별도 computed property - 부분 해결
+#### 7.3 별도 computed property - 해결
 
 `@ViewBuilder` 없이 **명시적 return** 사용:
 
 ```swift
 var exampleView: some View {
     if scaleUp {
-        return ExampleView(scale: 2).id("Example")
+        return ExampleView(scale: 2)
     } else {
-        return ExampleView(scale: 1).id("Example")
+        return ExampleView(scale: 1)
     }
 }
 ```
@@ -1077,9 +1077,9 @@ var exampleView: some View {
 | 항목 | 결과 |
 |------|------|
 | 애니메이션 | ✅ 부드러운 스케일 전환 |
-| @State 유지 | ❌ 여전히 초기화됨 |
+| @State 유지 | ✅ 보존됨 |
 
-**한계**: 애니메이션은 개선되지만 **뷰 자체는 여전히 재생성**된다.
+**작동 원리**: `@ViewBuilder`가 없으면 `_ConditionalContent`가 생성되지 않아 **동일한 structural identity**를 유지한다.
 
 ---
 
