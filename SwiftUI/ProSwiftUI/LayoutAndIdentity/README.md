@@ -812,23 +812,29 @@ let html = div {
 
 SwiftUI의 모든 뷰는 고유하게 식별 가능해야 한다. SwiftUI는 항상 어떤 뷰가 어디에 있는지 정확히 알아야 한다.
 
-### 두 가지 Identity 형태
+---
+
+### 1. Identity의 두 가지 형태
 
 | 종류 | 설명 | 사용 시점 |
 |------|------|----------|
 | **Explicit Identity** | 개발자가 직접 뷰의 identity 지정 | 동적 데이터(배열 순회), 특정 뷰 참조(스크롤 위치) |
 | **Structural Identity** | SwiftUI가 코드 위치 기반으로 암묵적 생성 | 대부분의 정적 뷰 |
 
-### Tree Diffing에 대한 오해
+---
 
-**흔한 오해**: "SwiftUI는 뷰 계층 변경 시 tree diffing으로 변경사항을 파악한다"
+### 2. 타입 시스템을 통한 Identity 구현
 
-**실제 동작**: Tree diffing은 **발생하지 않는다**
+#### 2.1 Tree Diffing에 대한 오해
+
+| 오해 | 실제 |
+|------|------|
+| "SwiftUI는 뷰 계층 변경 시 tree diffing으로 변경사항을 파악한다" | Tree diffing은 **발생하지 않는다** |
 
 - 컴파일러가 모든 서브뷰, modifier, 조건문, 루프를 **타입에 직접 인코딩**
 - Identity 덕분에 런타임 비교 불필요
 
-### 조건문의 타입 인코딩
+#### 2.2 조건문의 타입 인코딩
 
 ```swift
 VStack {
@@ -848,18 +854,16 @@ VStack {
 - 최상위: `ModifiedContent` (VStack + AddGestureModifier)
 - VStack 내부: `_ConditionalContent<Text, Text>`
 
-**핵심**: `_ConditionalContent`는 **if문이 타입 시스템에 인코딩된 것**
-
-- `_ConditionalContent`는 underscored (private API)
-- `buildEither`가 생성 (`ViewBuilder`의 메서드)
+**`_ConditionalContent`의 특징**:
+- if문이 타입 시스템에 인코딩된 것
+- underscored (private API)
+- `ViewBuilder`의 `buildEither`가 생성
 - 조건 변경 시 view diffing 없이 TrueContent ↔ FalseContent 전환
 
-### Switch문의 이진 트리 변환
+#### 2.3 Switch문의 이진 트리 변환
 
 ```swift
-enum ViewState {
-    case a, b, c, d, e, f
-}
+enum ViewState { case a, b, c, d, e, f }
 
 @ViewBuilder var state: some View {
     switch loadState {
@@ -872,7 +876,7 @@ enum ViewState {
     }
 }
 
-// 타입:
+// 생성되는 타입:
 // _ConditionalContent<
 //     _ConditionalContent<
 //         _ConditionalContent<Text, Image>,
@@ -882,20 +886,25 @@ enum ViewState {
 // >
 ```
 
-**이진 트리 탐색**:
-- `.a` (Text): true → true → true
-- `.b` (Image): true → true → false
-- `.c` (Circle): true → false → true
-- `.d` (Rectangle): true → false → false
-- `.e` (Capsule): false → true
-- `.f` (RoundedRectangle): false → false
+**이진 트리 탐색 경로**:
 
-### 로직의 타입 변환이 미치는 영향
+| case | 뷰 | 경로 |
+|------|-----|------|
+| `.a` | Text | true → true → true |
+| `.b` | Image | true → true → false |
+| `.c` | Circle | true → false → true |
+| `.d` | Rectangle | true → false → false |
+| `.e` | Capsule | false → true |
+| `.f` | RoundedRectangle | false → false |
+
+#### 2.4 로직의 타입 변환이 미치는 영향
 
 1. **정적 표현**: SwiftUI는 복잡한 뷰 레이아웃을 **컴파일 타임**에 표현해야 함
 2. **실제 타입**: 복잡한 뷰 레이아웃이 body의 **실제 underlying 타입**이 됨
 
-### some View의 역할
+---
+
+### 3. some View의 역할
 
 ```swift
 var body: some View {
@@ -907,8 +916,6 @@ var body: some View {
 - 반환 타입을 명시적으로 작성하지 않아도 됨
 - 단, Swift에게 타입 정보를 **숨기는 것이 아님**
 
-**`View` vs `some View`**:
-
 | 반환 타입 | 의미 | SwiftUI 호환성 |
 |----------|------|---------------|
 | `View` (프로토콜) | 타입 정보를 숨김 | ❌ 사용 불가 |
@@ -917,17 +924,11 @@ var body: some View {
 - SwiftUI는 **타입과 위치 기반**으로 모든 뷰를 식별
 - 타입 정보가 숨겨지면 효율적인 레이아웃 업데이트 불가능
 
-### 핵심 정리
+---
 
-- 모든 뷰는 identity를 가짐 (explicit 또는 structural)
-- 조건문/switch문은 `_ConditionalContent`로 타입에 인코딩
-- Tree diffing 없이 타입 기반으로 뷰 전환
-- `some View`는 타입을 숨기지 않고 명시만 생략
-- modifier → `ModifiedContent`, 여러 뷰 → `TupleView`로 변환되어 긴 타입 생성
+### 4. @ViewBuilder와 구조적 Identity
 
-### @ViewBuilder와 구조적 Identity의 작동 원리
-
-View 프로토콜에는 다음 코드가 포함되어 있다:
+View 프로토콜의 정의:
 
 ```swift
 @ViewBuilder var body: Self.Body { get }
@@ -938,36 +939,31 @@ View 프로토콜에는 다음 코드가 포함되어 있다:
 - VStack 내용물도 조건문과 루프를 포함해 **컴파일 타임에 타입이 확정**됨
 - 이로 인해 모든 뷰가 **명확한 structural identity**를 가짐
 
-### Identity와 뷰의 수명
+---
+
+### 5. Identity와 뷰의 수명
 
 **핵심 원칙**: 뷰의 identity가 변경되면 뷰가 **소멸**된다
 
 | 상황 | 결과 |
 |------|------|
 | Identity 유지 | 뷰와 상태 보존 |
-| Identity 변경 (structural 또는 explicit) | 뷰 소멸, 상태 초기화 |
+| Identity 변경 | 뷰 소멸, 상태 초기화 |
 
 **성능 및 상태 영향**:
 - 플랫폼 뷰(UIView/NSView) 폐기 → **성능 저하**
 - 뷰에 저장된 **모든 데이터 소멸** (@State 등)
 
-### 조건문과 Identity 문제
+---
+
+### 6. 조건문과 Identity 문제
+
+#### 6.1 문제의 원인
 
 `_ConditionalContent`는 true/false 콘텐츠에 대해 **제네릭**이다:
 
 ```swift
-// 내부적으로
 _ConditionalContent<TrueContent, FalseContent>
-```
-
-**if 조건으로 뷰 전환 시 발생하는 문제**:
-
-```swift
-if showDetailView {
-    DetailView()  // TrueContent
-} else {
-    SummaryView() // FalseContent
-}
 ```
 
 조건이 바뀔 때마다:
@@ -975,9 +971,7 @@ if showDetailView {
 2. 현재 뷰의 **상태가 소멸**됨
 3. 새 뷰가 **처음부터 생성**됨
 
-이는 SwiftUI가 `if` 조건의 각 분기를 **서로 다른 identity**로 취급하기 때문이다.
-
-### Identity 문제 실제 예시
+#### 6.2 문제 예시
 
 ```swift
 struct ExampleView: View {
@@ -1001,7 +995,6 @@ struct ContentView: View {
             } else {
                 ExampleView()
             }
-
             Toggle("Scale Up", isOn: $scaleUp.animation())
         }
         .padding()
@@ -1009,19 +1002,14 @@ struct ContentView: View {
 }
 ```
 
-**동일한 `ExampleView`를 조건에 따라 다르게 렌더링**:
-- `scaleUp = true`: 200% 확대
-- `scaleUp = false`: 기본 크기
-
-**실행 시 발생하는 문제**:
+**발생하는 문제**:
 
 | 현상 | 원인 |
 |------|------|
 | 크기 변경이 **페이드 전환**으로 보임 | 애니메이션이 아닌 **뷰 교체** 발생 |
 | 탭 카운트가 **0으로 초기화** | @State가 뷰와 함께 **소멸** |
 
-**문제의 근본 원인**:
-
+**문제 흐름**:
 ```
 _ConditionalContent 전환 발생
     ↓
@@ -1034,83 +1022,34 @@ SwiftUI가 원래 ExampleView를 "소멸"로 판단
 새로운 ExampleView 생성 (처음부터)
 ```
 
-**결과적으로**:
-- 데이터 손실
-- 부드러운 애니메이션 대신 전환 효과
-- SwiftUI가 불필요한 추가 작업 수행
-- SwiftUI 관점에서 이들은 **두 개의 별개 뷰**
+---
 
-### Modifier 제거해도 문제 지속
+### 7. 해결 시도와 한계
 
-뷰 modifier를 제거하고 생성 방식만 다르게 해도 **동일한 문제 발생**:
+#### 7.1 Modifier 제거 - 효과 없음
+
+문제는 modifier가 아니라 **`if` 분기 자체**에 있다:
 
 ```swift
-struct ExampleView: View {
-    @State private var counter = 0
-    let scale: Double
-
-    var body: some View {
-        Button("Tap Count: \(counter)") {
-            counter += 1
-        }
-        .scaleEffect(scale)
-    }
-}
-
-struct ContentView: View {
-    @State private var scaleUp = false
-
-    var body: some View {
-        VStack {
-            if scaleUp {
-                ExampleView(scale: 2)
-            } else {
-                ExampleView(scale: 1)
-            }
-
-            Toggle("Scale Up", isOn: $scaleUp.animation())
-        }
-        .padding()
-    }
+// 여전히 문제 발생
+if scaleUp {
+    ExampleView(scale: 2)
+} else {
+    ExampleView(scale: 1)
 }
 ```
 
-**변경된 점**:
-- `scaleEffect`를 `ExampleView` 내부로 이동
-- `scale` 파라미터로 값만 전달
-
-**여전히 발생하는 문제**:
-- 페이드 전환 (애니메이션 아님)
-- @State 초기화
-
-**핵심**: 문제는 modifier가 아니라 **`if` 분기 자체**에 있다. `_ConditionalContent`의 TrueContent와 FalseContent는 항상 **별개의 identity**를 갖는다.
-
-### `.id()` modifier로도 해결 안 됨
-
-동일한 explicit identity를 부여해도 **문제가 지속**된다:
+#### 7.2 `.id()` modifier - 효과 없음
 
 ```swift
-var body: some View {
-    VStack {
-        if scaleUp {
-            ExampleView(scale: 2)
-                .id("Example")
-        } else {
-            ExampleView(scale: 1)
-                .id("Example")
-        }
-
-        Toggle("Scale Up", isOn: $scaleUp.animation())
-    }
-    .padding()
+if scaleUp {
+    ExampleView(scale: 2).id("Example")
+} else {
+    ExampleView(scale: 1).id("Example")
 }
 ```
 
-**여전히 발생하는 문제**:
-- 페이드 전환
-- @State 초기화
-
-**이유**: `.id()` modifier는 **structural identity 내부에서** 적용된다. `_ConditionalContent`의 TrueContent와 FalseContent는 이미 **서로 다른 structural identity**를 가지므로, 각각에 같은 `.id("Example")`을 붙여도 SwiftUI는 이들을 **별개의 뷰**로 취급한다.
+**이유**: `.id()`는 structural identity **내부에서** 적용됨
 
 ```
 _ConditionalContent<
@@ -1119,58 +1058,32 @@ _ConditionalContent<
 >
 ```
 
-**핵심**: Explicit identity는 structural identity를 **대체하지 않고** 그 위에 추가될 뿐이다. `if` 분기 자체가 이미 다른 타입을 만들기 때문에 `.id()`만으로는 해결되지 않는다.
+Explicit identity는 structural identity를 **대체하지 않고** 그 위에 추가될 뿐이다.
 
-### 부분적 해결: 별도 computed property로 분리
+#### 7.3 별도 computed property - 부분 해결
 
-`@ViewBuilder` 없이 **명시적 return**을 사용하는 computed property로 분리:
+`@ViewBuilder` 없이 **명시적 return** 사용:
 
 ```swift
-struct ContentView: View {
-    @State private var scaleUp = false
-
-    var exampleView: some View {
-        if scaleUp {
-            return ExampleView(scale: 2)
-                .id("Example")
-        } else {
-            return ExampleView(scale: 1)
-                .id("Example")
-        }
-    }
-
-    var body: some View {
-        VStack {
-            exampleView
-
-            Toggle("Scale Up", isOn: $scaleUp.animation())
-        }
-        .padding()
+var exampleView: some View {
+    if scaleUp {
+        return ExampleView(scale: 2).id("Example")
+    } else {
+        return ExampleView(scale: 1).id("Example")
     }
 }
 ```
 
-**작동 원리**:
-
-| `@ViewBuilder` (body) | 명시적 return (exampleView) |
-|----------------------|---------------------------|
-| `_ConditionalContent<A, B>` 생성 | 단일 타입 반환 |
-| 각 분기가 다른 structural identity | **동일한 타입**으로 취급 |
-
-**결과**:
-
-| 항목 | 상태 |
+| 항목 | 결과 |
 |------|------|
 | 애니메이션 | ✅ 부드러운 스케일 전환 |
 | @State 유지 | ❌ 여전히 초기화됨 |
 
-**참고**: 이 방식에서는 `.id()`를 제거해도 애니메이션이 잘 작동한다. `@ViewBuilder`가 없으면 `_ConditionalContent`가 생성되지 않아 **동일한 structural identity**를 유지하기 때문이다.
+**한계**: 애니메이션은 개선되지만 **뷰 자체는 여전히 재생성**된다.
 
-**한계**: 애니메이션은 개선되지만 **뷰 자체는 여전히 재생성**된다. @State 보존은 **완전한 해결책이 아니다**.
+---
 
-### 권장 해결책: 삼항 연산자 사용
-
-SwiftUI가 원하는 방식은 **삼항 조건 연산자**를 사용하는 것:
+### 8. 권장 해결책: 삼항 연산자 사용
 
 ```swift
 struct ContentView: View {
@@ -1179,7 +1092,6 @@ struct ContentView: View {
     var body: some View {
         VStack {
             ExampleView(scale: scaleUp ? 2 : 1)
-
             Toggle("Scale Up", isOn: $scaleUp.animation())
         }
         .padding()
@@ -1187,96 +1099,63 @@ struct ContentView: View {
 }
 ```
 
-**결과**:
-
-| 항목 | 상태 |
+| 항목 | 결과 |
 |------|------|
 | 애니메이션 | ✅ 부드러운 스케일 전환 |
-| @State 유지 | ❌ 여전히 초기화됨 |
+| @State 유지 | ✅ 보존됨 |
 
 **작동 원리**:
 - `scaleUp` 값에 관계없이 VStack의 첫 번째 자식은 항상 `ExampleView`
 - **동일한 structural identity** 유지
 - `if` 분기가 없으므로 `_ConditionalContent` 생성 안 됨
 
-**핵심**: 삼항 연산자를 사용하면 structural identity가 모든 작업을 처리한다. Boolean 값이 변경되어도 SwiftUI는 뷰를 **살아있는 상태로 유지**한다.
+---
 
-### Modifier와 Identity 문제
+### 9. Modifier와 Identity 문제
 
-조건에 따라 modifier를 적용하는 경우에도 동일한 문제 발생:
+#### 9.1 조건부 modifier 문제
 
 ```swift
-struct ContentView: View {
-    @State private var isNewMessage = false
-
-    var body: some View {
-        if isNewMessage {
-            Text("Message title here").bold()
-        } else {
-            Text("Message title here")
-        }
-    }
+// 문제 발생
+if isNewMessage {
+    Text("Message title here").bold()
+} else {
+    Text("Message title here")
 }
 ```
 
-**문제**: `if` 분기로 인해 `_ConditionalContent` 생성 → 상태 손실
+#### 9.2 해결책
 
-**해결책 1: Boolean 파라미터 (iOS 16+)**
-
-iOS 16부터 `bold()`가 Boolean 파라미터 지원:
-
+**iOS 16+: Boolean 파라미터**
 ```swift
 Text("Message title here").bold(isNewMessage)
 ```
 
-**해결책 2: fontWeight() 사용 (iOS 15 이하)**
-
+**iOS 15 이하: fontWeight() 사용**
 ```swift
-// 명시적 weight 지정
 Text("Message title here").fontWeight(isNewMessage ? .bold : .regular)
-
-// 또는 nil로 기본값 사용
+// 또는
 Text("Message title here").fontWeight(isNewMessage ? .bold : nil)
 ```
 
-### hidden() modifier의 한계
+---
 
-일부 modifier는 파라미터를 **받지 않는다**. 대표적인 예가 `hidden()`:
+### 10. 커스텀 조건부 Modifier 구현
+
+#### 10.1 hidden() modifier의 한계
+
+`hidden()`은 파라미터를 받지 않아 `if` 분기가 불가피:
 
 ```swift
-struct ContentView: View {
-    @State private var shouldHide = false
-
-    var body: some View {
-        VStack {
-            if shouldHide {
-                ExampleView(scale: 1)
-                    .hidden()
-            } else {
-                ExampleView(scale: 1)
-            }
-
-            Button("Toggle") {
-                withAnimation {
-                    shouldHide.toggle()
-                }
-            }
-        }
-    }
+// 문제 발생
+if shouldHide {
+    ExampleView().hidden()
+} else {
+    ExampleView()
 }
 ```
 
-**문제점**:
-- `hidden()`은 조건 파라미터를 받지 않음
-- `if` 분기 사용이 불가피 → 상태 손실 문제 재발생
-
-**`hidden()`의 동작**:
-- 뷰를 **무조건** 숨김
-- 레이아웃에서 **공간은 유지**
-
-### 커스텀 hidden() modifier 구현
-
-**잘못된 접근: @ViewBuilder 사용**
+#### 10.2 잘못된 접근: @ViewBuilder 사용
 
 ```swift
 extension View {
@@ -1290,11 +1169,9 @@ extension View {
 }
 ```
 
-**문제**: `@ViewBuilder`를 사용하면 `_ConditionalContent` 생성 → identity 문제 재발생
+**문제**: `@ViewBuilder` → `_ConditionalContent` 생성 → identity 문제 재발생
 
-**핵심**: 문제는 `ExampleView`가 아니라 **`@ViewBuilder`** 자체다.
-
-**올바른 접근: 삼항 연산자 사용**
+#### 10.3 올바른 접근: 삼항 연산자 사용
 
 ```swift
 extension View {
@@ -1304,11 +1181,31 @@ extension View {
 }
 ```
 
-**결과**:
-- `hidden` 값에 관계없이 **동일한 identity 유지**
-- 뷰가 항상 **살아있는 상태로 유지**됨
+**결과**: `hidden` 값에 관계없이 **동일한 identity 유지**
 
-### Identity 관리의 이점
+---
+
+### 11. 핵심 정리
+
+#### Identity 기본 개념
+- 모든 뷰는 identity를 가짐 (explicit 또는 structural)
+- 조건문/switch문은 `_ConditionalContent`로 타입에 인코딩
+- Tree diffing 없이 타입 기반으로 뷰 전환
+- `some View`는 타입을 숨기지 않고 명시만 생략
+
+#### Identity 변경의 영향
+- 뷰 소멸 → 플랫폼 뷰 폐기 (성능 저하)
+- @State 등 모든 저장 데이터 소멸
+- 부드러운 애니메이션 대신 페이드 전환
+
+#### Identity 유지 방법
+| 방법 | 설명 |
+|------|------|
+| 삼항 연산자 | `condition ? value1 : value2` |
+| Boolean 파라미터 modifier | `.bold(isActive)` (iOS 16+) |
+| 값 기반 modifier | `.fontWeight(condition ? .bold : nil)` |
+
+#### Identity 관리의 이점
 
 | 이점 | 설명 |
 |------|------|
