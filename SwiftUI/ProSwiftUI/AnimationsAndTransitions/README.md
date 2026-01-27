@@ -168,7 +168,9 @@ var animatableData: Double {
 
 ---
 
-### 활용 예시: Font Size 애니메이션
+### iOS 15.6 이하 호환성
+
+#### Font Size 애니메이션
 
 iOS 16 이전 버전에서는 시스템 폰트 크기 애니메이션이 기본 지원되지 않았다. `Animatable` 프로토콜로 해결 가능:
 
@@ -211,16 +213,9 @@ struct ContentView: View {
 }
 ```
 
-| iOS 버전 | Font Size 애니메이션 |
-|----------|---------------------|
-| iOS 16+ | 기본 지원 |
-| iOS 15.6 이하 | `Animatable` 프로토콜 필요 |
-
 > **주의**: 애니메이션 중 매 프레임마다 새로운 크기의 시스템 폰트를 생성한다. 효과는 훌륭하지만 과도하게 사용하면 성능에 영향을 줄 수 있다. Apple의 iOS 16+ 구현이 더 최적화되어 있을 가능성이 높다.
 
----
-
-### iOS 15.6 이하에서 foregroundColor 애니메이션
+#### foregroundColor 애니메이션
 
 `foregroundColor()`는 iOS 15.6 이하에서 애니메이션되지 않는다:
 
@@ -242,15 +237,9 @@ struct ContentView: View {
 }
 ```
 
-#### Animatable로 해결하기 어려운 이유
+색상 애니메이션을 `Animatable`로 구현하려면 before/after 색상을 저장하고 RGBA 값을 수동으로 보간해야 해서 복잡하다.
 
-색상 애니메이션을 `Animatable`로 구현하려면:
-- before/after 색상을 뷰 내부에 저장
-- RGBA 값을 수동으로 보간
-
-→ 복잡하고 지저분한 코드가 필요하다.
-
-#### 해결책: colorMultiply() 활용
+**해결책: colorMultiply() 활용**
 
 `colorMultiply()`는 애니메이션이 가능하다. 원본 색상과 다른 색상의 RGBA 값을 각각 곱한다.
 
@@ -263,7 +252,7 @@ Text("Hello, World!")
     .colorMultiply(isRed ? .red : .blue)
 ```
 
-#### Extension으로 정리
+**Extension으로 정리**:
 
 ```swift
 extension View {
@@ -275,10 +264,13 @@ extension View {
 }
 ```
 
-| iOS 버전 | foregroundColor 애니메이션 |
-|----------|---------------------------|
-| iOS 16+ | 기본 지원 |
-| iOS 15.6 이하 | `colorMultiply()` 우회 필요 |
+#### iOS 버전별 지원 현황
+
+| 속성 | iOS 16+ | iOS 15.6 이하 |
+|------|---------|--------------|
+| Font Size | 기본 지원 | `Animatable` 필요 |
+| foregroundColor | 기본 지원 | `colorMultiply()` 우회 |
+| zIndex | ❌ | `Animatable` 필요 |
 
 ---
 
