@@ -7,42 +7,62 @@
 
 import SwiftUI
 
-struct CustomFont: ViewModifier {
-    func body(content: Content) -> some View {
-        content.font(.largeTitle)
-    }
-}
-
-@resultBuilder
-struct S {
-    static func buildBlock(_ components: Int...) -> Int {
-        components.reduce(0, +)
-    }
-    static func buildEither(first component: Int) -> Int {
-        component
+struct AnimatableZIndexModifier: ViewModifier, Animatable {
+    var animatableData: Double {
+        get { index }
+        set { print(newValue); index = newValue }
     }
     
+    var index: Double
+
+    func body(content: Content) -> some View {
+        content
+            .zIndex(index)
+    }
 }
 
-@resultBuilder
-struct IntArrayBuilder {
-  static func buildBlock(_ parts: Int...) -> [Int] { parts }
-  static func buildEither(first: [Int]) -> [Int] { first }
-  static func buildEither(second: [Int]) -> [Int] { second }
-  static func buildIf(_ part: [Int]?) -> [Int] { part ?? [] }
-  static func buildExpression(_ value: Int) -> [Int] { [value] }
+struct AnimatableFontModifier: ViewModifier, Animatable {
+    var size: Double
+
+    var animatableData: Double {
+        get { size }
+        set { print(size); size = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: size))
+    }
 }
 
-func makeInts(@IntArrayBuilder _ content: () -> [Int]) -> [Int] {
-  content()
+extension View {
+    func animatableZIndex(_ index: Double) -> some View {
+        self.modifier(AnimatableZIndexModifier(index: index))
+    }
+    
+    func animatableFont(size: Double) -> some View {
+        self.modifier(AnimatableFontModifier(size: size))
+    }
+    
+    func animatableForegroundColor(_ color: Color) -> some View {
+            self
+                .foregroundColor(.white)
+                .colorMultiply(color)
+        }
 }
 
 struct ContentView: View {
+    @State private var isRed = false
+
     var body: some View {
-        Text("Hello")
-            .background(Bool.random() ? Color.blue : nil)
+        Text("Hello, World!")
+            .foregroundColor(.white)
+            .colorMultiply(isRed ? .red : .blue)
+            .font(.largeTitle.bold())
             .onTapGesture {
-                print(type(of: self.body))
+                withAnimation {
+                    isRed.toggle()
+                }
             }
     }
 }
