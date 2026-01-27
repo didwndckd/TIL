@@ -274,6 +274,151 @@ extension View {
 
 ---
 
+### Creating animated views
+
+`Animatable` 프로토콜은 `ViewModifier`에만 제한되지 않는다. 일반 `View`에서도 동일하게 작동한다.
+
+#### 예시 1: CountingText
+
+숫자가 애니메이션되며 변하는 텍스트:
+
+```swift
+struct CountingText: View, Animatable {
+    var value: Double
+    var fractionLength = 8
+
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text(value.formatted(.number.precision(.fractionLength(fractionLength))))
+    }
+}
+
+// 사용
+struct ContentView: View {
+    @State private var value = 0.0
+
+    var body: some View {
+        CountingText(value: value)
+            .onTapGesture {
+                withAnimation(.linear) {
+                    value = Double.random(in: 1...1000)
+                }
+            }
+    }
+}
+```
+
+**핵심**: `Animatable`은 보간된 값을 전달할 뿐, 그 값을 어떻게 사용할지는 개발자가 결정한다.
+
+#### 예시 2: TypewriterText
+
+글자가 하나씩 나타나는 타이프라이터 효과:
+
+```swift
+struct TypewriterText: View, Animatable {
+    var string: String
+    var count = 0
+
+    var animatableData: Double {
+        get { Double(count) }
+        set { count = Int(max(0, newValue)) }
+    }
+
+    var body: some View {
+        let stringToShow = String(string.prefix(count))
+        Text(stringToShow)
+    }
+}
+```
+
+**레이아웃 개선**: 텍스트 공간을 미리 확보하려면 hidden된 전체 텍스트를 사용:
+
+```swift
+var body: some View {
+    let stringToShow = String(string.prefix(count))
+    ZStack {
+        Text(string)
+            .hidden()
+            .overlay(
+                Text(stringToShow),
+                alignment: .topLeading
+            )
+    }
+}
+```
+
+**사용 예시**:
+
+```swift
+struct ContentView: View {
+    @State private var value = 0
+    let message = "This is a very long piece of text that appears letter by letter."
+
+    var body: some View {
+        VStack {
+            TypewriterText(string: message, count: value)
+                .frame(width: 300, alignment: .leading)
+
+            Button("Type!") {
+                withAnimation(.linear(duration: 2)) {
+                    value = message.count
+                }
+            }
+
+            Button("Reset") {
+                value = 0
+            }
+        }
+    }
+}
+```
+
+#### 접근성 고려
+
+VoiceOver 사용자나 애니메이션 줄이기를 설정한 사용자를 위한 대응:
+
+```swift
+struct TypewriterText: View, Animatable {
+    @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
+    @Environment(\.accessibilityReduceMotion) var accessibilityReduceMotion
+
+    var string: String
+    var count = 0
+
+    var animatableData: Double {
+        get { Double(count) }
+        set { count = Int(max(0, newValue)) }
+    }
+
+    var body: some View {
+        if accessibilityVoiceOverEnabled || accessibilityReduceMotion {
+            Text(string)  // 애니메이션 없이 전체 텍스트 표시
+        } else {
+            let stringToShow = String(string.prefix(count))
+            ZStack {
+                Text(string)
+                    .hidden()
+                    .overlay(
+                        Text(stringToShow),
+                        alignment: .topLeading
+                    )
+            }
+        }
+    }
+}
+```
+
+| 환경 변수 | 용도 |
+|----------|------|
+| `accessibilityVoiceOverEnabled` | VoiceOver 활성화 여부 |
+| `accessibilityReduceMotion` | 동작 줄이기 설정 여부 |
+
+---
+
 ### 핵심 정리
 
 | 항목 | 설명 |

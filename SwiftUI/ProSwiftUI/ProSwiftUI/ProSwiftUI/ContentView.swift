@@ -51,19 +51,61 @@ extension View {
         }
 }
 
-struct ContentView: View {
-    @State private var isRed = false
+struct CountingText: View, Animatable {
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+    
+    var value: Double
+    var fractionLength = 8
 
     var body: some View {
-        Text("Hello, World!")
-            .foregroundColor(.white)
-            .colorMultiply(isRed ? .red : .blue)
-            .font(.largeTitle.bold())
-            .onTapGesture {
-                withAnimation {
-                    isRed.toggle()
+        Text(value.formatted(.number.precision(.fractionLength(fractionLength))))
+    }
+}
+
+struct TypewriterText: View, Animatable {
+    var string: String
+    var count = 0
+
+    var animatableData: Double {
+        get { Double(count) }
+        set { count = Int(max(0, newValue)) }
+    }
+
+    var body: some View {
+        let stringToShow = String(string.prefix(count))
+        ZStack {
+            Text(string)
+                .hidden()
+                .overlay(
+                    Text(stringToShow),
+                    alignment: .topLeading
+                )
+        }
+    }
+}
+
+struct ContentView: View {
+    @State private var value = 0
+    let message = "This is a very long piece of text that appears letter by letter."
+
+    var body: some View {
+        VStack {
+            TypewriterText(string: message, count: value)
+                .frame(width: 300, alignment: .leading)
+
+            Button("Type!") {
+                withAnimation(.linear(duration: 2)) {
+                    value = message.count
                 }
             }
+
+            Button("Reset") {
+                value = 0
+            }
+        }
     }
 }
 
