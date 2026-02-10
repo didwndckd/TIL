@@ -519,6 +519,22 @@ struct ContentView: View {
                     CategoryButton(category: category, selection: $selectedCategory)
                 }
             }
+            // overlayPreferenceValue: preference를 읽어서 오버레이 뷰로 변환
+            // onPreferenceChange + overlay를 합친 것
+            .overlayPreferenceValue(CategoryPreferenceKey.self) { preferences in
+                GeometryReader { proxy in
+                    if let selected = preferences.first(where: { $0.category == selectedCategory }) {
+                        // proxy[anchor]로 Anchor를 현재 좌표 공간의 CGRect로 변환
+                        // 서로 다른 좌표 공간 간의 변환을 SwiftUI가 자동 처리
+                        let frame = proxy[selected.anchor]
+
+                        Rectangle()
+                            .fill(.primary)
+                            .frame(width: frame.width, height: 2)
+                            .position(x: frame.midX, y: frame.maxY)
+                    }
+                }
+            }
 
             List(categories, id: \.id) { category in
                 HStack {
@@ -536,22 +552,6 @@ struct ContentView: View {
                 Text("Selected: \(selectedCategory.id)")
             }
         }
-        // overlayPreferenceValue: preference를 읽어서 오버레이 뷰로 변환
-        // onPreferenceChange + overlay를 합친 것
-        .overlayPreferenceValue(CategoryPreferenceKey.self) { preferences in
-            GeometryReader { proxy in
-                if let selected = preferences.first(where: { $0.category == selectedCategory }) {
-                    // proxy[anchor]로 Anchor를 현재 좌표 공간의 CGRect로 변환
-                    // 서로 다른 좌표 공간 간의 변환을 SwiftUI가 자동 처리
-                    let frame = proxy[selected.anchor]
-
-                    Rectangle()
-                        .fill(.primary)
-                        .frame(width: frame.width, height: 2)
-                        .position(x: frame.midX, y: frame.maxY)
-                }
-            }
-        }
     }
 }
 ```
@@ -562,38 +562,3 @@ struct ContentView: View {
 | `anchorPreference()` | 뷰의 기하 정보를 `Anchor`로 감싸서 preference로 전달 |
 | `overlayPreferenceValue()` | preference를 읽어서 오버레이 뷰로 변환 (`onPreferenceChange` + `overlay`) |
 | `proxy[anchor]` | `Anchor`를 현재 `GeometryReader` 좌표 공간의 `CGRect`로 변환 |
-
-#### GeometryReader + Preference vs anchorPreference
-
-`GeometryReader`로 크기를 읽어서 `preference()`로 올려보내는 방식도 가능하지만, `anchorPreference`와는 근본적인 차이가 있다.
-
-```swift
-// GeometryReader + Preference 방식 — 2-pass 레이아웃
-// GeometryReader가 레이아웃에 직접 참여하므로 background/overlay 안에 숨기는 트릭 필요
-// 크기 읽기 → 상태 갱신 → 재렌더링으로 레이아웃 사이클이 한 번 더 돔
-CategoryButton(...)
-    .background(
-        GeometryReader { proxy in
-            Color.clear
-                .preference(key: SizeKey.self, value: proxy.size)
-        }
-    )
-
-// anchorPreference 방식 — 1-pass 레이아웃
-// Anchor는 지연 평가(lazy): 이 시점에서는 실제 좌표 계산이 일어나지 않음
-// 나중에 overlayPreferenceValue 안에서 proxy[anchor]로 접근할 때 비로소 해석됨
-// 같은 레이아웃 패스 내에서 overlay를 그릴 수 있어 추가 사이클 없음
-CategoryButton(...)
-    .anchorPreference(key: CategoryPreferenceKey.self, value: .bounds) {
-        [CategoryPreference(category: category, anchor: $0)]
-    }
-```
-
-| | GeometryReader + Preference | anchorPreference |
-|--|----------------------------|-----------------|
-| **레이아웃 패스** | 2-pass (읽기 → 상태 갱신 → 재렌더링) | 1-pass (지연 평가) |
-| **좌표 변환** | 수동 (`proxy.frame(in:)` + 좌표 공간 지정) | 자동 (`proxy[anchor]`) |
-| **레이아웃 부작용** | `GeometryReader`가 크기에 영향 줄 수 있음 | 없음 |
-| **코드 복잡도** | `background`/`overlay` 트릭 필요 | 단일 modifier |
-
-> **참고**: 버튼이 몇 개일 때는 체감 차이가 미미하지만, 카테고리가 많아지거나 스크롤 뷰 안에서 사용할 때는 2-pass 레이아웃이 누적되면서 성능 차이가 눈에 띌 수 있다. Apple이 `anchorPreference`를 별도로 제공하는 이유 자체가 이 레이아웃 효율성 때문이다.
