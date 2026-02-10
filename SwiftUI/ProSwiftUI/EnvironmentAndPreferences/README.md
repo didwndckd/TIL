@@ -336,3 +336,264 @@ VStack {
 | **공유 객체 + Environment Key** | 공유 상태 + 안전성 + key path로 프로퍼티 단위 갱신 |
 | **Overriding** | 같은 키에 값 설정 시 완전 대체. `transformEnvironment()`로 변형 가능 |
 | **Text modifier 흡수** | `Text`는 modifier를 내부 enum 배열에 흡수. `font()`는 호출 위치에 따라 이중 동작 |
+
+
+
+## Preferences
+
+Environment가 **위→아래**로 데이터를 전파한다면, Preferences는 **아래→위**로 데이터를 전파하는 시스템이다. 자식 뷰가 자신의 정보를 상위 뷰에 보고할 때 사용한다. 대표적인 예가 `navigationTitle()`이다.
+
+---
+
+### Preferences의 동작 방식
+
+```swift
+NavigationStack {
+    VStack {
+        Image(systemName: "sun.max")
+            .navigationTitle("Image")   // ← 첫 번째로 발견되어 이 값이 사용됨
+
+        Text("Welcome!")
+            .navigationTitle("Text")    // ← 무시됨
+    }
+    .navigationTitle("VStack")          // ← 무시됨
+}
+// navigationTitle은 preference로 구현되어 있다
+// 값이 여러 개일 때 NavigationStack은 첫 번째 값을 선택한다
+// Environment와 마찬가지로 중간 컨테이너에서 멈추지 않고 최상위까지 계속 올라간다
+```
+
+커스텀 Preference도 동일한 원리로 동작한다:
+
+- 어떤 뷰든 preference 값을 설정할 수 있다
+- 값은 뷰 계층을 따라 위로 흐른다
+- 여러 값이 올라올 때 **어떤 값을 사용할지 직접 결정**해야 한다 (첫 번째 선택, 합산 등)
+
+> **참고**: 데이터가 위아래로 자유롭게 흐르면 스파게티 코드가 될 수 있으므로 Preferences 사용은 신중해야 한다.
+
+---
+
+### 커스텀 PreferenceKey 만들기
+
+`PreferenceKey`는 `EnvironmentKey`와 유사하지만, `defaultValue` 외에 **reducer 함수**(`reduce`)를 추가로 요구한다. 여러 자식 뷰에서 값이 올라올 때 이를 하나로 합치는 방법을 정의하는 것이다.
+
+자식 뷰의 너비를 상위 뷰에 보고하는 예제로 전체 흐름을 살펴본다.
+
+```swift
+// 1. PreferenceKey 정의 — defaultValue + reduce 필수
+struct WidthPreferenceKey: PreferenceKey {
+    static let defaultValue = 0.0
+
+    // reducer: 여러 값이 올라올 때 어떤 값을 사용할지 결정
+    // 마지막 값 사용 (value = nextValue())
+    // 합산하려면: value += nextValue()
+    // 첫 번째 값만 사용하려면: 빈 구현 (nextValue()를 호출하지 않음)
+    static func reduce(value: inout Double, nextValue: () -> Double) {
+        value = nextValue()
+    }
+}
+
+// 2. 자식 뷰 — .preference()로 값을 위로 보고
+struct SizingView: View {
+    @State private var width = 50.0
+
+    var body: some View {
+        Color.red
+            .frame(width: width, height: 100)
+            .onTapGesture {
+                width = Double.random(in: 50...160)
+            }
+            .preference(key: WidthPreferenceKey.self, value: width)
+    }
+}
+
+// 3. 상위 뷰 — .onPreferenceChange()로 값을 수신
+struct ContentView: View {
+    @State private var width = 0.0
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                SizingView()
+
+                // 수신한 preference 값을 다른 뷰에 활용
+                Text("100%")
+                    .frame(width: width)
+                    .background(.red)
+                Text("150%")
+                    .frame(width: width * 1.5)
+                    .background(.green)
+                Text("200%")
+                    .frame(width: width * 2)
+                    .background(.blue)
+            }
+            .onPreferenceChange(WidthPreferenceKey.self) { width = $0 }
+            .navigationTitle("Width: \(width)")
+        }
+    }
+}
+```
+
+`SizingView`를 여러 개 배치하면 `reduce()`에 정의한 전략에 따라 값이 결정된다:
+
+| reduce 구현 | 결과 |
+|-------------|------|
+| `value = nextValue()` | 마지막 자식의 값 사용 |
+| `value += nextValue()` | 모든 자식의 값 합산 |
+| 빈 구현 (`nextValue()` 미호출) | 첫 번째 자식의 값만 사용 (`navigationTitle`과 동일) |
+
+---
+
+### Anchor Preferences
+
+일반 `PreferenceKey`는 단순한 값(숫자, 문자열 등)을 위로 전달하지만, **기하 정보(위치·크기)**를 전달하려면 `Anchor<CGRect>`를 사용해야 한다. `Anchor`는 좌표 공간에 독립적인 **불투명(opaque) 기하 저장소**로, `GeometryProxy`를 통해서만 실제 좌표로 변환할 수 있다. 이 덕분에 서로 다른 좌표 공간 간의 변환을 SwiftUI가 자동으로 처리해 준다.
+
+Airbnb 앱처럼 선택된 카테고리 아래에 밑줄이 이동하는 UI를 예제로 살펴본다.
+
+```swift
+// === 데이터 모델 ===
+struct Category: Identifiable, Equatable {
+    let id: String
+    let symbol: String
+}
+
+// Anchor<CGRect>를 포함하는 preference 데이터
+// Anchor는 불투명 기하 저장소 — 직접 읽을 수 없고 GeometryProxy를 통해서만 좌표로 변환
+struct CategoryPreference: Equatable {
+    let category: Category
+    let anchor: Anchor<CGRect>
+}
+
+// 여러 자식에서 올라오는 preference를 배열로 수집
+struct CategoryPreferenceKey: PreferenceKey {
+    static let defaultValue = [CategoryPreference]()
+
+    static func reduce(value: inout [CategoryPreference], nextValue: () -> [CategoryPreference]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
+// === 카테고리 버튼 ===
+struct CategoryButton: View {
+    var category: Category
+    @Binding var selection: Category?
+
+    var body: some View {
+        Button {
+            withAnimation { selection = category }
+        } label: {
+            VStack {
+                Image(systemName: category.symbol)
+                Text(category.id)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement()
+        .accessibilityLabel(category.id)
+        // anchorPreference: 이 버튼의 bounds를 Anchor로 감싸서 위로 전달
+        // key: 어떤 PreferenceKey에 저장할지
+        // value: 어떤 기하 정보를 보낼지 (.bounds = 전체 프레임)
+        // transform: Anchor를 PreferenceKey가 기대하는 타입으로 변환
+        .anchorPreference(
+            key: CategoryPreferenceKey.self,
+            value: .bounds,
+            transform: { [CategoryPreference(category: category, anchor: $0)] }
+        )
+    }
+}
+
+// === ContentView ===
+struct ContentView: View {
+    @State private var selectedCategory: Category?
+
+    let categories = [
+        Category(id: "Arctic", symbol: "snowflake"),
+        Category(id: "Beach", symbol: "beach.umbrella"),
+        Category(id: "Shared Homes", symbol: "house")
+    ]
+
+    var body: some View {
+        VStack {
+            HStack(spacing: 20) {
+                ForEach(categories) { category in
+                    CategoryButton(category: category, selection: $selectedCategory)
+                }
+            }
+
+            List(categories, id: \.id) { category in
+                HStack {
+                    Button(category.id) {
+                        withAnimation { selectedCategory = category }
+                    }
+                    if selectedCategory == category {
+                        Spacer()
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+
+            if let selectedCategory {
+                Text("Selected: \(selectedCategory.id)")
+            }
+        }
+        // overlayPreferenceValue: preference를 읽어서 오버레이 뷰로 변환
+        // onPreferenceChange + overlay를 합친 것
+        .overlayPreferenceValue(CategoryPreferenceKey.self) { preferences in
+            GeometryReader { proxy in
+                if let selected = preferences.first(where: { $0.category == selectedCategory }) {
+                    // proxy[anchor]로 Anchor를 현재 좌표 공간의 CGRect로 변환
+                    // 서로 다른 좌표 공간 간의 변환을 SwiftUI가 자동 처리
+                    let frame = proxy[selected.anchor]
+
+                    Rectangle()
+                        .fill(.primary)
+                        .frame(width: frame.width, height: 2)
+                        .position(x: frame.midX, y: frame.maxY)
+                }
+            }
+        }
+    }
+}
+```
+
+| 항목 | 설명 |
+|------|------|
+| `Anchor<CGRect>` | 좌표 공간에 독립적인 불투명 기하 저장소 |
+| `anchorPreference()` | 뷰의 기하 정보를 `Anchor`로 감싸서 preference로 전달 |
+| `overlayPreferenceValue()` | preference를 읽어서 오버레이 뷰로 변환 (`onPreferenceChange` + `overlay`) |
+| `proxy[anchor]` | `Anchor`를 현재 `GeometryReader` 좌표 공간의 `CGRect`로 변환 |
+
+#### GeometryReader + Preference vs anchorPreference
+
+`GeometryReader`로 크기를 읽어서 `preference()`로 올려보내는 방식도 가능하지만, `anchorPreference`와는 근본적인 차이가 있다.
+
+```swift
+// GeometryReader + Preference 방식 — 2-pass 레이아웃
+// GeometryReader가 레이아웃에 직접 참여하므로 background/overlay 안에 숨기는 트릭 필요
+// 크기 읽기 → 상태 갱신 → 재렌더링으로 레이아웃 사이클이 한 번 더 돔
+CategoryButton(...)
+    .background(
+        GeometryReader { proxy in
+            Color.clear
+                .preference(key: SizeKey.self, value: proxy.size)
+        }
+    )
+
+// anchorPreference 방식 — 1-pass 레이아웃
+// Anchor는 지연 평가(lazy): 이 시점에서는 실제 좌표 계산이 일어나지 않음
+// 나중에 overlayPreferenceValue 안에서 proxy[anchor]로 접근할 때 비로소 해석됨
+// 같은 레이아웃 패스 내에서 overlay를 그릴 수 있어 추가 사이클 없음
+CategoryButton(...)
+    .anchorPreference(key: CategoryPreferenceKey.self, value: .bounds) {
+        [CategoryPreference(category: category, anchor: $0)]
+    }
+```
+
+| | GeometryReader + Preference | anchorPreference |
+|--|----------------------------|-----------------|
+| **레이아웃 패스** | 2-pass (읽기 → 상태 갱신 → 재렌더링) | 1-pass (지연 평가) |
+| **좌표 변환** | 수동 (`proxy.frame(in:)` + 좌표 공간 지정) | 자동 (`proxy[anchor]`) |
+| **레이아웃 부작용** | `GeometryReader`가 크기에 영향 줄 수 있음 | 없음 |
+| **코드 복잡도** | `background`/`overlay` 트릭 필요 | 단일 modifier |
+
+> **참고**: 버튼이 몇 개일 때는 체감 차이가 미미하지만, 카테고리가 많아지거나 스크롤 뷰 안에서 사용할 때는 2-pass 레이아웃이 누적되면서 성능 차이가 눈에 띌 수 있다. Apple이 `anchorPreference`를 별도로 제공하는 이유 자체가 이 레이아웃 효율성 때문이다.
