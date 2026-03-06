@@ -188,3 +188,4 @@ struct ContentView: View {
 - `anchor: .center`: 계산한 point가 뷰의 중심임을 명시
 - `$count.animation()`: Stepper 값 변경 시 자동 애니메이션 적용
 
+## Implementing an equal width layout
