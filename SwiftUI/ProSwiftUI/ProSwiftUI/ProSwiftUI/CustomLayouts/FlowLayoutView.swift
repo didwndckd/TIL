@@ -131,6 +131,9 @@ struct FlowLayoutView: View {
                         )
                 }
             }
+            // lineLimit 초과 뷰는 size .zero로 배치되지만 뷰 자체는 렌더링되므로
+            // clipped로 잘라내야 함. antialiased는 clipping 시 부드러운 경계 처리
+            .clipped(antialiased: lineLimit > 0)
             .border(.pink)
             .padding(.horizontal)
             
