@@ -41,6 +41,7 @@ struct ContentView: View {
                     NavigationLink("Equal Width Layout", destination: EqualWidthLayoutView())
                     NavigationLink("Relative Width Layout", destination: RelativeWidthLayoutView())
                     NavigationLink("Masonry Layout(with Cache)", destination: MasonryLayoutView())
+                    NavigationLink("Flow Layout", destination: FlowLayoutView())
                 }
 
                 Section("Drawing and Effects") {
