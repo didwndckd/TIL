@@ -36,7 +36,11 @@ struct ContentView: View {
                 }
 
                 Section("Custom Layouts") {
-                    Text("Custom Layouts")
+                    NavigationLink("Adaptive Layouts", destination: AdaptiveLayoutsView())
+                    NavigationLink("Radial Layout (with Animations)", destination: RadialLayoutView())
+                    NavigationLink("Equal Width Layout", destination: EqualWidthLayoutView())
+                    NavigationLink("Relative Width Layout", destination: RelativeWidthLayoutView())
+                    NavigationLink("Masonry Layout(with Cache)", destination: MasonryLayoutView())
                 }
 
                 Section("Drawing and Effects") {
