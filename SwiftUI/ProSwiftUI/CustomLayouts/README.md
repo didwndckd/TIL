@@ -603,3 +603,84 @@ struct MasonryLayout: Layout {
 | `makeCache` | 불필요 | 빈 `Cache` 반환 |
 | `frames()` 호출 | `sizeThatFits` + `placeSubviews` 매번 (2회) | `sizeThatFits`에서 1회, `placeSubviews`는 캐시 사용 |
 | 회전 대응 | 자동 (매번 재계산) | `cache.width != bounds.width` 체크 필요 |
+
+## Customizing layout animations
+
+### 핵심 개념
+
+- SwiftUI는 레이아웃 변경 시 **시작/끝 위치만 계산**하여 직선 보간 애니메이션을 적용 (spacing, columns 등)
+- **중간 상태가 중요한 경우** (원형 배치에서 펼쳐지는 효과 등) `animatableData`를 구현해야 SwiftUI가 모든 중간값을 전달
+- `Layout` 프로토콜은 `Animatable`을 상속 → `animatableData` 구현 가능
+
+### animatableData 없이 vs 있을 때
+
+| | `animatableData` 없음 | `animatableData` 있음 |
+|---|---|---|
+| 애니메이션 | 시작→끝 **직선 이동** | 원호를 따라 **경로 애니메이션** |
+| `sizeThatFits` / `placeSubviews` 호출 | 각 2회 (시작, 끝) | **매 중간값마다 2회씩** (0.01, 0.02, ...) |
+| 성능 | 가벼움 | 호출 횟수 급증 — 캐시 고려 필요 |
+
+### 적용 코드
+
+```swift
+struct RadialLayout: Layout {
+    var rollOut = 0.0
+
+    // Layout은 Animatable 상속 → animatableData 구현 가능
+    // SwiftUI가 0→1 사이 모든 중간값을 전달하여 placeSubviews()를 반복 호출
+    var animatableData: Double {
+        get { rollOut }
+        set { rollOut = newValue }
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let radius = min(bounds.size.width, bounds.size.height) / 2
+        // rollOut을 곱하여 0(모두 겹침) → 1(완전 펼침)까지 제어
+        let angle = Angle.degrees(360 / Double(subviews.count)).radians * rollOut
+
+        for (index, subview) in subviews.enumerated() {
+            let viewSize = subview.sizeThatFits(.unspecified)
+            let xPos = cos(angle * Double(index) - .pi / 2) * (radius - viewSize.width / 2)
+            let yPos = sin(angle * Double(index) - .pi / 2) * (radius - viewSize.height / 2)
+            let point = CGPoint(x: bounds.midX + xPos, y: bounds.midY + yPos)
+            subview.place(at: point, anchor: .center, proposal: .unspecified)
+        }
+    }
+}
+
+struct ContentView: View {
+    @State private var count = 16
+    @State private var isExpanded = false
+
+    var body: some View {
+        RadialLayout(rollOut: isExpanded ? 1 : 0) {
+            ForEach(0..<count, id: \.self) { _ in
+                Circle()
+                    .frame(width: 32, height: 32)
+            }
+        }
+        .safeAreaInset(edge: .bottom) {
+            VStack {
+                Stepper("Count: \(count)", value: $count.animation(), in: 0...36)
+                    .padding()
+
+                Button("Expand") {
+                    withAnimation(.easeInOut(duration: 1)) {
+                        isExpanded.toggle()
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### 주요 포인트
+
+- `rollOut = 0`: 모든 뷰가 같은 위치(중앙)에 겹침. `rollOut = 1`: 완전히 펼쳐진 원형 배치
+- `animatableData` 없으면 뷰가 직선으로 슬라이드, 있으면 원호를 따라 펼쳐짐
+- 애니메이션 중 `sizeThatFits()` + `placeSubviews()`가 **매 프레임마다 호출**되므로 비용이 큰 계산은 캐시 활용 권장

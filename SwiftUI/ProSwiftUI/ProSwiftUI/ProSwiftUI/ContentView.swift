@@ -30,13 +30,23 @@ struct ExampleView: View {
 }
 
 struct RadialLayout: Layout {
+    var rollOut = 0.0
+    
+    var animatableData: Double {
+        get { rollOut }
+        set { rollOut = newValue }
+    }
+    
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
-        proposal.replacingUnspecifiedDimensions()
+        print("In sizeThatFits")
+        return proposal.replacingUnspecifiedDimensions()
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        print("In placeSubviews")
         let radius = min(bounds.size.width, bounds.size.height) / 2
-        let angle = Angle.degrees(360 / Double(subviews.count)).radians
+//        let angle = Angle.degrees(360 / Double(subviews.count)).radians
+        let angle = Angle.degrees(360 / Double(subviews.count)).radians * rollOut
         for (index, subview) in subviews.enumerated() {
             let viewSize = subview.sizeThatFits(.unspecified)
             let xPos = cos(angle * Double(index) - .pi / 2) * (radius - viewSize.width / 2)
@@ -244,25 +254,27 @@ struct PlaceholderView: View {
 }
 
 struct ContentView: View {
-    @State private var columns = 3
-
-    @State private var views = (0..<20).map { _ in
-        CGSize(width: .random(in: 100...500), height: .random(in: 100...500))
-    }
+    @State private var count = 16
+    @State private var isExpanded = false
 
     var body: some View {
-        ScrollView {
-            MasonryLayout(columns: columns) {
-                ForEach(0..<20) { i in
-                    PlaceholderView(index: i, size: views[i])
-                }
+        RadialLayout(rollOut: isExpanded ? 1 : 0) {
+            ForEach(0..<count, id: \.self) { _ in
+                Circle()
+                    .frame(width: 32, height: 32)
             }
-            .padding(.horizontal, 5)
         }
         .safeAreaInset(edge: .bottom) {
-            Stepper("Columns: \(columns)", value: $columns.animation(), in: 1...5)
-                .padding()
-                .background(.regularMaterial)
+            VStack {
+                Stepper("Count: \(count)", value: $count.animation(), in: 0...36)
+                    .padding()
+
+                Button("Expand") {
+                    withAnimation(.easeInOut(duration: 1)) {
+                        isExpanded.toggle()
+                    }
+                }
+            }
         }
     }
 }
