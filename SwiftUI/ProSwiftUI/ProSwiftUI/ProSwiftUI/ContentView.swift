@@ -29,7 +29,10 @@ struct ContentView: View {
                 }
 
                 Section("Environment and Preferences") {
-                    Text("Environment and Preferences")
+                    NavigationLink("Custom Environment Key", destination: CustomEnvironmentKeyView())
+                    NavigationLink("Overriding Environment", destination: OverridingEnvironmentView())
+                    NavigationLink("Custom PreferenceKey", destination: CustomPreferenceKeyView())
+                    NavigationLink("Anchor Preferences", destination: AnchorPreferencesView())
                 }
 
                 Section("Custom Layouts") {
