@@ -522,3 +522,84 @@ struct ContentView: View {
 | anchor | `.leading` (수직 중앙 정렬) | 기본값 `.topLeading` |
 | y 좌표 | `bounds.midY` (한 줄) | `bounds.minY + frame.minY` (누적) |
 | `layoutProperties` | 미지정 | `.vertical` — Divider 방향 제어 |
+
+## Layout caching
+
+### 핵심 개념
+
+- **캐시는 프로파일링으로 성능 문제가 확인된 후에만 추가** — 나쁜 캐싱은 흔한 버그 원인
+- `Cache` 구조체를 레이아웃 안에 중첩 정의하면 SwiftUI가 자동으로 사용
+- SwiftUI는 레이아웃/서브뷰가 변경되면 캐시를 자동 무효화하지만, **할당된 공간(bounds) 변경은 감지 못함** → `width` 프로퍼티로 직접 검증 필요
+
+### 캐시 무효화 문제
+
+1. Portrait 진입 → `sizeThatFits()` 호출, 캐시 설정
+2. Landscape 회전 → `sizeThatFits()` 호출, 캐시 갱신
+3. Portrait 복귀 → `sizeThatFits()` **재호출 안 됨** (이미 호출된 적 있으므로), landscape 캐시가 잘못 사용됨
+
+→ `placeSubviews()`에서 `cache.width != bounds.width`를 체크하여 캐시 재생성
+
+### 적용 코드
+
+```swift
+struct MasonryLayout: Layout {
+    var columns: Int
+    var spacing: Double
+
+    // 캐시: 계산된 프레임 + 해당 너비를 저장
+    struct Cache {
+        var width = 0.0
+        var frames: [CGRect]
+    }
+
+    init(columns: Int = 3, spacing: Double = 5) {
+        self.columns = max(1, columns)
+        self.spacing = spacing
+    }
+
+    // SwiftUI가 캐시 생성 시 호출
+    func makeCache(subviews: Subviews) -> Cache {
+        Cache(frames: [])
+    }
+
+    func frames(for subviews: Subviews, in totalWidth: Double) -> [CGRect] {
+        // ... 기존 frames 로직 동일 ...
+    }
+
+    // cache 타입이 Void → Cache로 변경
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let viewFrames = frames(for: subviews, in: width)
+        let height = viewFrames.max { $0.maxY < $1.maxY } ?? .zero
+
+        // 캐시에 계산 결과 저장
+        cache.frames = viewFrames
+        cache.width = width
+
+        return CGSize(width: width, height: height.maxY)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        // bounds 너비가 캐시와 다르면 재계산 (회전 등)
+        if cache.width != bounds.width {
+            cache.frames = frames(for: subviews, in: bounds.width)
+            cache.width = bounds.width
+        }
+
+        for index in subviews.indices {
+            let frame = cache.frames[index]  // viewFrames → cache.frames
+            let position = CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY)
+            subviews[index].place(at: position, proposal: ProposedViewSize(frame.size))
+        }
+    }
+}
+```
+
+### 캐시 적용 전후 비교
+
+| | 캐시 없음 | 캐시 있음 |
+|---|---|---|
+| `cache` 타입 | `Void` | 커스텀 `Cache` 구조체 |
+| `makeCache` | 불필요 | 빈 `Cache` 반환 |
+| `frames()` 호출 | `sizeThatFits` + `placeSubviews` 매번 (2회) | `sizeThatFits`에서 1회, `placeSubviews`는 캐시 사용 |
+| 회전 대응 | 자동 (매번 재계산) | `cache.width != bounds.width` 체크 필요 |

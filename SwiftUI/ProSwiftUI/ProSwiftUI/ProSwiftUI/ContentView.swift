@@ -152,10 +152,19 @@ struct RelativeHStack: Layout {
 struct MasonryLayout: Layout {
     var columns: Int
     var spacing: Double
+    
+    struct Cache {
+        var width = 0.0
+        var frames: [CGRect]
+    }
 
     init(columns: Int = 3, spacing: Double = 5) {
         self.columns = max(1, columns)
         self.spacing = spacing
+    }
+    
+    func makeCache(subviews: Subviews) -> Cache {
+        Cache(frames: [])
     }
     
     func frames(for subviews: Subviews, in totalWidth: Double) -> [CGRect] {
@@ -188,18 +197,22 @@ struct MasonryLayout: Layout {
         return viewFrames
     }
     
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
         let width = proposal.replacingUnspecifiedDimensions().width
         let viewFrames = frames(for: subviews, in: width)
         let height = viewFrames.max { $0.maxY < $1.maxY } ?? .zero
         return CGSize(width: width, height: height.maxY)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
-        let viewFrames = frames(for: subviews, in: bounds.width)
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        if cache.width != bounds.width {
+            cache.frames = frames(for: subviews, in: bounds.width)
+            cache.width = bounds.width
+            print("Recreating cache")
+        }
 
         for index in subviews.indices {
-            let frame = viewFrames[index]
+            let frame = cache.frames[index]
             let position = CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY)
             subviews[index].place(at: position, proposal: ProposedViewSize(frame.size))
         }
