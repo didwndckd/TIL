@@ -22,7 +22,10 @@ struct ContentView: View {
                 }
 
                 Section("Animations and Transitions") {
-                    Text("Animations and Transitions")
+                    NavigationLink("Animating the Unanimatable", destination: AnimatingTheUnanimatableView())
+                    NavigationLink("Custom Timing Curves", destination: CustomTimingCurvesView())
+                    NavigationLink("Overriding Animations", destination: OverridingAnimationsView())
+                    NavigationLink("Advanced Transitions", destination: AdvancedTransitionsView())
                 }
 
                 Section("Environment and Preferences") {
