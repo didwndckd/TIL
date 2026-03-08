@@ -1,5 +1,55 @@
 # Custom Layouts
 
+## 핵심 타입 정리
+
+### `Layout` 프로토콜
+
+커스텀 레이아웃을 만들기 위한 프로토콜. `Animatable`을 상속하므로 `animatableData` 구현 가능. 필수 메서드 2개:
+
+| 메서드 | 역할 |
+|---|---|
+| `sizeThatFits(proposal:subviews:cache:)` | 이 레이아웃 컨테이너가 원하는 **크기를 반환**. 부모가 다양한 proposal로 여러 번 호출할 수 있음 |
+| `placeSubviews(in:proposal:subviews:cache:)` | 확정된 `bounds` 안에서 각 자식 뷰를 **실제로 배치** |
+
+선택 메서드:
+
+| 메서드/프로퍼티 | 역할 |
+|---|---|
+| `makeCache(subviews:)` | 캐시 타입을 `Void` 대신 커스텀 구조체로 지정. 레이아웃·서브뷰 변경 시 자동 무효화 |
+| `static layoutProperties` | 레이아웃의 축 방향(`stackOrientation`) 등을 SwiftUI에 알림. `Divider` 방향 등에 영향 |
+| `animatableData` | 레이아웃 프로퍼티의 중간값 보간을 활성화하여 경로 애니메이션 구현 |
+
+### `ProposedViewSize`
+
+부모가 자식에게 **"이 정도 공간이 있어"** 라고 전달하는 제안. `CGSize`와 달리 width/height 각각 독립적으로 `nil`이 될 수 있음.
+
+| 값 | 의미 | 용도 |
+|---|---|---|
+| `.unspecified` (nil) | "이상적인 크기가 얼마야?" | 자식의 자연 크기 조회 |
+| `.zero` | "최소 얼마나 필요해?" | 최소 크기 조회 |
+| `.infinity` | "최대 얼마나 쓸 수 있어?" | 최대 크기 조회 |
+| 구체적 값 (e.g. 300×200) | "이 크기로 맞춰봐" | 실제 배치 |
+| 부분 값 (e.g. 300×nil) | "가로만 정해졌어" | 한 축만 제약 |
+
+- `replacingUnspecifiedDimensions()`: `nil` 값을 기본값(10pt)으로 대체하여 `CGSize` 반환
+
+### `Layout.Subviews` (LayoutSubviews)
+
+`placeSubviews()`와 `sizeThatFits()`에 전달되는 **자식 뷰 프록시들의 컬렉션**. `RandomAccessCollection` 준수. 직접 뷰를 수정할 수는 없고, 크기 조회·배치만 가능.
+
+### `LayoutSubview`
+
+컬렉션의 개별 요소. 실제 `View`가 아닌 **프록시**로, 레이아웃에 필요한 정보만 노출:
+
+| 멤버 | 역할 |
+|---|---|
+| `sizeThatFits(_:)` | 주어진 `ProposedViewSize`에 대해 자식이 원하는 크기(`CGSize`) 반환 |
+| `place(at:anchor:proposal:)` | 자식을 특정 좌표에 배치. `anchor`는 좌표가 뷰의 어느 지점인지 지정 (`.center`, `.topLeading` 등) |
+| `spacing` | 인접 뷰와의 preferred spacing 정보. `distance(to:along:)`으로 조회 |
+| `priority` | `layoutPriority()` modifier로 설정한 값. 공간 배분 비율 등에 활용 |
+
+---
+
 ## Adaptive Layouts
 
 ### 핵심 개념
