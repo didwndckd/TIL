@@ -385,3 +385,140 @@ struct ContentView: View {
 | sizeThatFits | 자식 크기 기반 직접 계산 | 제안된 width를 그대로 수용 |
 | proposal 방식 | 공유 크기 강제 | 뷰별 비율 너비 제안, 높이는 `nil` |
 | anchor | `.center` | `.leading` |
+
+## Implementing a masonry layout
+
+### 핵심 개념
+
+- **Masonry(Waterfall) 레이아웃**: 열(column)은 고정이지만 행(row)은 없는 ragged grid. 각 뷰를 **가장 짧은 열**에 배치하여 균형을 맞춤 (Pinterest 스타일)
+- `frames(for:in:)` 헬퍼 패턴은 RelativeHStack과 거의 동일 — `sizeThatFits()`와 `placeSubviews()` 양쪽에서 재사용
+- **`layoutProperties`**: 레이아웃의 축 방향을 SwiftUI에 알려줌. `Divider` 등이 올바른 방향으로 렌더링되도록 함
+
+### 전체 코드
+
+```swift
+struct MasonryLayout: Layout {
+    var columns: Int
+    var spacing: Double
+
+    init(columns: Int = 3, spacing: Double = 5) {
+        self.columns = max(1, columns)
+        self.spacing = spacing
+    }
+
+    func frames(for subviews: Subviews, in totalWidth: Double) -> [CGRect] {
+        // 열 간 총 간격
+        let totalSpacing = spacing * Double(columns - 1)
+        // 각 열의 너비
+        let columnWidth = (totalWidth - totalSpacing) / Double(columns)
+        let columnWidthWithSpacing = columnWidth + spacing
+        // 모든 뷰에 동일한 너비 제안, 높이는 자유
+        let proposedSize = ProposedViewSize(width: columnWidth, height: nil)
+
+        var viewFrames = [CGRect]()
+        // 각 열의 현재 높이를 추적
+        var columnHeights = Array(repeating: 0.0, count: columns)
+
+        for subview in subviews {
+            // 가장 짧은 열 찾기
+            var selectedColumn = 0
+            var selectedHeight = Double.greatestFiniteMagnitude
+
+            for (columnIndex, height) in columnHeights.enumerated() {
+                if height < selectedHeight {
+                    selectedColumn = columnIndex
+                    selectedHeight = height
+                }
+            }
+
+            let x = Double(selectedColumn) * columnWidthWithSpacing
+            let y = columnHeights[selectedColumn]
+            let size = subview.sizeThatFits(proposedSize)
+            let frame = CGRect(x: x, y: y, width: size.width, height: size.height)
+            // 해당 열 높이 갱신 (뷰 높이 + 간격)
+            columnHeights[selectedColumn] += size.height + spacing
+            viewFrames.append(frame)
+        }
+
+        return viewFrames
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let viewFrames = frames(for: subviews, in: width)
+        let height = viewFrames.max { $0.maxY < $1.maxY } ?? .zero
+        return CGSize(width: width, height: height.maxY)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let viewFrames = frames(for: subviews, in: bounds.width)
+
+        for index in subviews.indices {
+            let frame = viewFrames[index]
+            // RelativeHStack과 달리 y는 bounds.minY + frame.minY, anchor는 기본값(.topLeading)
+            let position = CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY)
+            subviews[index].place(at: position, proposal: ProposedViewSize(frame.size))
+        }
+    }
+
+    /// 레이아웃 축 방향을 SwiftUI에 알림
+    /// Divider가 올바른 방향(수평)으로 렌더링됨
+    static var layoutProperties: LayoutProperties {
+        var properties = LayoutProperties()
+        properties.stackOrientation = .vertical
+        return properties
+    }
+}
+
+struct PlaceholderView: View {
+    let color: Color = [.blue, .cyan, .green, .indigo, .mint, .orange, .pink, .purple, .red].randomElement()!
+    let size: CGSize
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(color)
+
+            Text("\(Int(size.width))x\(Int(size.height))")
+                .foregroundColor(.white)
+                .font(.headline)
+        }
+        .aspectRatio(size, contentMode: .fill)
+    }
+}
+
+struct ContentView: View {
+    @State private var columns = 3
+
+    @State private var views = (0..<20).map { _ in
+        CGSize(width: .random(in: 100...500), height: .random(in: 100...500))
+    }
+
+    var body: some View {
+        ScrollView {
+            MasonryLayout(columns: columns) {
+                ForEach(0..<20) { i in
+                    PlaceholderView(size: views[i])
+                }
+            }
+            .padding(.horizontal, 5)
+        }
+        .safeAreaInset(edge: .bottom) {
+            Stepper("Columns: \(columns)", value: $columns.animation(), in: 1...5)
+                .padding()
+                .background(.regularMaterial)
+        }
+    }
+}
+```
+
+### RelativeHStack과의 차이
+
+| | RelativeHStack | MasonryLayout |
+|---|---|---|
+| 방향 | 수평 1행 | 수직 다열 (열 수 지정) |
+| 열 배치 | 순서대로 | **가장 짧은 열**에 배치 |
+| 너비 결정 | `layoutPriority` 비율 | `totalWidth / columns` 균등 분배 |
+| anchor | `.leading` (수직 중앙 정렬) | 기본값 `.topLeading` |
+| y 좌표 | `bounds.midY` (한 줄) | `bounds.minY + frame.minY` (누적) |
+| `layoutProperties` | 미지정 | `.vertical` — Divider 방향 제어 |
