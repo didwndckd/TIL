@@ -47,23 +47,82 @@ struct RadialLayout: Layout {
     }
 }
 
-struct ContentView: View {
-    @State private var count = 16
+struct EqualWidthHStack: Layout {
     
-    var body: some View {
-        RadialLayout {
-            ForEach(0..<count, id: \.self) { _ in
-                Circle()
-                    .frame(width: 32, height: 32)
+    private func maximumSize(across subviews: Subviews) -> CGSize {
+        var maximumSize = CGSize.zero
+
+        for view in subviews {
+            let size = view.sizeThatFits(.unspecified)
+
+            if size.width > maximumSize.width {
+                maximumSize.width = size.width
+            }
+
+            if size.height > maximumSize.height {
+                maximumSize.height = size.height
             }
         }
-        .padding()
-        .safeAreaInset(edge: .bottom) {
-            Stepper("Count: \(count)", value: $count.animation(), in: 0...100)
-                .padding()
-        }
+
+        return maximumSize
     }
     
+    private func spacing(for subviews: Subviews) -> [Double] {
+        var spacing = [Double]()
+
+        for index in subviews.indices {
+            if index == subviews.count - 1 {
+                spacing.append(0)
+            } else {
+                let distance = subviews[index].spacing.distance(to: subviews[index + 1].spacing, along: .horizontal)
+                spacing.append(distance)
+            }
+        }
+
+        return spacing
+    }
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let maxSize = maximumSize(across: subviews)
+        let spacing = spacing(for: subviews)
+        let totalSpacing = spacing.reduce(0, +)
+
+        return CGSize(width: maxSize.width * Double(subviews.count) + totalSpacing, height: maxSize.height)
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let maxSize = maximumSize(across: subviews)
+        let spacing = spacing(for: subviews)
+        let proposal = ProposedViewSize(width: maxSize.width, height: maxSize.height)
+        var x = bounds.minX + maxSize.width / 2
+//        var x = bounds.minX
+        
+        for index in subviews.indices {
+            subviews[index].place(
+                at: CGPoint(x: x, y: bounds.midY),
+                anchor: .center,
+//                anchor: .leading,
+                proposal: proposal
+            )
+            x += maxSize.width + spacing[index]
+        }
+    }
+}
+
+struct ContentView: View {
+    var body: some View {
+        EqualWidthHStack {
+            Text("Short")
+                .background(.red)
+
+            Text("This is long")
+                .background(.green)
+
+            Text("This is longest")
+                .background(.blue)
+        }
+        .border(.yellow)
+    }
 }
 
 

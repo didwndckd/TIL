@@ -189,3 +189,109 @@ struct ContentView: View {
 - `$count.animation()`: Stepper 값 변경 시 자동 애니메이션 적용
 
 ## Implementing an equal width layout
+
+### 목표
+
+모든 자식 뷰가 **동일한 너비**를 갖는 HStack 구현. 단순히 `.frame(maxWidth: .infinity)`를 쓰면 HStack 전체가 불필요하게 커지므로, **가장 큰 자식 뷰의 너비**를 기준으로 모든 뷰에 동일한 공간을 배분한다.
+
+### 전체 코드
+
+```swift
+struct EqualWidthHStack: Layout {
+
+    /// 모든 자식 뷰 중 최대 너비·높이를 구한다
+    /// 이 값이 모든 뷰에 동일하게 적용될 크기의 기준이 된다
+    private func maximumSize(across subviews: Subviews) -> CGSize {
+        var maximumSize = CGSize.zero
+
+        for view in subviews {
+            // .unspecified → "네 이상적인 크기가 뭐야?"
+            let size = view.sizeThatFits(.unspecified)
+
+            if size.width > maximumSize.width {
+                maximumSize.width = size.width
+            }
+
+            if size.height > maximumSize.height {
+                maximumSize.height = size.height
+            }
+        }
+
+        return maximumSize
+    }
+
+    /// 인접 뷰 간 자동 간격 배열 생성
+    /// SwiftUI는 뷰 종류(Text-Text, Text-Image 등)와 플랫폼에 따라 자동 간격을 다르게 제공한다
+    /// 마지막 뷰는 다음 이웃이 없으므로 0
+    private func spacing(for subviews: Subviews) -> [Double] {
+        var spacing = [Double]()
+
+        for index in subviews.indices {
+            if index == subviews.count - 1 {
+                spacing.append(0)
+            } else {
+                let distance = subviews[index].spacing.distance(to: subviews[index + 1].spacing, along: .horizontal)
+                spacing.append(distance)
+            }
+        }
+
+        return spacing
+    }
+
+    /// 컨테이너 크기 결정
+    /// 너비 = 최대 너비 × 자식 수 + 총 간격, 높이 = 최대 높이
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let maxSize = maximumSize(across: subviews)
+        let spacing = spacing(for: subviews)
+        let totalSpacing = spacing.reduce(0, +)
+
+        return CGSize(width: maxSize.width * Double(subviews.count) + totalSpacing, height: maxSize.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let maxSize = maximumSize(across: subviews)
+        let spacing = spacing(for: subviews)
+
+        // 모든 자식에게 동일한 크기를 제안 (최대 너비 × 최대 높이)
+        // RadialLayout은 .unspecified였지만, 여기서는 동일 크기 강제가 목적이므로 구체적 값 사용
+        let proposal = ProposedViewSize(width: maxSize.width, height: maxSize.height)
+
+        // 첫 뷰의 중심 X 좌표. anchor가 .center이므로 반 너비만큼 오프셋
+        var x = bounds.minX + maxSize.width / 2
+
+        for index in subviews.indices {
+            subviews[index].place(
+                at: CGPoint(x: x, y: bounds.midY),
+                anchor: .center, // 계산한 좌표가 뷰의 중심임을 명시
+                proposal: proposal
+            )
+            // 다음 뷰 위치 = 현재 뷰 너비 + 뷰 간 간격
+            x += maxSize.width + spacing[index]
+        }
+    }
+}
+
+struct ContentView: View {
+    var body: some View {
+        EqualWidthHStack {
+            Text("Short")
+                .background(.red)
+
+            Text("This is long")
+                .background(.green)
+
+            Text("This is longest")
+                .background(.blue)
+        }
+        .border(.yellow)
+    }
+}
+```
+
+### Radial Layout과의 차이
+
+| | RadialLayout | EqualWidthHStack |
+|---|---|---|
+| proposal | `.unspecified` (자연 크기) | 공유 `ProposedViewSize` (최대 크기 강제) |
+| spacing 처리 | 불필요 (원형 배치) | `spacing.distance(to:along:)` 사용 |
+| sizeThatFits | 제안 크기 그대로 수용 | 자식 크기 기반으로 직접 계산 |
