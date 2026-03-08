@@ -295,3 +295,93 @@ struct ContentView: View {
 | proposal | `.unspecified` (자연 크기) | 공유 `ProposedViewSize` (최대 크기 강제) |
 | spacing 처리 | 불필요 (원형 배치) | `spacing.distance(to:along:)` 사용 |
 | sizeThatFits | 제안 크기 그대로 수용 | 자식 크기 기반으로 직접 계산 |
+
+## Implementing a relative width layout
+
+### 핵심 개념
+
+- **`layoutPriority()`를 비율 지정에 활용**: SwiftUI의 `layoutPriority()`를 hijack하여 각 뷰의 **상대적 공간 비율**을 지정. 우선순위 합계 대비 개별 비율로 너비 계산
+- 비율 값은 1/2/3, 30/50/20, 4/4/8 등 **어떤 숫자든 상대적으로 동작** — 합이 1이나 100일 필요 없음
+
+### 전체 코드
+
+```swift
+struct RelativeHStack: Layout {
+    var spacing = 0.0
+
+    /// 모든 프레임을 한 번에 계산하는 헬퍼 메서드
+    /// sizeThatFits()와 placeSubviews() 양쪽에서 재사용
+    func frames(for subviews: Subviews, in totalWidth: Double) -> [CGRect] {
+        // 1. 총 간격 = 개별 간격 × (뷰 수 - 1)
+        let totalSpacing = spacing * Double(subviews.count - 1)
+        // 2. 뷰에 배분할 수 있는 실제 너비
+        let availableWidth = totalWidth - totalSpacing
+        // 3. 모든 뷰의 layoutPriority 합계
+        let totalPriorities = subviews.reduce(0) { $0 + $1.priority }
+
+        var viewFrames = [CGRect]()
+        var x = 0.0
+
+        for subview in subviews {
+            // 비율에 따른 너비 계산: availableWidth × (개별 priority / 전체 priority)
+            let subviewWidth = availableWidth * subview.priority / totalPriorities
+            // 너비는 지정, 높이는 자유(nil)
+            let proposal = ProposedViewSize(width: subviewWidth, height: nil)
+            let size = subview.sizeThatFits(proposal)
+            let frame = CGRect(x: x, y: 0, width: size.width, height: size.height)
+            viewFrames.append(frame)
+            x += size.width + spacing
+        }
+
+        return viewFrames
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) -> CGSize {
+        let width = proposal.replacingUnspecifiedDimensions().width
+        let viewFrames = frames(for: subviews, in: width)
+        let height = viewFrames.max { $0.maxY < $1.maxY } ?? .zero
+        return CGSize(width: width, height: height.maxY)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Void) {
+        let viewFrames = frames(for: subviews, in: bounds.width)
+
+        for index in subviews.indices {
+            let frame = viewFrames[index]
+            let position = CGPoint(x: bounds.minX + frame.minX, y: bounds.midY)
+            subviews[index].place(at: position, anchor: .leading, proposal: ProposedViewSize(frame.size))
+        }
+    }
+}
+
+struct ContentView: View {
+    var body: some View {
+        RelativeHStack(spacing: 50) {
+            Text("First")
+                .frame(maxWidth: .infinity)
+                .background(.red)
+                .layoutPriority(1)
+
+            Text("Second")
+                .frame(maxWidth: .infinity)
+                .background(.green)
+                .layoutPriority(2)
+
+            Text("Third")
+                .frame(maxWidth: .infinity)
+                .background(.blue)
+                .layoutPriority(3)
+        }
+    }
+}
+```
+
+### EqualWidthHStack과의 차이
+
+| | EqualWidthHStack | RelativeHStack |
+|---|---|---|
+| 너비 결정 | 가장 큰 자식 기준 **동일 너비** | `layoutPriority` 비율로 **차등 배분** |
+| spacing | `spacing.distance(to:along:)` 자동 계산 | 고정값 하나를 직접 지정 |
+| sizeThatFits | 자식 크기 기반 직접 계산 | 제안된 width를 그대로 수용 |
+| proposal 방식 | 공유 크기 강제 | 뷰별 비율 너비 제안, 높이는 `nil` |
+| anchor | `.center` | `.leading` |
