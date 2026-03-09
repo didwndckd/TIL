@@ -7,19 +7,21 @@
 
 import SwiftUI
 
-class ParticleSystem {
-    var particles = [Particle]()
-    var position = CGPoint.zero
+extension DrawingWithCanvasView {
+    class ParticleSystem {
+        var particles = [Particle]()
+        var position = CGPoint.zero
 
-    func update(date: TimeInterval) {
-        particles = particles.filter { $0.deathDate > date }
-        particles.append(Particle(position: position))
+        func update(date: TimeInterval) {
+            particles = particles.filter { $0.deathDate > date }
+            particles.append(Particle(position: position))
+        }
     }
-}
 
-struct Particle {
-    let position: CGPoint
-    let deathDate = Date.now.timeIntervalSinceReferenceDate + 1
+    struct Particle {
+        let position: CGPoint
+        let deathDate = Date.now.timeIntervalSinceReferenceDate + 1
+    }
 }
 
 struct DrawingWithCanvasView: View {

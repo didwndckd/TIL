@@ -46,6 +46,8 @@ struct ContentView: View {
 
                 Section("Drawing and Effects") {
                     NavigationLink("Drawing with Canvas", destination: DrawingWithCanvasView())
+                    NavigationLink("Falling Snow", destination: FallingSnowView1())
+                    NavigationLink("Falling Snow (Laba)", destination: FallingSnowView2())
                 }
 
                 Section("Performance") {
