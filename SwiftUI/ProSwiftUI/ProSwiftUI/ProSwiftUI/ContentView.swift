@@ -45,7 +45,7 @@ struct ContentView: View {
                 }
 
                 Section("Drawing and Effects") {
-                    Text("Drawing and Effects")
+                    NavigationLink("Drawing with Canvas", destination: DrawingWithCanvasView())
                 }
 
                 Section("Performance") {
