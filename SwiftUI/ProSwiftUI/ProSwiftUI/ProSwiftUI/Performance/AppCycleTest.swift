@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-@main
+//@main
 struct TestApp: App {
     @State private var property = ExampleProperty(location: "App")
 
