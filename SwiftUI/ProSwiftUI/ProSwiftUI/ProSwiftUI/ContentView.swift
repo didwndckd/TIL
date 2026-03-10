@@ -59,6 +59,9 @@ struct ContentView: View {
                     NavigationLink("Skipping Work 1", destination: SkippingWork1())
                     NavigationLink("Skipping Work 2", destination: SkippingWork2())
                     NavigationLink("Skipping Work 3", destination: SkippingWork3())
+                    NavigationLink("Watching for changes 1", destination: WatchingForChanges1())
+                    NavigationLink("Watching for changes 2", destination: WatchingForChanges2())
+                    NavigationLink("Watching for changes 3", destination: WatchingForChanges3())
                 }
             }
             .navigationTitle("Pro SwiftUI")
