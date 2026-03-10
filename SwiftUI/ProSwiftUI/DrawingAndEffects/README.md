@@ -321,3 +321,93 @@ struct LavaLampView: View {
 - 상대 좌표 범위가 0~1을 약간 초과 (`-0.1...1.1`, `-0.25...1.25`): 화면 밖에서 자연스럽게 진입/퇴장하기 위함
 - `particles`가 `let` 상수 배열: 파티클 추가/제거가 없고 내부 프로퍼티만 변경하므로 배열 자체는 불변
 - `isMovingDown` 플래그로 방향 전환: 경계(1.25 / -0.25)에 도달하면 반전 — 파티클이 화면 안을 영구 순환
+
+## Wouldn't it be lava-ly?
+
+### 핵심 개념
+
+- **`VectorArithmetic` / `AdditiveArithmetic` 확장**: `[Double]` 배열을 SwiftUI 애니메이션 값으로 사용하기 위해 프로토콜 적합성 추가. `scale(by:)`, `+=`, `-=` 연산으로 SwiftUI가 배열 요소를 보간
+- **`AnimatablePolygonShape`**: `animatableData`로 `[Double]`을 받아 불규칙 다각형 생성. 각 꼭짓점의 반지름을 0.8~1.2 범위로 변형하여 원이 아닌 유기적 형태
+- **타이머-애니메이션 비동기 트릭**: 타이머 1초 간격, 애니메이션 3초 duration — 애니메이션이 완료되기 전에 새 값이 들어와 끊김 없이 자연스러운 보간 유지
+
+### Creating a Lava Lamp과의 차이
+
+| | Creating a Lava Lamp | Wouldn't it be lava-ly? |
+|---|---|---|
+| 블롭 형태 | `Circle()` (완벽한 원) | `AnimatingPolygon` (불규칙 다각형) |
+| 형태 변화 | 없음 | 매초 랜덤 꼭짓점 생성 → 3초 ease-in-out 보간 |
+| 추가 구조체 | 없음 | `AnimatablePolygonShape`, `AnimatingPolygon` |
+| `[Double]` 확장 | 불필요 | `VectorArithmetic` 적합성 필수 |
+
+### 불규칙 다각형 수학
+
+1. 중심점과 최대 반지름 계산
+2. 꼭짓점 개수(8개)에 대해 0~2π를 균등 분할하여 각도 산출
+3. `cos(angle) × radius`, `sin(angle) × radius`로 정다각형 좌표 계산
+4. 각 좌표에 `animatableData[i]` (0.8~1.2)를 곱하여 변 길이 변형
+
+### 추가된 코드
+
+```swift
+// [Double]을 SwiftUI 애니메이션 가능 타입으로 확장
+extension Array: VectorArithmetic, AdditiveArithmetic where Element == Double {
+    public mutating func scale(by rhs: Double) {
+        for (index, item) in self.enumerated() {
+            self[index] = item * rhs
+        }
+    }
+    public static func +=(lhs: inout [Double], rhs: [Double]) {
+        for (index, item) in rhs.enumerated() { lhs[index] += item }
+    }
+    public static func -=(lhs: inout [Double], rhs: [Double]) {
+        for (index, item) in rhs.enumerated() { lhs[index] -= item }
+    }
+    public static func -(lhs: [Double], rhs: [Double]) -> [Double] { [] }
+    public static var zero: [Double] { [0] }
+    public var magnitudeSquared: Double { 0 }
+}
+
+// 불규칙 다각형 Shape
+struct AnimatablePolygonShape: Shape {
+    var animatableData: [Double]
+
+    init(points: [Double]) { animatableData = points }
+
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            let center = CGPoint(x: rect.width / 2, y: rect.height / 2)
+            let radius = min(center.x, center.y)
+            let lines = animatableData.enumerated().map { index, value in
+                let fraction = Double(index) / Double(animatableData.count)
+                let xPos = center.x + radius * cos(fraction * .pi * 2)
+                let yPos = center.y + radius * sin(fraction * .pi * 2)
+                return CGPoint(x: xPos * value, y: yPos * value)
+            }
+            path.addLines(lines)
+        }
+    }
+}
+
+// 자동 애니메이션 다각형 뷰
+struct AnimatingPolygon: View {
+    @State private var points = Self.makePoints()
+    @State private var timer = Timer.publish(every: 1, tolerance: 1, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        AnimatablePolygonShape(points: points)
+            .animation(.easeInOut(duration: 3), value: points)
+            .onReceive(timer) { _ in points = Self.makePoints() }
+    }
+
+    static func makePoints() -> [Double] {
+        (0..<8).map { _ in .random(in: 0.8...1.2) }
+    }
+}
+```
+
+### 주요 포인트
+
+- **`-` 연산자와 `magnitudeSquared`는 더미 구현**: 프로토콜 요구사항이지만 라바램프 애니메이션에서 실제로 호출되지 않음
+- **`tolerance: 1`**: 타이머에 1초 허용 오차를 줘서 iOS가 여러 파티클의 타이머를 합쳐(coalesce) 실행 — 배터리 효율 개선
+- `symbols:`에서 `Circle()` → `AnimatingPolygon()`으로 **한 줄만 변경**하면 적용 완료. `Particle`, `ParticleSystem`은 수정 불필요
+- blur 슬라이더를 0으로 내리면 불규칙 다각형 원본 형태를 확인 가능
