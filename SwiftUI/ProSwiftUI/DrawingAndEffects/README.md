@@ -353,14 +353,21 @@ struct LavaLampView: View {
 extension Array: VectorArithmetic, AdditiveArithmetic where Element == Double {
     public mutating func scale(by rhs: Double) {
         for (index, item) in self.enumerated() {
+            guard index < self.count else { return }
             self[index] = item * rhs
         }
     }
     public static func +=(lhs: inout [Double], rhs: [Double]) {
-        for (index, item) in rhs.enumerated() { lhs[index] += item }
+        for (index, item) in rhs.enumerated() {
+            guard index < lhs.count else { return }
+            lhs[index] += item 
+        }
     }
     public static func -=(lhs: inout [Double], rhs: [Double]) {
-        for (index, item) in rhs.enumerated() { lhs[index] -= item }
+        for (index, item) in rhs.enumerated() { 
+            guard index < lhs.count else { return }
+            lhs[index] -= item 
+        }
     }
     public static func -(lhs: [Double], rhs: [Double]) -> [Double] { [] }
     public static var zero: [Double] { [0] }
