@@ -50,6 +50,7 @@ struct ContentView: View {
                     NavigationLink("Falling Snow (Lava)", destination: FallingSnowView2())
                     NavigationLink("Lava Lamp", destination: LavaLampView())
                     NavigationLink("Blurred backgrounds", destination: BlurredBackgroundsView())
+                    NavigationLink("Magic with SpriteKit", destination: MagicWithSpriteKitView())
                 }
 
                 Section("Performance") {

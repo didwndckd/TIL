@@ -467,6 +467,156 @@ struct BackgroundBlob: View {
 - 배경색과 같은 색(`.blue`)의 blob이 다른 색을 잘라내는(cut out) 효과를 만듦
 - 애니메이션 duration `2...4`는 데모용, 실제 사용 시 `20...40`으로 느리게 설정 권장
 
+## Magic with SpriteKit
+
+SpriteKit + Metal 셰이더를 활용하여 SwiftUI 뷰에 물결(water ripple) 효과를 적용하는 기법.
+
+### 핵심 개념
+
+- **Fragment Shader (GLSL)**: 텍스처의 각 픽셀에 대해 실행되는 GPU 프로그램. 요청된 좌표 대신 **근처 좌표의 픽셀을 반환**하여 물 굴절 효과 시뮬레이션
+- **`SKShader`**: SpriteKit에서 GLSL 셰이더를 로드·실행. GLSL → MSL(Metal) 자동 변환으로 성능 최적화
+- **`SKUniform`**: 셰이더에 외부 값(speed, strength, frequency)을 전달하는 유니폼 변수. `u_` 접두사 관례
+- **`ImageRenderer`**: SwiftUI 뷰를 `UIImage`로 렌더링. SpriteKit 텍스처로 변환하기 위한 브릿지
+- **`SpriteView(options: .allowsTransparency)`**: SpriteKit 씬을 SwiftUI 뷰 계층에 투명 배경으로 임베딩
+
+### 아키텍처 구조
+
+| 계층 | 역할 |
+|------|------|
+| **GLSL 셰이더** | 픽셀 단위 물결 왜곡 계산 (cos/sin으로 X/Y 오프셋) |
+| **`WaterScene` (SKScene)** | 셰이더를 SKSpriteNode에 적용, 텍스처 관리 |
+| **`WaterEffect<Content>` (SwiftUI View)** | SwiftUI 뷰 → UIImage → SpriteKit 텍스처 변환 브릿지 |
+| **`ContentView`** | 슬라이더로 speed/strength/frequency 실시간 조절 |
+
+### 셰이더 코드
+
+```glsl
+void main() {
+    float speed = u_time * u_speed;
+
+    v_tex_coord.x += cos((v_tex_coord.x + speed) * u_frequency) * u_strength;
+    v_tex_coord.y += sin((v_tex_coord.y + speed) * u_frequency) * u_strength;
+
+    gl_FragColor = texture2D(u_texture, v_tex_coord);
+}
+```
+
+**동작 원리**: 각 픽셀의 원래 좌표에 `cos`/`sin` 기반 오프셋을 더해 인접 픽셀을 읽음 → 물결 굴절 효과. `u_frequency`가 높으면 잔잔한 파문이 많아지고, `u_strength`가 크면 왜곡이 강해짐
+
+### 전체 코드
+
+```swift
+// MARK: - WaterScene (SpriteKit)
+class WaterScene: SKScene {
+    private let spriteNode = SKSpriteNode()
+    var image: UIImage?
+
+    let waterShader = SKShader(source: """
+    void main() {
+        float speed = u_time * u_speed;
+        v_tex_coord.x += cos((v_tex_coord.x + speed) * u_frequency) * u_strength;
+        v_tex_coord.y += sin((v_tex_coord.y + speed) * u_frequency) * u_strength;
+        gl_FragColor = texture2D(u_texture, v_tex_coord);
+    }
+    """)
+
+    override func sceneDidLoad() {
+        backgroundColor = .clear
+        scaleMode = .resizeFill
+        spriteNode.shader = waterShader
+        addChild(spriteNode)
+    }
+
+    func updateTexture() {
+        guard view != nil else { return }
+        guard let image else { return }
+
+        let texture = SKTexture(image: image)
+        spriteNode.texture = texture
+        spriteNode.size = texture.size()
+        spriteNode.position.x = frame.midX
+        spriteNode.position.y = frame.midY
+    }
+
+    override func didMove(to view: SKView) {
+        updateTexture()
+    }
+}
+
+// MARK: - WaterEffect (SwiftUI Bridge)
+struct WaterEffect<Content: View>: View {
+    @State private var scene = WaterScene()
+    @Environment(\.displayScale) var displayScale
+
+    var speed: Double
+    var strength: Double
+    var frequency: Double
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        let renderer = ImageRenderer(content: content())
+        renderer.scale = displayScale
+        let image = renderer.uiImage
+        let size = image?.size ?? .zero
+
+        scene.waterShader.uniforms = [
+            SKUniform(name: "u_speed", float: Float(speed)),
+            SKUniform(name: "u_strength", float: Float(strength) / 20.0),
+            SKUniform(name: "u_frequency", float: Float(frequency))
+        ]
+
+        scene.image = image
+        scene.updateTexture()
+
+        return SpriteView(scene: scene, options: .allowsTransparency)
+            .frame(width: size.width, height: size.height)
+    }
+}
+
+// MARK: - ContentView
+struct ContentView: View {
+    @State private var text = "Hello"
+    @State private var speed = 0.5
+    @State private var strength = 0.5
+    @State private var frequency = 5.0
+
+    var body: some View {
+        VStack {
+            WaterEffect(speed: speed, strength: strength, frequency: frequency) {
+                Circle()
+                    .fill(.red)
+                    .frame(width: 150, height: 150)
+                    .padding()
+                    .overlay(Circle().stroke(.red, lineWidth: 4))
+                    .overlay(Text(text).font(.title).foregroundColor(.white))
+                    .padding()
+            }
+
+            TextField("Enter a message", text: $text)
+                .textFieldStyle(.roundedBorder)
+
+            LabeledContent("Speed") {
+                Slider(value: $speed)
+            }
+            LabeledContent("Strength") {
+                Slider(value: $strength)
+            }
+            LabeledContent("Frequency") {
+                Slider(value: $frequency, in: 5...25)
+            }
+        }
+        .padding()
+    }
+}
+```
+
+### 주요 포인트
+
+- **`strength / 20.0`**: 사용자가 0~1 범위로 조절하지만, 셰이더에는 매우 작은 오프셋만 필요하므로 20으로 나눠서 전달
+- **`renderer.scale = displayScale`**: 기본 1.0 스케일이면 Retina 디스플레이에서 흐릿하게 보임. `@Environment(\.displayScale)`로 2x/3x 스케일 적용
+- **SwiftUI 뷰에 padding 필수**: 셰이더가 경계 밖 픽셀을 읽으면 Metal이 반대편 좌표로 래핑하므로, 여백이 있어야 자연스러움
+- **`WaterScene`이 class인 이유**: SpriteKit의 `SKScene`을 상속해야 하므로 class 필수. `@State`로 참조 유지
+- **CPU 부하 최소**: 셰이더는 GPU에서 병렬 실행되므로 CPU 사용량이 극히 낮음
 
 
 
@@ -477,13 +627,3 @@ struct BackgroundBlob: View {
 
 
 
-
-
-
-
-## 마지막에 추가할 내용(요청시)
-타입별 기본 개념 설명, 주요 함수 설명
-TimelineView
-Canvas 기본 개념 + symbols, drawLayer등 추가 설명
-VectorArithmetic
-AdditiveArithmetic
