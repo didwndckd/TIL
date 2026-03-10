@@ -212,3 +212,112 @@ class ParticleSystem {
 - `LinearGradient.mask`: TimelineView 전체를 마스크로 사용 — 흰색(불투명) 영역만 그라디언트가 보임
 - `xSpeed: -50...50` 범위의 작은 수평 이동이 자연스러운 낙하감을 줌
 - `ySpeed: 100...500` 범위의 큰 편차가 깊이감(depth) 생성
+
+## Creating a Lava Lamp
+
+### 핵심 개념
+
+- **Canvas `symbols`**: SwiftUI 뷰를 Canvas에 심볼로 전달하여 `resolveSymbol(id:)`로 조회 후 그리기. `ctx.fill(Circle().path(...))`와 달리 **임의의 SwiftUI 뷰**를 Canvas에 배치 가능
+- **상대 좌표 (0~1)**: 파티클 생성 시 캔버스 크기를 모르므로, 절대 좌표 대신 비율로 저장. 렌더링 시 `particle.x * size.width`로 변환
+- **파티클 재활용**: 이전 예제는 파티클을 생성/소멸 반복. 라바램프는 **고정 개수**를 초기화 시 생성하고 방향만 뒤집으며 영구 재사용
+- **Slider로 필터 조정**: `threshold`와 `blur` 값을 실시간으로 조절하여 메타볼 효과의 작동 원리를 직관적으로 이해
+
+### Falling Snow와의 차이
+
+| | Falling Snow | Lava Lamp |
+|---|---|---|
+| 파티클 수명 | 2초 후 소멸 | 영구 (방향 전환으로 재활용) |
+| 좌표 체계 | 절대 좌표 (px) | 상대 좌표 (0~1) |
+| 이동 방향 | 위→아래 (일방향) | 위↔아래 (양방향 전환) |
+| 파티클 크기 | 고정 32pt | 랜덤 100~250pt |
+| 생성 방식 | 매 프레임 1개씩 추가 | 초기화 시 고정 개수 일괄 생성 |
+| 그리기 방식 | `ctx.fill(Circle().path(...))` | Canvas `symbols` + `resolveSymbol(id:)` |
+| `Identifiable` | 불필요 | 필수 (심볼 조회용) |
+
+### 전체 코드
+
+```swift
+class Particle: Identifiable {
+    let id = UUID()
+    var size = Double.random(in: 100...250)
+    var x = Double.random(in: -0.1...1.1)
+    var y = Double.random(in: -0.25...1.25)
+    var isMovingDown = Bool.random()
+    var speed = Double.random(in: 0.01...0.1)
+}
+
+class ParticleSystem {
+    let particles: [Particle]
+    var lastUpdate = Date.now.timeIntervalSinceReferenceDate
+
+    init(count: Int) {
+        particles = (0..<count).map { _ in Particle() }
+    }
+
+    func update(date: TimeInterval) {
+        let delta = date - lastUpdate
+        lastUpdate = date
+
+        for particle in particles {
+            if particle.isMovingDown {
+                particle.y += particle.speed * delta
+                if particle.y > 1.25 { particle.isMovingDown = false }
+            } else {
+                particle.y -= particle.speed * delta
+                if particle.y < -0.25 { particle.isMovingDown = true }
+            }
+        }
+    }
+}
+
+struct LavaLampView: View {
+    @State private var particleSystem = ParticleSystem(count: 15)
+    @State private var threshold = 0.5
+    @State private var blur = 30.0
+
+    var body: some View {
+        VStack {
+            LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom).mask {
+                TimelineView(.animation) { timeline in
+                    Canvas { ctx, size in
+                        particleSystem.update(date: timeline.date.timeIntervalSinceReferenceDate)
+                        ctx.addFilter(.alphaThreshold(min: threshold))
+                        ctx.addFilter(.blur(radius: blur))
+
+                        ctx.drawLayer { ctx in
+                            for particle in particleSystem.particles {
+                                guard let symbol = ctx.resolveSymbol(id: particle.id) else { continue }
+                                ctx.draw(symbol, at: CGPoint(x: particle.x * size.width, y: particle.y * size.height))
+                            }
+                        }
+                    } symbols: {
+                        ForEach(particleSystem.particles) { particle in
+                            Circle()
+                                .frame(width: particle.size, height: particle.size)
+                        }
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .background(.indigo)
+
+            LabeledContent("Threshold") {
+                Slider(value: $threshold, in: 0.01...0.99)
+            }
+            .padding(.horizontal)
+
+            LabeledContent("Blur") {
+                Slider(value: $blur, in: 0...40)
+            }
+            .padding(.horizontal)
+        }
+    }
+}
+```
+
+### 주요 포인트
+
+- **Canvas `symbols` 패턴**: `symbols:` 클로저에서 `ForEach`로 뷰 생성 → `resolveSymbol(id:)`로 조회 → `ctx.draw(symbol, at:)`로 배치. 어떤 SwiftUI 뷰든 Canvas에 그릴 수 있는 강력한 기법
+- 상대 좌표 범위가 0~1을 약간 초과 (`-0.1...1.1`, `-0.25...1.25`): 화면 밖에서 자연스럽게 진입/퇴장하기 위함
+- `particles`가 `let` 상수 배열: 파티클 추가/제거가 없고 내부 프로퍼티만 변경하므로 배열 자체는 불변
+- `isMovingDown` 플래그로 방향 전환: 경계(1.25 / -0.25)에 도달하면 반전 — 파티클이 화면 안을 영구 순환
