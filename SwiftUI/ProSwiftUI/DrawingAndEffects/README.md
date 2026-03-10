@@ -187,6 +187,47 @@ struct DrawingWithCanvasView: View {
 | blendMode | `.plusLighter` | 미사용 |
 | drawLayer | 미사용 | 사용 (메타볼 효과의 전제 조건) |
 
+
+### 공통 데이터 모델
+
+```swift
+class Particle {
+    var x: Double
+    var y: Double
+    let xSpeed: Double
+    let ySpeed: Double
+    let deathDate = Date.now.timeIntervalSinceReferenceDate + 2
+
+    init(x: Double, y: Double, xSpeed: Double, ySpeed: Double) {
+        self.x = x; self.y = y; self.xSpeed = xSpeed; self.ySpeed = ySpeed
+    }
+}
+
+class ParticleSystem {
+    var particles = [Particle]()
+    var lastUpdate = Date.now.timeIntervalSinceReferenceDate
+
+    func update(date: TimeInterval, size: CGSize) {
+        let delta = date - lastUpdate
+        lastUpdate = date
+
+        for (index, particle) in particles.enumerated() {
+            if particle.deathDate < date {
+                particles.remove(at: index)
+            } else {
+                particle.x += particle.xSpeed * delta
+                particle.y += particle.ySpeed * delta
+            }
+        }
+
+        particles.append(Particle(
+            x: .random(in: -32...size.width), y: -32,
+            xSpeed: .random(in: -50...50), ySpeed: .random(in: 100...500)
+        ))
+    }
+}
+```
+
 ### 버전별 진화
 
 **V1 — 기본 눈 효과**: blur만 적용하여 부드러운 눈송이
@@ -248,46 +289,6 @@ struct FallingSnowView2: View {
 }
 ```
 
-### 공통 데이터 모델
-
-```swift
-class Particle {
-    var x: Double
-    var y: Double
-    let xSpeed: Double
-    let ySpeed: Double
-    let deathDate = Date.now.timeIntervalSinceReferenceDate + 2
-
-    init(x: Double, y: Double, xSpeed: Double, ySpeed: Double) {
-        self.x = x; self.y = y; self.xSpeed = xSpeed; self.ySpeed = ySpeed
-    }
-}
-
-class ParticleSystem {
-    var particles = [Particle]()
-    var lastUpdate = Date.now.timeIntervalSinceReferenceDate
-
-    func update(date: TimeInterval, size: CGSize) {
-        let delta = date - lastUpdate
-        lastUpdate = date
-
-        for (index, particle) in particles.enumerated() {
-            if particle.deathDate < date {
-                particles.remove(at: index)
-            } else {
-                particle.x += particle.xSpeed * delta
-                particle.y += particle.ySpeed * delta
-            }
-        }
-
-        particles.append(Particle(
-            x: .random(in: -32...size.width), y: -32,
-            xSpeed: .random(in: -50...50), ySpeed: .random(in: 100...500)
-        ))
-    }
-}
-```
-
 ### 주요 포인트
 
 - `alphaThreshold`와 `blur`의 **순서가 중요**: `alphaThreshold` → `blur` 순으로 적용해야 메타볼 효과 발생. 필터는 선언 역순으로 적용됨 (blur 먼저 → alphaThreshold)
@@ -296,14 +297,15 @@ class ParticleSystem {
 - `xSpeed: -50...50` 범위의 작은 수평 이동이 자연스러운 낙하감을 줌
 - `ySpeed: 100...500` 범위의 큰 편차가 깊이감(depth) 생성
 
-## Creating a Lava Lamp
+## Lava Lamp (Creating a Lava Lamp + Wouldn't it be lava-ly?)
 
 ### 핵심 개념
 
 - **Canvas `symbols`**: SwiftUI 뷰를 Canvas에 심볼로 전달하여 `resolveSymbol(id:)`로 조회 후 그리기. `ctx.fill(Circle().path(...))`와 달리 **임의의 SwiftUI 뷰**를 Canvas에 배치 가능
 - **상대 좌표 (0~1)**: 파티클 생성 시 캔버스 크기를 모르므로, 절대 좌표 대신 비율로 저장. 렌더링 시 `particle.x * size.width`로 변환
 - **파티클 재활용**: 이전 예제는 파티클을 생성/소멸 반복. 라바램프는 **고정 개수**를 초기화 시 생성하고 방향만 뒤집으며 영구 재사용
-- **Slider로 필터 조정**: `threshold`와 `blur` 값을 실시간으로 조절하여 메타볼 효과의 작동 원리를 직관적으로 이해
+- **`AnimatablePolygonShape`**: `[Double]`을 `animatableData`로 받아 불규칙 다각형 생성. `VectorArithmetic` 확장으로 SwiftUI가 배열 요소를 보간
+- **타이머-애니메이션 비동기 트릭**: 타이머 1초 간격, 애니메이션 3초 duration — 완료 전 새 값이 들어와 끊김 없이 자연스러운 보간 유지
 
 ### Falling Snow와의 차이
 
@@ -316,11 +318,19 @@ class ParticleSystem {
 | 생성 방식 | 매 프레임 1개씩 추가 | 초기화 시 고정 개수 일괄 생성 |
 | 그리기 방식 | `ctx.fill(Circle().path(...))` | Canvas `symbols` + `resolveSymbol(id:)` |
 | `Identifiable` | 불필요 | 필수 (심볼 조회용) |
+| 블롭 형태 | 원 | `Circle()` 또는 `AnimatingPolygon` (토글) |
+
+### 불규칙 다각형 수학 (AnimatablePolygonShape)
+
+1. 중심점과 최대 반지름 계산
+2. 꼭짓점 개수(8개)에 대해 0~2π를 균등 분할하여 각도 산출
+3. `cos(angle) × radius`, `sin(angle) × radius`로 정다각형 좌표 계산
+4. 각 좌표에 `animatableData[i]` (0.8~1.2)를 곱하여 변 길이 변형
 
 ### 전체 코드
 
 ```swift
-class Particle: Identifiable {
+class LavaLampParticle: Identifiable {
     let id = UUID()
     var size = Double.random(in: 100...250)
     var x = Double.random(in: -0.1...1.1)
@@ -329,12 +339,12 @@ class Particle: Identifiable {
     var speed = Double.random(in: 0.01...0.1)
 }
 
-class ParticleSystem {
-    let particles: [Particle]
+class LavaLampParticleSystem {
+    let particles: [LavaLampParticle]
     var lastUpdate = Date.now.timeIntervalSinceReferenceDate
 
     init(count: Int) {
-        particles = (0..<count).map { _ in Particle() }
+        particles = (0..<count).map { _ in LavaLampParticle() }
     }
 
     func update(date: TimeInterval) {
@@ -353,87 +363,8 @@ class ParticleSystem {
     }
 }
 
-struct LavaLampView: View {
-    @State private var particleSystem = ParticleSystem(count: 15)
-    @State private var threshold = 0.5
-    @State private var blur = 30.0
-
-    var body: some View {
-        VStack {
-            LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom).mask {
-                TimelineView(.animation) { timeline in
-                    Canvas { ctx, size in
-                        particleSystem.update(date: timeline.date.timeIntervalSinceReferenceDate)
-                        ctx.addFilter(.alphaThreshold(min: threshold))
-                        ctx.addFilter(.blur(radius: blur))
-
-                        ctx.drawLayer { ctx in
-                            for particle in particleSystem.particles {
-                                guard let symbol = ctx.resolveSymbol(id: particle.id) else { continue }
-                                ctx.draw(symbol, at: CGPoint(x: particle.x * size.width, y: particle.y * size.height))
-                            }
-                        }
-                    } symbols: {
-                        ForEach(particleSystem.particles) { particle in
-                            Circle()
-                                .frame(width: particle.size, height: particle.size)
-                        }
-                    }
-                }
-            }
-            .ignoresSafeArea()
-            .background(.indigo)
-
-            LabeledContent("Threshold") {
-                Slider(value: $threshold, in: 0.01...0.99)
-            }
-            .padding(.horizontal)
-
-            LabeledContent("Blur") {
-                Slider(value: $blur, in: 0...40)
-            }
-            .padding(.horizontal)
-        }
-    }
-}
-```
-
-### 주요 포인트
-
-- **Canvas `symbols` 패턴**: `symbols:` 클로저에서 `ForEach`로 뷰 생성 → `resolveSymbol(id:)`로 조회 → `ctx.draw(symbol, at:)`로 배치. 어떤 SwiftUI 뷰든 Canvas에 그릴 수 있는 강력한 기법
-- 상대 좌표 범위가 0~1을 약간 초과 (`-0.1...1.1`, `-0.25...1.25`): 화면 밖에서 자연스럽게 진입/퇴장하기 위함
-- `particles`가 `let` 상수 배열: 파티클 추가/제거가 없고 내부 프로퍼티만 변경하므로 배열 자체는 불변
-- `isMovingDown` 플래그로 방향 전환: 경계(1.25 / -0.25)에 도달하면 반전 — 파티클이 화면 안을 영구 순환
-
-## Wouldn't it be lava-ly?
-
-### 핵심 개념
-
-- **`VectorArithmetic` / `AdditiveArithmetic` 확장**: `[Double]` 배열을 SwiftUI 애니메이션 값으로 사용하기 위해 프로토콜 적합성 추가. `scale(by:)`, `+=`, `-=` 연산으로 SwiftUI가 배열 요소를 보간
-- **`AnimatablePolygonShape`**: `animatableData`로 `[Double]`을 받아 불규칙 다각형 생성. 각 꼭짓점의 반지름을 0.8~1.2 범위로 변형하여 원이 아닌 유기적 형태
-- **타이머-애니메이션 비동기 트릭**: 타이머 1초 간격, 애니메이션 3초 duration — 애니메이션이 완료되기 전에 새 값이 들어와 끊김 없이 자연스러운 보간 유지
-
-### Creating a Lava Lamp과의 차이
-
-| | Creating a Lava Lamp | Wouldn't it be lava-ly? |
-|---|---|---|
-| 블롭 형태 | `Circle()` (완벽한 원) | `AnimatingPolygon` (불규칙 다각형) |
-| 형태 변화 | 없음 | 매초 랜덤 꼭짓점 생성 → 3초 ease-in-out 보간 |
-| 추가 구조체 | 없음 | `AnimatablePolygonShape`, `AnimatingPolygon` |
-| `[Double]` 확장 | 불필요 | `VectorArithmetic` 적합성 필수 |
-
-### 불규칙 다각형 수학
-
-1. 중심점과 최대 반지름 계산
-2. 꼭짓점 개수(8개)에 대해 0~2π를 균등 분할하여 각도 산출
-3. `cos(angle) × radius`, `sin(angle) × radius`로 정다각형 좌표 계산
-4. 각 좌표에 `animatableData[i]` (0.8~1.2)를 곱하여 변 길이 변형
-
-### 추가된 코드
-
-```swift
 // [Double]을 SwiftUI 애니메이션 가능 타입으로 확장
-extension Array: VectorArithmetic, AdditiveArithmetic where Element == Double {
+extension Array: @retroactive VectorArithmetic, @retroactive AdditiveArithmetic where Element == Double {
     public mutating func scale(by rhs: Double) {
         for (index, item) in self.enumerated() {
             guard index < self.count else { return }
@@ -443,13 +374,13 @@ extension Array: VectorArithmetic, AdditiveArithmetic where Element == Double {
     public static func +=(lhs: inout [Double], rhs: [Double]) {
         for (index, item) in rhs.enumerated() {
             guard index < lhs.count else { return }
-            lhs[index] += item 
+            lhs[index] += item
         }
     }
     public static func -=(lhs: inout [Double], rhs: [Double]) {
-        for (index, item) in rhs.enumerated() { 
+        for (index, item) in rhs.enumerated() {
             guard index < lhs.count else { return }
-            lhs[index] -= item 
+            lhs[index] -= item
         }
     }
     public static func -(lhs: [Double], rhs: [Double]) -> [Double] { [] }
@@ -478,7 +409,6 @@ struct AnimatablePolygonShape: Shape {
     }
 }
 
-// 자동 애니메이션 다각형 뷰
 struct AnimatingPolygon: View {
     @State private var points = Self.makePoints()
     @State private var timer = Timer.publish(every: 1, tolerance: 1, on: .main, in: .common).autoconnect()
@@ -493,13 +423,75 @@ struct AnimatingPolygon: View {
         (0..<8).map { _ in .random(in: 0.8...1.2) }
     }
 }
+
+struct LavaLampView: View {
+    @State private var particleSystem = LavaLampParticleSystem(count: 15)
+    @State private var threshold = 0.5
+    @State private var blur = 30.0
+    @State private var usePolygon = false
+
+    var body: some View {
+        VStack {
+            LinearGradient(colors: [.red, .orange], startPoint: .top, endPoint: .bottom).mask {
+                TimelineView(.animation) { timeline in
+                    Canvas { ctx, size in
+                        particleSystem.update(date: timeline.date.timeIntervalSinceReferenceDate)
+                        ctx.addFilter(.alphaThreshold(min: threshold))
+                        ctx.addFilter(.blur(radius: blur))
+
+                        ctx.drawLayer { ctx in
+                            for particle in particleSystem.particles {
+                                guard let symbol = ctx.resolveSymbol(id: particle.id) else { continue }
+                                let point = CGPoint(x: particle.x * size.width, y: particle.y * size.height)
+                                ctx.draw(symbol, at: point)
+                            }
+                        }
+                    } symbols: {
+                        ForEach(particleSystem.particles) { particle in
+                            symbol(particle: particle)
+                                .frame(width: particle.size, height: particle.size)
+                        }
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .background(.indigo)
+
+            LabeledContent("Use Polygon") {
+                Toggle("", isOn: $usePolygon)
+            }
+            .padding(.horizontal)
+
+            LabeledContent("Threshold") {
+                Slider(value: $threshold, in: 0.01...0.99)
+            }
+            .padding(.horizontal)
+
+            LabeledContent("Blur") {
+                Slider(value: $blur, in: 0...40)
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    @ViewBuilder
+    private func symbol(particle: LavaLampParticle) -> some View {
+        if usePolygon {
+            AnimatingPolygon()
+        } else {
+            Circle()
+        }
+    }
+}
 ```
 
 ### 주요 포인트
 
-- **`-` 연산자와 `magnitudeSquared`는 더미 구현**: 프로토콜 요구사항이지만 라바램프 애니메이션에서 실제로 호출되지 않음
-- **`tolerance: 1`**: 타이머에 1초 허용 오차를 줘서 iOS가 여러 파티클의 타이머를 합쳐(coalesce) 실행 — 배터리 효율 개선
-- `symbols:`에서 `Circle()` → `AnimatingPolygon()`으로 **한 줄만 변경**하면 적용 완료. `Particle`, `ParticleSystem`은 수정 불필요
+- **Canvas `symbols` 패턴**: `symbols:` 클로저에서 `ForEach`로 뷰 생성 → `resolveSymbol(id:)`로 조회 → `ctx.draw(symbol, at:)`로 배치
+- 상대 좌표 범위가 0~1을 약간 초과 (`-0.1...1.1`, `-0.25...1.25`): 화면 밖에서 자연스럽게 진입/퇴장하기 위함
+- `usePolygon` 토글로 `Circle()` ↔ `AnimatingPolygon()` 전환 — `@ViewBuilder` 함수로 심볼만 교체하면 파티클 시스템은 수정 불필요
+- **`-` 연산자와 `magnitudeSquared`는 더미 구현**: 프로토콜 요구사항이지만 실제 애니메이션에서 호출되지 않음
+- **`tolerance: 1`**: 타이머에 1초 허용 오차를 줘서 iOS가 타이머를 합쳐(coalesce) 실행 — 배터리 효율 개선
 - blur 슬라이더를 0으로 내리면 불규칙 다각형 원본 형태를 확인 가능
 
 ## Blurred backgrounds
