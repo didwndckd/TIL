@@ -346,7 +346,7 @@ struct WatchingForChanges3: View {
 ### 주요 발견 사항
 
 - **`@State` 프로퍼티 초기화가 `init()`보다 먼저** 실행됨
-- **화면에 보이지 않는 뷰의 `init()`도 즉시 호출됨** — `NavigationLink`의 destination인 `DetailView.init()`이 앱 시작 시 2번 호출
+- **화면에 보이지 않는 뷰의 `init()`도 즉시 호출됨** — `NavigationLink`의 destination인 `DetailView.init()`이 앱 시작 시 호출
 - **`body`는 여러 번 재호출될 수 있음** — SwiftUI가 원할 때 언제든 호출
 - **실행 순서**: `onAppear()` → `task()` 순서로 실행. 같은 종류의 modifier끼리는 코드 순서대로 실행
 - **`onAppear()` / `task()`는 뷰가 화면에 표시될 때만 실행** — `init()`/`body`와 달리 실제로 필요한 시점
