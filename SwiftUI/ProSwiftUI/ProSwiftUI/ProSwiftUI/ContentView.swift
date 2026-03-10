@@ -54,7 +54,11 @@ struct ContentView: View {
                 }
 
                 Section("Performance") {
-                    Text("Performance")
+                    NavigationLink("Delaying Work 1", destination: DelayingWork1())
+                    NavigationLink("Delaying Work 2", destination: DelayingWork2())
+                    NavigationLink("Skipping Work 1", destination: SkippingWork1())
+                    NavigationLink("Skipping Work 2", destination: SkippingWork2())
+                    NavigationLink("Skipping Work 3", destination: SkippingWork3())
                 }
             }
             .navigationTitle("Pro SwiftUI")
