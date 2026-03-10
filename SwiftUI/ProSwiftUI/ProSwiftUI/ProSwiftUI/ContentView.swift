@@ -49,6 +49,7 @@ struct ContentView: View {
                     NavigationLink("Falling Snow", destination: FallingSnowView1())
                     NavigationLink("Falling Snow (Lava)", destination: FallingSnowView2())
                     NavigationLink("Lava Lamp", destination: LavaLampView())
+                    NavigationLink("Blurred backgrounds", destination: BlurredBackgroundsView())
                 }
 
                 Section("Performance") {

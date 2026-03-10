@@ -418,3 +418,72 @@ struct AnimatingPolygon: View {
 - **`tolerance: 1`**: 타이머에 1초 허용 오차를 줘서 iOS가 여러 파티클의 타이머를 합쳐(coalesce) 실행 — 배터리 효율 개선
 - `symbols:`에서 `Circle()` → `AnimatingPolygon()`으로 **한 줄만 변경**하면 적용 완료. `Particle`, `ParticleSystem`은 수정 불필요
 - blur 슬라이더를 0으로 내리면 불규칙 다각형 원본 형태를 확인 가능
+
+## Blurred backgrounds
+
+Canvas 없이 기본 Shape + 애니메이션 + blur만으로 부드러운 배경 효과를 만드는 기법.
+
+### 핵심 구조
+
+**BackgroundBlob** — 랜덤 위치·크기·색상의 타원(Ellipse)을 회전 애니메이션으로 움직이는 단일 뷰
+
+```swift
+struct BackgroundBlob: View {
+    @State private var rotationAmount = 0.0
+    let alignment: Alignment = [.topLeading, .topTrailing, .bottomLeading, .bottomTrailing].randomElement()!
+    let color: Color = [.blue, .cyan, .indigo, .mint, .purple, .teal].randomElement()!
+
+    var body: some View {
+        Ellipse()
+            .fill(color)
+            .frame(width: .random(in: 200...500), height: .random(in: 200...500))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+            .offset(x: .random(in: -400...400), y: .random(in: -400...400))
+            .rotationEffect(.degrees(rotationAmount))
+            .animation(.linear(duration: .random(in: 20...40)).repeatForever(), value: rotationAmount)
+            .onAppear { rotationAmount = .random(in: -360...360) }
+            .blur(radius: 75)
+    }
+}
+```
+
+**사용**: `ZStack` + `ForEach(0..<15)`로 15개 겹쳐서 배경색(`.blue`) 위에 배치
+
+### 모디파이어 적용 순서와 역할
+
+| 순서 | 모디파이어 | 역할 |
+|------|-----------|------|
+| 1 | `.frame(width:height:)` | 타원 크기 랜덤 설정 (200~500) |
+| 2 | `.frame(maxWidth:maxHeight:alignment:)` | 화면 코너 중 하나에 배치 |
+| 3 | `.offset(x:y:)` | 추가 랜덤 위치 이동 (-400~+400) |
+| 4 | `.rotationEffect()` | **offset 뒤에 적용** → 원래 위치를 중심으로 공전 |
+| 5 | `.blur(radius: 75)` | 색상이 자연스럽게 섞이는 핵심 효과 |
+
+### 주요 포인트
+
+- **`rotationEffect`를 `offset` 뒤에 적용**하는 것이 핵심 — 뷰가 원래 위치를 중심으로 원형 궤도를 그리며 움직임
+- `.onAppear`에서 `rotationAmount`를 변경하면 `.animation` 모디파이어가 자동으로 반복 애니메이션 시작
+- `blur(radius: 75)` 한 줄로 날카로운 타원들이 부드럽게 블렌딩됨
+- 배경색과 같은 색(`.blue`)의 blob이 다른 색을 잘라내는(cut out) 효과를 만듦
+- 애니메이션 duration `2...4`는 데모용, 실제 사용 시 `20...40`으로 느리게 설정 권장
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 마지막에 추가할 내용(요청시)
+타입별 기본 개념 설명, 주요 함수 설명
+TimelineView
+Canvas 기본 개념 + symbols, drawLayer등 추가 설명
+VectorArithmetic
+AdditiveArithmetic
