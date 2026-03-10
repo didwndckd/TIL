@@ -1,5 +1,88 @@
 # Drawing and Effects
 
+## 핵심 타입 정리
+
+### `Canvas`
+
+SwiftUI에서 자유롭게 2D 드로잉을 수행하는 뷰. `GraphicsContext`와 `CGSize`를 클로저로 제공받아 직접 그리기. SwiftUI 뷰 시스템을 우회하여 고성능 렌더링 가능.
+
+| 파라미터 | 역할 |
+|----------|------|
+| `{ ctx, size in }` | 메인 드로잉 클로저. `ctx`는 `GraphicsContext`, `size`는 캔버스 크기 |
+| `symbols: { }` | SwiftUI 뷰를 심볼로 전달. `ForEach`로 `Identifiable` 뷰 생성 → `resolveSymbol(id:)`로 조회 |
+
+### `GraphicsContext`
+
+Canvas 내부에서 실제 드로잉을 수행하는 컨텍스트. 필터, 블렌딩, 레이어 합성 등 저수준 그래픽 제어 제공.
+
+| 멤버 | 역할 |
+|------|------|
+| `addFilter(.blur(radius:))` | 가우시안 블러 적용 |
+| `addFilter(.alphaThreshold(min:color:))` | 지정 알파 범위의 픽셀만 단색으로 치환. `blur`와 조합하면 메타볼 효과 |
+| `drawLayer { ctx in }` | 별도 레이어에 먼저 합성 후 메인 컨텍스트에 반영. 메타볼 효과의 전제조건 |
+| `resolveSymbol(id:)` | `symbols:` 클로저에서 전달된 SwiftUI 뷰를 id로 조회 |
+| `draw(symbol, at:)` | 조회한 심볼을 특정 좌표에 배치 |
+| `fill(path, with:)` | Shape 경로를 색상/그라디언트로 채우기 |
+| `blendMode` | 겹치는 픽셀의 합성 방식. `.plusLighter`는 가산 블렌딩(밝아짐) |
+| `opacity` | 이후 드로잉의 투명도 설정. 수명 기반 페이드아웃 등에 활용 |
+
+- `alphaThreshold`와 `blur`의 **선언 순서가 중요**: 필터는 선언 역순으로 적용됨. `alphaThreshold` → `blur` 순으로 선언해야 blur 먼저 → alphaThreshold 적용
+- `drawLayer`가 없으면 각 도형이 개별적으로 알파 테스트를 받아 메타볼 합성 불가
+
+### `TimelineView`
+
+지정 스케줄에 따라 뷰를 반복 갱신하는 컨테이너. 매 프레임 렌더링이 필요한 애니메이션에 사용.
+
+| 스케줄 | 동작 |
+|--------|------|
+| `.animation` | 디스플레이 주사율에 맞춰 매 프레임 호출 (60fps/120fps ProMotion) |
+| `.animation(minimumInterval:)` | 최소 간격을 지정하여 프레임 호출 빈도 제한 |
+| `.everyMinute` | 매 분 정각에 호출. 시계 UI 등에 활용 |
+| `.periodic(from:by:)` | 지정 시작 시점부터 일정 간격(`TimeInterval`)으로 반복 호출 |
+| `.explicit(sequence)` | `Date` 시퀀스를 직접 전달하여 특정 시점에만 호출 |
+
+- `timeline.date.timeIntervalSinceReferenceDate`로 현재 시간을 `TimeInterval`로 변환하여 사용
+
+### `ImageRenderer`
+
+SwiftUI 뷰를 래스터 이미지(`UIImage`)로 렌더링하는 브릿지. SpriteKit 텍스처 변환 등에 활용.
+
+| 멤버 | 역할 |
+|------|------|
+| `init(content:)` | 렌더링할 SwiftUI 뷰 지정 |
+| `scale` | 렌더링 스케일. 기본 1.0이면 Retina에서 흐릿함 → `@Environment(\.displayScale)`로 2x/3x 적용 필요 |
+| `uiImage` | 렌더링 결과를 `UIImage?`로 반환 |
+
+### `VectorArithmetic` / `AdditiveArithmetic`
+
+SwiftUI 애니메이션이 중간값을 보간하기 위해 요구하는 프로토콜. 커스텀 타입(예: `[Double]`)을 `animatableData`로 사용하려면 적합성 추가 필요.
+
+| 필수 멤버 | 역할 |
+|-----------|------|
+| `scale(by:)` | 스칼라 곱. SwiftUI가 보간 비율을 곱할 때 호출 |
+| `+=` / `-=` | 요소별 덧셈/뺄셈. 시작값과 끝값 사이 차이 계산에 사용 |
+| `static var zero` | 영벡터. 보간 시작점 |
+| `var magnitudeSquared` | 벡터 크기의 제곱. 애니메이션 수렴 판단용 |
+| `static func -` | 두 값의 차이 반환 (`AdditiveArithmetic` 요구) |
+
+- `magnitudeSquared`와 `-` 연산자는 **더미 구현도 가능** — 라바램프 등 단순 보간에서는 실제 호출되지 않음
+- `[Double]` 확장 시 각 요소가 독립적으로 보간되어 다각형 꼭짓점 등의 자연스러운 변형 가능
+
+### SpriteKit 타입
+
+SpriteKit + Metal 셰이더를 SwiftUI에 통합하기 위한 타입들.
+
+| 타입 | 역할 |
+|------|------|
+| `SKScene` | SpriteKit 씬. `sceneDidLoad()`에서 노드 구성, `didMove(to:)`에서 뷰 연결 시 초기화 |
+| `SKSpriteNode` | 텍스처를 표시하는 노드. `shader` 프로퍼티에 `SKShader` 할당하여 셰이더 적용 |
+| `SKShader` | GLSL 소스 코드를 로드·실행. GLSL → MSL(Metal) 자동 변환 |
+| `SKUniform` | 셰이더에 외부 값을 전달하는 유니폼 변수. `u_` 접두사 관례 (`u_speed`, `u_strength` 등) |
+| `SKTexture` | `UIImage` → SpriteKit 텍스처 변환. `SKSpriteNode`에 할당하여 표시 |
+| `SpriteView` | SpriteKit 씬을 SwiftUI 뷰 계층에 임베딩. `options: .allowsTransparency`로 투명 배경 지원 |
+
+---
+
 ## Drawing with Canvas
 
 ### 핵심 개념
