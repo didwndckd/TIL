@@ -4,6 +4,6 @@
 - [UIKit](UIKit)
 - [SwiftUI](SwiftUI)
 - [Objective-C](Objective-C)
-- [DDD](DDD)
+- [SoftwareDesign](SoftwareDesign)
 - [XcodeBuildSystem](XcodeBuildSystem)
 
