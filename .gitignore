@@ -135,4 +135,10 @@ iOSInjectionProject/
 /*.gcno
 **/xcshareddata/WorkspaceSettings.xcsettings
 
+# Claude Code
+.claude/settings.local.json
+
+# Obsidian
+.obsidian/
+
 # End of https://www.toptal.com/developers/gitignore/api/swift,macos,xcode,cocoapods,carthage
