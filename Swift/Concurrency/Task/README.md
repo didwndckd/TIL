@@ -201,16 +201,16 @@ struct ContentView: View {
 
 ### 2. Task vs Detached Task 상세 차이 표
 
-| 구분                      | Task        | Task.detached         |
-| ------------------------- | ----------- | --------------------- |
-| 실행 시점                 | 즉시        | 즉시                  |
-| Priority 상속             | ✔️           | ❌                     |
-| Task Local Values 상속    | ✔️           | ❌                     |
-| Actor Context 상속        | ✔️           | ❌                     |
-| MainActor에서 UI 업데이트 | ✔️ 가능      | ❌ 불가                |
-| Actor 메서드 접근         | 자연스러움  | 제한됨 (`await self`) |
-| 병렬 실행 능력            | 보통        | 높음                  |
-| 일반적 사용 권장          | 👍 거의 항상 | ⚠️ 최후의 수단         |
+| 구분                   | Task     | Task.detached      |
+| -------------------- | -------- | ------------------ |
+| 실행 시점                | 즉시       | 즉시                 |
+| Priority 상속          | ✔️       | ❌                  |
+| Task Local Values 상속 | ✔️       | ❌                  |
+| Actor Context 상속     | ✔️       | ❌                  |
+| MainActor에서 UI 업데이트  | ✔️ 가능    | ❌ 불가               |
+| Actor 메서드 접근         | 자연스러움    | 제한됨 (`await self`) |
+| 병렬 실행 능력             | 보통       | 높음                 |
+| 일반적 사용 권장            | 👍 거의 항상 | ⚠️ 최후의 수단          |
 
 ---
 

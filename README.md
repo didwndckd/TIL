@@ -1,4 +1,4 @@
-# TIL
+# dev-notes
 
 - [Swift](Swift)
 - [UIKit](UIKit)
