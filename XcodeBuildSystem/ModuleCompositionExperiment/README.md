@@ -1,6 +1,13 @@
-# Mach-O
+# 모듈 링크 방식별 구성 실험
 
-> Mach Object file format
+> 각 모듈을 Static/Dynamic Library 또는 Static/Dynamic Framework로 구성했을 때 빌드 산출물이 어떻게 달라지는지 비교
+
+## Mach-O
+
+Mach-O(Mach Object)는 Apple 플랫폼의 실행 파일 / 라이브러리 / 프레임워크 내부 바이너리가 사용하는 파일 포맷이다. Xcode Build Settings의 **Mach-O Type** 옵션으로 타겟이 어떤 형태의 Mach-O 파일로 빌드될지(Executable, Static Library, Dynamic Library 등) 결정된다.
+
+- **Static / Dynamic**은 Mach-O Type이 결정한다.
+- **Library / Framework**는 타겟의 Product Type이 결정한다. Framework는 Mach-O 바이너리를 번들 디렉터리로 감싼 형태이다.
 
 ## Excutable
 
